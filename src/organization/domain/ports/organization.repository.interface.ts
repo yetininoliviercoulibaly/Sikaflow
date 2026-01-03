@@ -9,6 +9,7 @@ export interface IOrganizationRepository {
   getMembers(organizationId: string): Promise<OrganizationMember[]>;
   addMember(member: OrganizationMember): Promise<void>;
   findMember(organizationId: string, userId: string): Promise<OrganizationMember | null>;
+  findOwner(organizationId: string): Promise<OrganizationMember | null>;
   findOrganizationsForUser(userId: string): Promise<Organization[]>;
   removeMember(organizationId: string, userId: string): Promise<void>;
 }

@@ -8,6 +8,7 @@ import { IOrganizationRepository, I_ORGANIZATION_REPOSITORY } from '../../../org
 export interface ActivateEventPassCommand {
   organizationId: string;
   paymentReference?: string; // If provided, means payment is confirmed
+  provider?: string;
 }
 
 export interface ActivateEventPassResult {

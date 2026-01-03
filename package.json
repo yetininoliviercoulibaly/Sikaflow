@@ -10,7 +10,7 @@
     "build": "nest build",
     "start": "nest start",
     "start:dev": "nest start --watch",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "repository": {
     "type": "git",
@@ -35,6 +35,8 @@
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.11",
     "@nestjs/platform-express": "^11.1.11",
+    "@nestjs/schedule": "^6.1.0",
+    "@types/cron": "^2.0.1",
     "@types/stripe": "^8.0.416",
     "axios": "^1.13.2",
     "bullmq": "^5.66.4",
@@ -48,7 +50,10 @@
     "uuid": "^13.0.0"
   },
   "devDependencies": {
+    "@nestjs/testing": "^11.1.11",
+    "@types/jest": "^30.0.0",
     "@types/node": "^25.0.3",
-    "@types/pdfkit": "^0.17.4"
+    "@types/pdfkit": "^0.17.4",
+    "ts-jest": "^29.4.6"
   }
 }

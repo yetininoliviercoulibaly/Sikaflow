@@ -6,6 +6,7 @@ import { OrganizationMemberSchema } from './organization/infrastructure/persiste
 import { IncidentSchema } from './incident/infrastructure/persistence/incident.schema';
 import { PromptTemplateSchema } from './common/prompt/infrastructure/persistence/prompt-template.schema';
 import { EventPassSchema } from './subscription/infrastructure/persistence/event-pass.schema';
+import { SubscriptionSchema } from './subscription/infrastructure/persistence/subscription.schema';
 
 const config: Options = {
   driver: PostgreSqlDriver,
@@ -14,7 +15,7 @@ const config: Options = {
   password: process.env.DB_PASSWORD || 'postgres',
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '5432', 10),
-  entities: [OrganizationSchema, UserSchema, TransactionSchema, OrganizationMemberSchema, IncidentSchema, PromptTemplateSchema, EventPassSchema],
+  entities: [OrganizationSchema, UserSchema, TransactionSchema, OrganizationMemberSchema, IncidentSchema, PromptTemplateSchema, EventPassSchema, SubscriptionSchema],
   debug: true,
   allowGlobalContext: true, // For simple app usage, usually false in prod
 };

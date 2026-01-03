@@ -26,6 +26,7 @@ import { SwitchOrganizationHandler } from './application/handlers/switch-organiz
 import { NotImplementedHandler } from './application/handlers/not-implemented.handler';
 import { GenerateReportHandler } from './application/handlers/generate-report.handler';
 import { ActivateEventPassHandler } from './application/handlers/activate-event-pass.handler';
+import { SubscribeMonthlyHandler } from './application/handlers/subscribe-monthly.handler';
 import { ACTION_HANDLER_TOKEN } from './application/handlers/action-handler.interface';
 import { InteractiveMessageStrategy } from './application/strategies/interactive-message.strategy';
 
@@ -68,11 +69,10 @@ import { InteractiveMessageStrategy } from './application/strategies/interactive
     },
     // Action Handlers
     CreateTransactionHandler,
-    AskDataHandler,
-    GenerateReportHandler,
     SwitchOrganizationHandler,
     NotImplementedHandler,
     ActivateEventPassHandler,
+    SubscribeMonthlyHandler,
     {
         provide: ACTION_HANDLER_TOKEN,
         useFactory: (...handlers) => handlers,
@@ -81,7 +81,9 @@ import { InteractiveMessageStrategy } from './application/strategies/interactive
             AskDataHandler, 
             GenerateReportHandler, 
             SwitchOrganizationHandler, 
+            SwitchOrganizationHandler, 
             ActivateEventPassHandler,
+            SubscribeMonthlyHandler,
             NotImplementedHandler
         ]
     }

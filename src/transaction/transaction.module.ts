@@ -22,6 +22,6 @@ import { UserModule } from '../user/user.module';
     },
     CreateTransactionUseCase,
   ],
-  exports: [I_TRANSACTION_REPOSITORY],
+  exports: [I_TRANSACTION_REPOSITORY, CreateTransactionUseCase],
 })
 export class TransactionModule {}

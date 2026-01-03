@@ -17,6 +17,15 @@ export class MikroOrmEventPassRepository implements IEventPassRepository {
     });
   }
 
+  async findAllActive(): Promise<EventPass[]> {
+    const now = new Date();
+    return this.em.find(EventPass, {
+      status: PassStatus.ACTIVE,
+      validFrom: { $lte: now },
+      validUntil: { $gte: now },
+    });
+  }
+
   async findById(id: string): Promise<EventPass | null> {
     return this.em.findOne(EventPass, { id });
   }

@@ -101,4 +101,34 @@ export class BusinessIntelligenceService {
 
     return `Le montant pour ${label} (${periodLabel}) est de ${formatted}`;
   }
+
+  async getRawMetric(organizationId: string, metric: string, startDate: Date, endDate: Date): Promise<number> {
+    
+    // Build Date Filter
+    const formattedStart = startDate.toISOString();
+    const formattedEnd = endDate.toISOString();
+
+    let sql = `SELECT SUM(amount) as sum FROM "transaction" WHERE transaction_date >= ? AND transaction_date <= ? AND organization_id = ?`;
+    const params: any[] = [formattedStart, formattedEnd, organizationId];
+
+    switch (metric) {
+        case 'REVENUE':
+            sql += ` AND type = 'INCOME'`;
+            break;
+        case 'EXPENSES':
+            sql += ` AND type = 'EXPENSE'`;
+            break;
+        case 'TIPS':
+             sql += ` AND category = 'Tips'`;
+             break;
+        default:
+            return 0;
+    }
+
+    const res = await this.em.getConnection().execute(sql, params);
+    // Handle Postgres/MikroORM raw result structure
+    // Usually Array<{sum: number}>
+    const val = res[0]?.sum; 
+    return val ? Number(val) : 0;
+  }
 }

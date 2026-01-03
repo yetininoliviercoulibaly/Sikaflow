@@ -70,4 +70,41 @@ export class StripePaymentProvider implements IPaymentProvider {
       return false;
     }
   }
+
+  async createSubscriptionCheckoutSession(priceId: string, metadata: { organizationId: string; type: string }): Promise<string> {
+    const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+
+    if (!stripeSecretKey) {
+       this.logger.warn('STRIPE_SECRET_KEY not set. Returning mock link.');
+       return `https://checkout.stripe.com/mock-sub?price=${priceId}&org=${metadata.organizationId}`;
+    }
+
+    try {
+      const Stripe = (await import('stripe')).default;
+      const stripe = new Stripe(stripeSecretKey);
+
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price: priceId, // Stripe Price ID
+            quantity: 1,
+          },
+        ],
+        mode: 'subscription',
+        success_url: `${process.env.APP_URL || 'https://eventpilot.app'}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.APP_URL || 'https://eventpilot.app'}/payment/cancel`,
+        metadata: metadata,
+        subscription_data: {
+            metadata: metadata // ensure metadata is on subscription object too
+        }
+      });
+
+      this.logger.log(`Created Stripe Subscription Session: ${session.id}`);
+      return session.url || '';
+    } catch (error) {
+      this.logger.error('Stripe subscription link creation failed', error);
+      throw new Error('Payment service unavailable');
+    }
+  }
 }

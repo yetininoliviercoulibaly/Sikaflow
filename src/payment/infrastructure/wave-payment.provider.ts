@@ -75,4 +75,15 @@ export class WavePaymentProvider implements IPaymentProvider {
       return false;
     }
   }
+
+  async createSubscriptionCheckoutSession(priceId: string, metadata: { organizationId: string; type: string }): Promise<string> {
+      // Wave does not support 'subscription' mode directly. We simulate it as 30-day access.
+      // Use env var for amount if priceId is not sufficient
+      const amount = process.env.WAVE_MONTHLY_AMOUNT || '5000'; // 5000 XOF default
+
+      // Add subscription-specific metadata
+      const subMetadata = { ...metadata, isValuesSubscription: 'true' };
+
+      return this.createPaymentLink(parseFloat(amount), 'XOF', subMetadata);
+  }
 }

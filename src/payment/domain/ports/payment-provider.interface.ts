@@ -14,6 +14,8 @@ export interface IPaymentProvider {
    * @param reference Payment reference or session ID
    */
   verifyPayment(reference: string): Promise<boolean>;
+  
+  createSubscriptionCheckoutSession(priceId: string, metadata: { organizationId: string; type: string }): Promise<string>;
 }
 
 export const PAYMENT_PROVIDER_TOKEN = Symbol('PAYMENT_PROVIDER');

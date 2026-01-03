@@ -1,7 +1,7 @@
 import { EntityManager } from '@mikro-orm/postgresql'; // or core
 import { Injectable } from '@nestjs/common';
 import { Organization } from '../../domain/organization.entity';
-import { OrganizationMember } from '../../domain/organization-member.entity';
+import { OrganizationMember, UserRole } from '../../domain/organization-member.entity';
 import { IOrganizationRepository } from '../../domain/ports/organization.repository.interface';
 import { OrganizationSchema } from './organization.schema';
 import { OrganizationMemberSchema } from './organization-member.schema';
@@ -31,6 +31,10 @@ export class MikroOrmOrganizationRepository implements IOrganizationRepository {
 
   async findMember(organizationId: string, userId: string): Promise<OrganizationMember | null> {
     return this.em.findOne(OrganizationMember, { organizationId, userId });
+  }
+
+  async findOwner(organizationId: string): Promise<OrganizationMember | null> {
+    return this.em.findOne(OrganizationMember, { organizationId, role: UserRole.OWNER });
   }
 
   async findOrganizationsForUser(userId: string): Promise<Organization[]> {

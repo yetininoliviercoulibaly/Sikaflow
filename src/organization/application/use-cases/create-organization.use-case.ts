@@ -4,10 +4,12 @@ import { Organization } from '../../domain/organization.entity';
 import { OrganizationMember, UserRole } from '../../domain/organization-member.entity';
 import { IOrganizationRepository, I_ORGANIZATION_REPOSITORY } from '../../domain/ports/organization.repository.interface';
 import { IUserRepository, I_USER_REPOSITORY } from '../../../user/domain/ports/user.repository.interface';
+import { User } from '../../../user/domain/user.entity';
 
 export interface CreateOrganizationCommand {
-  ownerId: string;
+  ownerId?: string;
   name: string;
+  userPhoneNumber?: string;
 }
 
 @Injectable()
@@ -19,19 +21,40 @@ export class CreateOrganizationUseCase {
     private readonly userRepository: IUserRepository,
   ) {}
 
-  async execute(command: CreateOrganizationCommand): Promise<Organization> {
-    const { ownerId, name } = command;
+  async execute(command: { ownerId?: string; name: string; userPhoneNumber?: string }): Promise<Organization> {
+    const { ownerId, name, userPhoneNumber } = command;
+    let userId = ownerId;
+    let user = userId ? await this.userRepository.findById(userId) : null;
 
-    const user = await this.userRepository.findById(ownerId);
-    if (!user) {
-      throw new Error('User not found');
+    // If user not found by ID, try to find by phone number if provided
+    if (!user && userPhoneNumber) {
+        user = await this.userRepository.findByPhoneNumber(userPhoneNumber);
     }
+
+    // If still not found and we have a phone number, CREATE the user
+    if (!user && userPhoneNumber) {
+        userId = uuidv4();
+        const newUser = new User(
+            userId,
+            userPhoneNumber,
+            null, // Name unknown initially
+            null, // No org yet
+            new Date()
+        );
+        user = await this.userRepository.create(newUser);
+    }
+
+    if (!user) {
+      throw new Error('User not found and no phone number provided to create one.');
+    }
+    
+    userId = user.id;
 
     const organizationId = uuidv4();
     const newOrganization = new Organization(
       organizationId,
       name,
-      ownerId,
+      userId,
       {},
       new Date(),
     );
@@ -42,7 +65,7 @@ export class CreateOrganizationUseCase {
     // Add Owner as Member
     const member = new OrganizationMember(
       organizationId,
-      ownerId,
+      userId,
       UserRole.OWNER,
       new Date(),
     );

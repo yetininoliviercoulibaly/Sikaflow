@@ -22,10 +22,8 @@ export class MikroOrmUserRepository implements IUserRepository {
   }
 
   async update(user: User): Promise<User> {
-    // MikroORM tracks changes on managed entities, so often just flush is enough if the entity is attached.
-    // If detached, we merge.
-    const merged = this.em.assign(user, user); // Simplified merge/update strategy
+    // Since user is typically a managed entity in this context, we just need to flush.
     await this.em.flush();
-    return merged;
+    return user;
   }
 }

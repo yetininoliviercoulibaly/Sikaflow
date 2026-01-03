@@ -6,9 +6,17 @@ export class CreateOrganizationDto {
   @IsString()
   name: string;
 
-  @IsNotEmpty()
+  @IsNotEmpty() // Still required for now, or make optional? 
+  // Wait, if no ownerId, we need phone. So both can be optional but ValidateIf one exists?
+  // User asked for frictionless. If we use this DTO from Controller, we might not have ownerId but have phone.
+  // Let's make ownerId optional and add userPhoneNumber.
+  // Validation logic: At least one must be present. For now, simple optional is easier to start.
   @IsUUID()
-  ownerId: string;
+  @IsNotEmpty()
+  ownerId?: string;
+
+  @IsPhoneNumber()
+  userPhoneNumber?: string;
 }
 
 export class AddMemberDto {
