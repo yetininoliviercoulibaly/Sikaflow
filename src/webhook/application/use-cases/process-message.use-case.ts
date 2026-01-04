@@ -105,7 +105,8 @@ export class ProcessMessageUseCase {
                     messageId: messageId,
                     messageBody: message.type === 'text' && message.text ? message.text.body : undefined,
                     missingFields: action.missing_fields,
-                    language: user?.preferredLanguage || 'fr'
+                    language: user?.preferredLanguage || 'fr',
+                    user: user, // Pass pre-fetched user to avoid duplicate DB lookups
                 });
             } else {
                 this.logger.warn(`No handler found for intent: ${action.intent}`);

@@ -27,23 +27,17 @@ export class GreetingHandler implements IActionHandler {
     }
 
     async handle(data: any, context: ActionContext): Promise<void> {
-        const { senderPhoneNumber, organizationId } = context;
+        const { senderPhoneNumber, user } = context;
 
-        const user = await this.userRepository.findByPhoneNumber(senderPhoneNumber);
-
+        // Use pre-fetched user from context instead of DB lookup
         if (user && user.lastActiveOrganizationId) {
-            // Check if onboarding feature is enabled and auto-trigger
-            const hasOnboarding = await this.featureGuard.canAccess(
-                user.lastActiveOrganizationId,
-                FeatureFlag.ONBOARDING_AGENT,
-            );
+            // Parallelize feature check and member lookup for performance
+            const [hasOnboarding, member] = await Promise.all([
+                this.featureGuard.canAccess(user.lastActiveOrganizationId, FeatureFlag.ONBOARDING_AGENT),
+                this.organizationRepository.findMember(user.lastActiveOrganizationId, user.id),
+            ]);
 
             if (hasOnboarding) {
-                // Get member role
-                const member = await this.organizationRepository.findMember(
-                    user.lastActiveOrganizationId,
-                    user.id,
-                );
                 const role = member?.role || 'STAFF';
 
                 // Start onboarding if not already done
