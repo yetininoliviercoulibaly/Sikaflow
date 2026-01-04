@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
 import { ILLMProvider } from './llm-provider.interface';
+import { LLMAnalysisResult, LLMIntent } from './llm-types';
+import { LLM_SYSTEM_PROMPTS } from './llm-prompts';
 
 @Injectable()
 export class GeminiLLMProvider implements ILLMProvider {
@@ -19,73 +21,15 @@ export class GeminiLLMProvider implements ILLMProvider {
     this.model = this.genAI.getGenerativeModel({ model: modelName });
   }
 
-  async analyzeText(text: string, options?: { context?: Record<string, any>; systemPrompt?: string }): Promise<any> {
+  async analyzeText(text: string, options?: { context?: Record<string, any>; systemPrompt?: string }): Promise<LLMAnalysisResult> {
     this.logger.log(`[Gemini] Analyzing text: "${text}"`);
     
-    // Use provided system prompt or fall back to default
-    const systemInstruction = options?.systemPrompt || `
-      You are an AI assistant for an event management app.
-      Analyze the following text from a user (WhatsApp message).
-      
-      User Context: ${JSON.stringify(options?.context || {})}
-      
-      Determine the user's INTENT(s). A user might do multiple things or correct themselves.
-      
-      Supported INTENTS:
-      - 'CREATE_TRANSACTION': User mentions spending money, income, buying, etc.
-      - 'REPORT_INCIDENT': User reports a problem, security issue, broken item.
-      - 'ASK_DATA': User asks for business metrics.
-      - 'GENERATE_REPORT': User asks for a PDF report (flash, weekly, etc).
-      - 'CANCEL_LAST_ACTION': User explicitly cancels previous request.
-      - 'UPDATE_LAST_ACTION': User corrects previous info.
-      - 'UNKNOWN': Unclear.
+    // Use provided system prompt or fall back to default from constants
+    const systemInstruction = options?.systemPrompt || LLM_SYSTEM_PROMPTS.DEFAULT_ANALYSIS;
+    const finalSystemInstruction = systemInstruction.replace('${JSON.stringify(options?.context || {})}', JSON.stringify(options?.context || {}));
 
-      For 'CREATE_TRANSACTION', extract:
-      - amount (number)
-      - currency (default EUR)
-      - category (short string)
-      - description (summary)
-      - type ('INCOME' or 'EXPENSE')
-      
-      For 'REPORT_INCIDENT', extract:
-      - severity ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')
-      - description
 
-      For 'ASK_DATA', extract:
-      - metric ('REVENUE', 'TIPS', 'EXPENSES', 'CASH_FLOW')
-      - period ('today', 'yesterday', 'this_week', 'last_month')
-      - date (ISO 8601 date string 'YYYY-MM-DD')
-
-      For 'GENERATE_REPORT', extract:
-      - type ('FLASH', 'WEEKLY')
-      - period (optional)
-
-      STRUCTURE RESPONSE AS JSON OBJECT with an 'actions' array.
-      
-      Fields per action:
-      - intent: String enum.
-      - data: Object with extracted fields.
-      - missing_fields: Array of strings if vital info is missing (e.g., ['amount']).
-      - organization_name: String if user explicitly mentions a venue like "for Le Lounge".
-
-      Example: 
-      {
-        "actions": [
-            { 
-               "intent": "CREATE_TRANSACTION", 
-               "data": { "amount": 50, "type": "EXPENSE", "category": "Food" },
-               "organization_name": "Le Lounge"
-            },
-            {
-               "intent": "REPORT_INCIDENT",
-               "data": { "description": "Bagarre" },
-               "missing_fields": ["severity"]
-            }
-        ]
-      }
-    `;
-
-    const prompt = `${systemInstruction}
+    const prompt = `${finalSystemInstruction}
 
       Input Text: "${text}"`;
 
@@ -101,29 +45,20 @@ export class GeminiLLMProvider implements ILLMProvider {
       }
       
       this.logger.warn(`Failed to parse JSON from Gemini response: ${textResponse}`);
-      return { intent: 'UNKNOWN', data: {} };
+      return { actions: [{ intent: LLMIntent.UNKNOWN, data: {} }] };
 
     } catch (error) {
       this.logger.error('Gemini API Error', error);
-      return { intent: 'UNKNOWN', data: {} };
+      return { actions: [{ intent: LLMIntent.UNKNOWN, data: {} }] };
     }
   }
 
-  async analyzeMedia(base64Data: string, mimeType: string, options?: { context?: Record<string, any>; prompt?: string }): Promise<any> {
+  async analyzeMedia(base64Data: string, mimeType: string, options?: { context?: Record<string, any>; prompt?: string }): Promise<LLMAnalysisResult> {
     this.logger.log(`[Gemini] Analyzing media (${mimeType})`);
 
     try {
-        const prompt = options?.prompt || `
-          Analyze this media (image or document).
-          User Context: ${JSON.stringify(options?.context || {})}
-          
-          Identify intents: 'CREATE_TRANSACTION' (receipt/invoice), 'REPORT_INCIDENT' (photo of issue), or 'UNKNOWN'.
-          
-          For 'CREATE_TRANSACTION', extract amount, currency, category, description, date.
-          For 'REPORT_INCIDENT', extract severity, description.
-
-          Output JSON with 'actions' array.
-        `;
+        const basePrompt = options?.prompt || LLM_SYSTEM_PROMPTS.MEDIA_ANALYSIS;
+        const prompt = basePrompt.replace('${JSON.stringify(options?.context || {})}', JSON.stringify(options?.context || {}));
 
         const result = await this.model.generateContent([
             prompt,
@@ -140,11 +75,11 @@ export class GeminiLLMProvider implements ILLMProvider {
         if (jsonMatch) {
             return JSON.parse(jsonMatch[0]);
         }
-        return { intent: 'UNKNOWN' };
+        return { actions: [{ intent: LLMIntent.UNKNOWN, data: {} }] };
 
     } catch (error) {
         this.logger.error('Gemini Media Analysis Error', error);
-        return { intent: 'UNKNOWN' };
+        return { actions: [{ intent: LLMIntent.UNKNOWN, data: {} }] };
     }
   }
 

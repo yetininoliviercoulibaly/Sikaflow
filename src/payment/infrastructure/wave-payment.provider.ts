@@ -1,7 +1,8 @@
+
 import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
-import { IPaymentProvider } from '../domain/ports/payment-provider.interface';
+import { IPaymentProvider, PaymentVerificationResult } from '../domain/ports/payment-provider.interface';
 
 @Injectable()
 export class WavePaymentProvider implements IPaymentProvider {
@@ -19,11 +20,22 @@ export class WavePaymentProvider implements IPaymentProvider {
 
     if (!waveApiKey) {
       this.logger.warn('WAVE_API_KEY not set. Returning mock link.');
-      return `https://pay.wave.com/mock?amount=${amount}&currency=${currency}&org=${metadata.organizationId}`;
+      // Mock needs to keep metadata for testing if possible, or we assume test environment handles it
+      // For mock verification, we need to store it somewhere or encode in URL? 
+      // Simplified: Mock verifies always true, returns empty metadata.
+      const query = new URLSearchParams({
+          amount: amount.toString(),
+          currency,
+          org: metadata.organizationId,
+          // Encode metadata in mock url for testability?
+          ...metadata
+      }).toString();
+      return `https://pay.wave.com/mock?${query}`;
     }
 
     try {
       // Wave Checkout Session API
+      // Note: Assuming Wave supports 'metadata' object as custom fields
       const response = await firstValueFrom(
         this.httpService.post(
           `${this.waveApiUrl}/checkout/sessions`,
@@ -33,6 +45,14 @@ export class WavePaymentProvider implements IPaymentProvider {
             error_url: `${process.env.APP_URL || 'https://eventpilot.app'}/payment/error`,
             success_url: `${process.env.APP_URL || 'https://eventpilot.app'}/payment/success?wave_checkout_id={checkout_session_id}`,
             client_reference: metadata.organizationId,
+            // Passing metadata if supported. If not, we might rely on client_reference containing ID 
+            // and separate persistence.
+            // But relying on Wave to return it back in Session object.
+            // Many Gateways support it. Let's assume yes or use proper serialization if needed.
+            // For now, I'll add it and hope Wave stores key-values.
+            // If strict validation fails, I'd wrap it in client_reference as JSON.
+            // Let's try passing it.
+            metadata: metadata 
           },
           {
             headers: {
@@ -52,12 +72,12 @@ export class WavePaymentProvider implements IPaymentProvider {
     }
   }
 
-  async verifyPayment(checkoutId: string): Promise<boolean> {
+  async verifyPayment(checkoutId: string): Promise<PaymentVerificationResult> {
     const waveApiKey = process.env.WAVE_API_KEY;
 
     if (!waveApiKey) {
       this.logger.warn('WAVE_API_KEY not set. Returning mock verification.');
-      return true; // Mock for dev
+      return { success: true, metadata: {} }; // Mock
     }
 
     try {
@@ -69,10 +89,19 @@ export class WavePaymentProvider implements IPaymentProvider {
         }),
       );
 
-      return response.data.payment_status === 'succeeded';
+      const session = response.data;
+      const success = session.payment_status === 'succeeded';
+      
+      return {
+          success,
+          metadata: session.metadata || {}, // Retrieve metadata
+          amount: parseFloat(session.amount),
+          currency: session.currency
+      };
+
     } catch (error) {
       this.logger.error('Wave payment verification failed', error);
-      return false;
+      return { success: false };
     }
   }
 

@@ -10,5 +10,7 @@ export const OrganizationSchema = new EntitySchema<Organization>({
     ownerId: { type: 'uuid' }, // Assuming simple column mapping for now. Relations handled via proper referencing if needed or just ID.
     settings: { type: 'jsonb' },
     createdAt: { type: 'timestamp' },
+    subscriptionExpiresAt: { type: 'timestamp', nullable: true },
+    currentPlanId: { type: 'uuid', nullable: true }, // Mapped as simple ID column for now to avoid circular dependency complexity, or use reference if needed.
   },
 });

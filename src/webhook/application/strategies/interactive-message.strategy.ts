@@ -81,6 +81,19 @@ export class InteractiveMessageStrategy implements IMessageStrategy {
         };
     }
 
+    // Handle Feedback
+    if (selectedId.startsWith('FEEDBACK|')) {
+        const rating = parseInt(selectedId.split('|')[1], 10);
+        if (!isNaN(rating)) {
+            return {
+                intent: 'PROVIDE_FEEDBACK',
+                data: { rating, confidence: 1.0 },
+                actions: [{ intent: 'PROVIDE_FEEDBACK', data: { rating, confidence: 1.0 } }]
+            };
+        }
+    }
+
     return null;
   }
 }
+

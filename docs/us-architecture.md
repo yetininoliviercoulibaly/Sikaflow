@@ -5,7 +5,7 @@ PROMPT : GÉNÉRATION DU SOCLE TECHNIQUE "EVENT-PILOT" (V2 - MIKRO-ORM)
 2. STACK TECHNIQUE & CONTRAINTES
    Framework : NestJS.
    ORM : MikroORM.
-   Règle de Pureté du Domaine : Les entités dans la couche Domain doivent être des POJOs (Plain Old JavaScript Objects). Elles ne doivent comporter aucune annotation (pas de @Entity(), @Property(), etc.). La configuration de MikroORM doit se faire via EntitySchema ou des fichiers de mapping dans la couche Infrastructure.
+   **Règle de Pureté du Domaine (CRITIQUE)** : Les entités dans la couche Domain doivent être des POJOs (Plain Old JavaScript Objects). Elles ne doivent comporter **AUCUNE annotation** (pas de `@Entity()`, `@Property()`, etc.) ni aucune dépendance vers MikroORM. La configuration de MikroORM doit se faire **uniquement** via `EntitySchema` dans la couche Infrastructure.
 3. DIRECTIVES D'ARCHITECTURE (STRICTES)
    Pour chaque module créé, respecte cette hiérarchie :
    Domain Layer : Entités métiers (classes TS pures), Exceptions de domaine, et Ports (Interfaces de repositories/services).

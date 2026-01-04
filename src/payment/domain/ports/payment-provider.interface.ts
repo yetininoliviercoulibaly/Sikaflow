@@ -1,3 +1,10 @@
+export interface PaymentVerificationResult {
+  success: boolean;
+  metadata?: Record<string, string>;
+  amount?: number;
+  currency?: string;
+}
+
 export interface IPaymentProvider {
   /**
    * Creates a payment link for the given amount
@@ -13,7 +20,7 @@ export interface IPaymentProvider {
    * Verifies if a payment was successful
    * @param reference Payment reference or session ID
    */
-  verifyPayment(reference: string): Promise<boolean>;
+  verifyPayment(reference: string): Promise<PaymentVerificationResult>;
   
   createSubscriptionCheckoutSession(priceId: string, metadata: { organizationId: string; type: string }): Promise<string>;
 }

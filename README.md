@@ -28,6 +28,10 @@ Consultez le [Diagramme d'Architecture détaillé](docs/architecture.md) pour pl
 ## ✨ Fonctionnalités Clés (Implémentées)
 
 - **📱 WhatsApp Webhook** : Réception temps réel, validation de signature.
+- **👋 Onboarding Automatisé** :
+  - Accueil des nouveaux utilisateurs ("Salut").
+  - Création assistée d'organisation ("Créer le club...").
+  - Ajout simplifié de membres d'équipe.
 - **🧠 Analyse IA Avancée** :
   - Détection Multi-Intentions (Transaction, Incident, Rapport).
   - Extraction de données structurées (Montant, Catégorie, Sévérité).
@@ -86,6 +90,9 @@ PAYMENT_REGION=INTERNATIONAL  # ou AFRICA pour activer Wave
 STRIPE_SECRET_KEY=sk_test_...
 WAVE_API_KEY=wave_sn_prod_...
 APP_URL=https://eventpilot.app  # URL de callback après paiement
+
+# LOCALIZATION
+DEFAULT_COUNTRY_CODE=+225  # Indicatif téléphonique par défaut (ex: +33 pour France)
 ```
 
 ### 3. Installation des dépendances

@@ -19,6 +19,50 @@ services:
     volumes:
       - redis_data:/data
 
+  # # 1. Job Init: Migration Runner
+  # migration-runner:
+  #   build:
+  #     context: .
+  #     target: production
+  #   command: sh -c "npm run migration:up && npm run seed:run"
+  #   environment:
+  #     POSTGRES_HOST: db
+  #     POSTGRES_PORT: 5432
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: postgres
+  #     POSTGRES_DB: event_pilot_db
+  #     MIKRO_ORM_MIGRATIONS_DISABLE_FOREIGN_KEYS: 'false'
+  #   depends_on:
+  #     db:
+  #       condition: service_started
+
+  # # 2. Main Application
+  # app:
+  #   build:
+  #     context: .
+  #     target: production
+  #   restart: always
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     NODE_ENV: production
+  #     PORT: 3000
+  #     DB_HOST: db
+  #     DB_PORT: 5432
+  #     DB_USER: postgres
+  #     DB_PASSWORD: postgres
+  #     DB_NAME: event_pilot_db
+  #     REDIS_HOST: redis
+  #     REDIS_PORT: 6379
+  #     # Add other vars from .env here via env_file: [.env]
+  #   depends_on:
+  #     db:
+  #       condition: service_started
+  #     redis:
+  #       condition: service_started
+  #     migration-runner:
+  #       condition: service_completed_successfully
+
 volumes:
   postgres_data:
   redis_data:

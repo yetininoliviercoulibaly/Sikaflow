@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import config from './mikro-orm.config';
 import { OrganizationModule } from './organization/organization.module';
@@ -10,9 +10,19 @@ import { PromptModule } from './common/prompt/prompt.module';
 import { BullModule } from '@nestjs/bullmq';
 import { ReportModule } from './report/report.module';
 import { SubscriptionModule } from './subscription/subscription.module';
+import { TicketingModule } from './ticketing/ticketing.module';
+import { PaymentModule } from './payment/payment.module';
+import { FeedbackModule } from './feedback/feedback.module';
+import { OnboardingModule } from './onboarding/onboarding.module';
+import { RawBodyMiddleware } from './common/middleware/raw-body.middleware';
+import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     MikroOrmModule.forRoot(config),
     BullModule.forRoot({
       connection: {
@@ -28,8 +38,19 @@ import { SubscriptionModule } from './subscription/subscription.module';
     PromptModule,
     ReportModule,
     SubscriptionModule,
+    TicketingModule,
+    PaymentModule,
+    FeedbackModule,
+    OnboardingModule,
+    EventEmitterModule.forRoot(),
   ],
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule {
+    configure(consumer: MiddlewareConsumer) {
+        consumer
+            .apply(RawBodyMiddleware)
+            .forRoutes({ path: 'webhook', method: RequestMethod.POST });
+    }
+}

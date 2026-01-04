@@ -4,7 +4,9 @@ export interface ActionContext {
   organizationId: string | null;
   senderPhoneNumber: string;
   messageId: string;
+  messageBody?: string;
   missingFields?: string[];
+  language?: string;
 }
 
 export interface IActionHandler {

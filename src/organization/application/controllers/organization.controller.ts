@@ -1,10 +1,15 @@
-import { Controller, Post, Body, Param, Delete, Query, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Body, Param, Delete, Query, BadRequestException, UseGuards } from '@nestjs/common';
 import { CreateOrganizationUseCase } from '../use-cases/create-organization.use-case';
 import { AddMemberUseCase } from '../use-cases/add-member.use-case';
 import { RemoveMemberUseCase } from '../use-cases/remove-member.use-case';
 import { CreateOrganizationDto, AddMemberDto } from '../dtos/organization.dtos';
+import { ApiKeyGuard } from '../../../common/guards/api-key.guard';
+import { ApiTags, ApiOperation, ApiResponse, ApiSecurity } from '@nestjs/swagger';
 
+@ApiTags('Organizations')
+@ApiSecurity('api-key')
 @Controller('organizations')
+@UseGuards(ApiKeyGuard)
 export class OrganizationController {
   constructor(
     private readonly createOrganizationUseCase: CreateOrganizationUseCase,
@@ -13,11 +18,15 @@ export class OrganizationController {
   ) {}
 
   @Post()
+  @ApiOperation({ summary: 'Create a new organization' })
+  @ApiResponse({ status: 201, description: 'The organization has been successfully created.' })
   async create(@Body() createOrganizationDto: CreateOrganizationDto) {
     return this.createOrganizationUseCase.execute(createOrganizationDto);
   }
 
   @Post(':id/members')
+  @ApiOperation({ summary: 'Add a member to an organization' })
+  @ApiResponse({ status: 201, description: 'Member added successfully.' })
   async addMember(
     @Param('id') id: string,
     @Body() addMemberDto: AddMemberDto,
@@ -29,10 +38,11 @@ export class OrganizationController {
   }
 
   @Delete(':id/members/:userId')
+  @ApiOperation({ summary: 'Remove a member from an organization' })
+  @ApiResponse({ status: 200, description: 'Member removed successfully.' })
   async removeMember(
     @Param('id') organizationId: string,
     @Param('userId') targetUserId: string,
-    // Using Query for requesterId in this phase as we don't have Auth middleware injecting user yet
     @Query('requesterId') requesterId: string, 
   ) {
       if (!requesterId) {

@@ -1,14 +1,14 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { IActionHandler } from './action-handler.interface';
 import { SubscribeMonthlyUseCase } from '../../../subscription/application/use-cases/subscribe-monthly.use-case';
-import { WhatsAppService } from '../../../common/whatsapp/whatsapp.service';
+import { IWhatsAppService, I_WHATSAPP_SERVICE } from '../../../common/whatsapp/whatsapp.service.interface';
 import { IOrganizationRepository, I_ORGANIZATION_REPOSITORY } from '../../../organization/domain/ports/organization.repository.interface';
 
 @Injectable()
 export class SubscribeMonthlyHandler implements IActionHandler {
   constructor(
     private readonly subscribeUseCase: SubscribeMonthlyUseCase,
-    private readonly whatsAppService: WhatsAppService,
+    @Inject(I_WHATSAPP_SERVICE) private readonly whatsAppService: IWhatsAppService,
     @Inject(I_ORGANIZATION_REPOSITORY) private readonly organizationRepository: IOrganizationRepository,
   ) {}
 

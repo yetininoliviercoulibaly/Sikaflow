@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Query, ForbiddenException, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, ForbiddenException, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
 import { WhatsAppPayloadDto } from '../dtos/whatsapp-payload.dto';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { WhatsAppSignatureGuard } from '../guards/whatsapp-signature.guard';
 
 @Controller('webhook')
 export class WhatsAppController {
@@ -28,6 +29,7 @@ export class WhatsAppController {
   }
 
   @Post()
+  @UseGuards(WhatsAppSignatureGuard)
   @HttpCode(HttpStatus.OK)
   async handleIncomingWebhook(@Body() payload: WhatsAppPayloadDto) {
     // Push to Queue immediately

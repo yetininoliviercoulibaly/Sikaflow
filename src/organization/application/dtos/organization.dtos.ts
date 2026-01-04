@@ -1,33 +1,35 @@
 import { IsNotEmpty, IsString, IsUUID, IsEnum, IsPhoneNumber } from 'class-validator';
 import { UserRole } from '../../domain/organization-member.entity';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateOrganizationDto {
+  @ApiProperty({ example: 'My Event Corp', description: 'Name of the organization' })
   @IsNotEmpty()
   @IsString()
   name: string;
 
-  @IsNotEmpty() // Still required for now, or make optional? 
-  // Wait, if no ownerId, we need phone. So both can be optional but ValidateIf one exists?
-  // User asked for frictionless. If we use this DTO from Controller, we might not have ownerId but have phone.
-  // Let's make ownerId optional and add userPhoneNumber.
-  // Validation logic: At least one must be present. For now, simple optional is easier to start.
+  @ApiProperty({ required: false, example: 'uuid-of-owner', description: 'User ID of the owner' })
   @IsUUID()
   @IsNotEmpty()
   ownerId?: string;
 
+  @ApiProperty({ required: false, example: '33612345678', description: 'Phone number of the owner if ID not known' })
   @IsPhoneNumber()
   userPhoneNumber?: string;
 }
 
 export class AddMemberDto {
+  @ApiProperty({ example: 'uuid-of-requester', description: 'ID of the admin making the request' })
   @IsNotEmpty()
   @IsUUID()
-  requesterId: string; // Ideally this comes from Auth Guard, but implementing as DTO property for now as per minimal requirements
+  requesterId: string; 
 
+  @ApiProperty({ example: '33612345678', description: 'Phone number of member to add' })
   @IsNotEmpty()
-  @IsPhoneNumber() // Checks generic international format
+  @IsPhoneNumber() 
   targetPhoneNumber: string;
 
+  @ApiProperty({ enum: UserRole, example: UserRole.STAFF, description: 'Role of the new member' })
   @IsNotEmpty()
   @IsEnum(UserRole)
   role: UserRole;

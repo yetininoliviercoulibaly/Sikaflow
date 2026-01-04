@@ -7,8 +7,9 @@ export const UserSchema = new EntitySchema<User>({
   properties: {
     id: { type: 'uuid', primary: true },
     phoneNumber: { type: 'varchar', length: 50 },
-    fullName: { type: 'varchar', length: 100, nullable: true },
+    fullName: { type: 'string', nullable: true },
     lastActiveOrganizationId: { type: 'uuid', nullable: true },
-    createdAt: { type: 'timestamp' },
+    preferredLanguage: { type: 'string', default: 'fr' },
+    createdAt: { type: 'datetime', defaultRaw: 'CURRENT_TIMESTAMP' },
   },
 });

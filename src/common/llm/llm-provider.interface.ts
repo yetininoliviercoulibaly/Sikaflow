@@ -1,3 +1,5 @@
+import { LLMAnalysisResult } from './llm-types';
+
 export const LLM_PROVIDER_TOKEN = 'LLM_PROVIDER_TOKEN';
 
 export interface ILLMProvider {
@@ -6,7 +8,7 @@ export interface ILLMProvider {
    * @param text The input text to analyze.
    * @param options Optional configuration including context and system prompt.
    */
-  analyzeText(text: string, options?: { context?: Record<string, any>; systemPrompt?: string }): Promise<any>;
+  analyzeText(text: string, options?: { context?: Record<string, any>; systemPrompt?: string }): Promise<LLMAnalysisResult>;
 
   /**
    * Analyzes media content (Image/PDF) provided as Base64.
@@ -14,7 +16,7 @@ export interface ILLMProvider {
    * @param mimeType The type of media.
    * @param options Optional context and prompt.
    */
-  analyzeMedia(base64Data: string, mimeType: string, options?: { context?: Record<string, any>; prompt?: string }): Promise<any>;
+  analyzeMedia(base64Data: string, mimeType: string, options?: { context?: Record<string, any>; prompt?: string }): Promise<LLMAnalysisResult>;
 
   /**
    * Transcribes audio content to text (e.g., voice notes).

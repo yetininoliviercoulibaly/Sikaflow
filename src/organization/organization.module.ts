@@ -29,6 +29,6 @@ import { UserModule } from '../user/user.module';
     RemoveMemberUseCase,
     SwitchOrganizationUseCase,
   ],
-  exports: [I_ORGANIZATION_REPOSITORY, ResolveContextUseCase, RemoveMemberUseCase, SwitchOrganizationUseCase],
+  exports: [I_ORGANIZATION_REPOSITORY, ResolveContextUseCase, RemoveMemberUseCase, SwitchOrganizationUseCase, CreateOrganizationUseCase],
 })
 export class OrganizationModule {}

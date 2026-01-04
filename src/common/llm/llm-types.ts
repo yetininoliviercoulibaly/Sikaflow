@@ -1,0 +1,34 @@
+
+export enum LLMIntent {
+  GREETING = 'GREETING',
+  CREATE_ORGANIZATION = 'CREATE_ORGANIZATION',
+  ADD_MEMBER = 'ADD_MEMBER',
+  SUBSCRIBE = 'SUBSCRIBE',
+  HELP = 'HELP',
+  CREATE_TRANSACTION = 'CREATE_TRANSACTION',
+  REPORT_INCIDENT = 'REPORT_INCIDENT',
+  ASK_DATA = 'ASK_DATA',
+  GENERATE_REPORT = 'GENERATE_REPORT',
+  CANCEL_LAST_ACTION = 'CANCEL_LAST_ACTION',
+  UPDATE_LAST_ACTION = 'UPDATE_LAST_ACTION',
+  CREATE_EVENT = 'CREATE_EVENT',
+  GENERATE_CLAIM_LINKS = 'GENERATE_CLAIM_LINKS',
+  CLAIM_TICKET = 'CLAIM_TICKET',
+  CHECK_STOCK = 'CHECK_STOCK',
+  // Onboarding Agent intents
+  START_ONBOARDING = 'START_ONBOARDING',
+  ONBOARDING_NEXT = 'ONBOARDING_NEXT',
+  ADOPTION_REPORT = 'ADOPTION_REPORT',
+  UNKNOWN = 'UNKNOWN',
+}
+
+export interface LLMAnalysisResult {
+    actions: LLMAction[];
+}
+
+export interface LLMAction {
+    intent: LLMIntent | string;
+    data: Record<string, any>;
+    missing_fields?: string[];
+    organization_name?: string;
+}

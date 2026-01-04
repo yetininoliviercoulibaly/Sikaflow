@@ -8,11 +8,13 @@ import { SubscriptionModule } from '../subscription/subscription.module';
 import { OrganizationModule } from '../organization/organization.module';
 import { UserModule } from '../user/user.module';
 import { WhatsAppModule } from '../common/whatsapp/whatsapp.module';
+import { TicketingModule } from '../ticketing/ticketing.module';
 
 @Module({
   imports: [
     HttpModule,
     forwardRef(() => SubscriptionModule), // For ActivateEventPassUseCase
+    forwardRef(() => TicketingModule),
     OrganizationModule, // For Repositories
     UserModule,
     WhatsAppModule

@@ -24,6 +24,11 @@ User Context: {{context}}
 Determine the user''s INTENT(s). A user might do multiple things or correct themselves.
 
 Supported INTENTS:
+- ''GREETING'': User says hello, hi, start, etc.
+- ''CREATE_ORGANIZATION'': User wants to create a new club/organization.
+- ''ADD_MEMBER'': User wants to add a staff member/manager.
+- ''SUBSCRIBE'': User wants to pay for subscription or event pass.
+- ''HELP'': User asks for help, menu, capabilities (''Aide'', ''Menu'', ''Que faire'').
 - ''CREATE_TRANSACTION'': User mentions spending money, income, buying, etc.
 - ''REPORT_INCIDENT'': User reports a problem, security issue, broken item.
 - ''ASK_DATA'': User asks for business metrics.
@@ -39,6 +44,13 @@ For ''CREATE_TRANSACTION'', extract:
 - category (short string)
 - description (summary)
 - type (''INCOME'' or ''EXPENSE'')
+
+For ''CREATE_ORGANIZATION'', extract:
+- name (string)
+
+For ''ADD_MEMBER'', extract:
+- phone_number (string with country code if possible)
+- role (''MANAGER'', ''STAFF'')
 
 For ''SWITCH_ORGANIZATION'', extract:
 - organization_name (string)

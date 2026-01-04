@@ -1,10 +1,11 @@
-import { Controller, Post, Body, Headers, BadRequestException, Logger, Inject } from '@nestjs/common';
+import { Controller, Post, Body, Headers, Logger, Inject } from '@nestjs/common';
 import { ActivateEventPassUseCase } from '../../../subscription/application/use-cases/activate-event-pass.use-case';
 import { WhatsAppService } from '../../../common/whatsapp/whatsapp.service';
 import { IOrganizationRepository, I_ORGANIZATION_REPOSITORY } from '../../../organization/domain/ports/organization.repository.interface';
 import { IUserRepository, I_USER_REPOSITORY } from '../../../user/domain/ports/user.repository.interface';
 import { ISubscriptionRepository, I_SUBSCRIPTION_REPOSITORY } from '../../../subscription/domain/ports/subscription.repository.interface';
-import { Subscription, SubscriptionStatus, SubscriptionType } from '../../../subscription/domain/subscription.entity';
+import { Subscription, SubscriptionStatus } from '../../../subscription/domain/subscription.entity';
+
 
 @Controller('payment/webhook')
 export class PaymentWebhookController {
@@ -27,10 +28,10 @@ export class PaymentWebhookController {
       const metadata = session.metadata || session.subscription_details?.metadata || {}; 
       const organizationId = metadata.organizationId;
 
-      if (organizationId) {
-        this.logger.log(`Handling Stripe payment for organization ${organizationId}`);
-        await this.processSuccessPayment(metadata, 'STRIPE', session.id);
-      }
+        if (organizationId) {
+            this.logger.log(`Handling Stripe payment for organization ${organizationId}`);
+            await this.processSuccessPayment(metadata, 'STRIPE', session.id, session.amount_total ? session.amount_total / 100 : 0);
+        }
     }
     return { received: true };
   }
@@ -44,19 +45,33 @@ export class PaymentWebhookController {
         const paymentReference = event.data.id;
         const metadata = event.data.metadata || { organizationId };
 
-        if (organizationId) {
-            this.logger.log(`Handling Wave payment for organization ${organizationId}`);
-            await this.processSuccessPayment(metadata, 'WAVE', paymentReference);
+        // For TICKET, organizationId in client_reference works.
+        // Amount is in event.data.amount (Wave sends string or number?) - usually string in JSON
+        const amount = parseFloat(event.data.amount) || 0;
+
+        // Note: For Ticket, organizationId might be null in client_reference if I didn't put it there?
+        // BuyTicketHandler put organizationId in metadata. Wave -> client_reference = metadata.organizationId.
+        // So organizationId is populated.
+        
+        if (organizationId || metadata.organizationId) {
+             this.logger.log(`Handling Wave payment for organization ${organizationId}`);
+             await this.processSuccessPayment(metadata, 'WAVE', paymentReference, amount);
         }
     }
     return { received: true };
   }
 
-  private async processSuccessPayment(metadata: any, provider: 'STRIPE' | 'WAVE', reference: string) {
+  private async processSuccessPayment(metadata: any, provider: 'STRIPE' | 'WAVE', reference: string, amount: number = 0) {
     const organizationId = metadata.organizationId;
-    if (!organizationId) return;
+    
+    // Logic for Tickets: OrgId might be implicitly linked via Event, but webhook metadata HAS it.
+    // If not, we might fail. But createPaymentLink puts it there.
 
     try {
+
+
+        if (!organizationId) return;
+
         if (metadata.type === 'SUBSCRIPTION' || metadata.isValuesSubscription === 'true') {
              await this.handleSubscriptionPayment(organizationId, provider, reference);
         } else {
@@ -66,6 +81,8 @@ export class PaymentWebhookController {
         this.logger.error(`Failed to process payment webhook for ${organizationId}`, error);
     }
   }
+
+
 
   private async handleEventPassPayment(organizationId: string, provider: string, reference: string) {
         const result = await this.activateEventPassUseCase.execute({

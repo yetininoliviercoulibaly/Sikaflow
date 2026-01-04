@@ -11,7 +11,7 @@ export class ProcessMessageUseCase {
   private readonly logger = new Logger(ProcessMessageUseCase.name);
 
   // Intents that bypass subscription check (allow users to activate pass)
-  private readonly BYPASS_INTENTS = ['ACTIVATE_EVENT_PASS', 'UNKNOWN', 'GREETING'];
+  private readonly BYPASS_INTENTS = ['ACTIVATE_EVENT_PASS', 'UNKNOWN', 'GREETING', 'CREATE_ORGANIZATION', 'HELP'];
 
   constructor(
     @Inject(MESSAGE_STRATEGY_TOKEN)
@@ -45,15 +45,25 @@ export class ProcessMessageUseCase {
              continue;
         }
 
-        // 2. Process
-        const analysis = await strategy.process(message, from);
-
+        // Check for specific Regex patterns (Bypass LLM for Claim Links)
+        let analysis: any = null;
+        if (message.type === 'text' && message.text?.body?.startsWith('CLAIM-')) {
+             analysis = {
+                 intent: 'CLAIM_TICKET',
+                 data: { token: message.text.body }, // We don't parse it fully here, usage in handler
+                 actions: [{ intent: 'CLAIM_TICKET', data: { raw_message: message.text.body } }]
+             };
+        } else {
+             // 2. Process via Strategy (LLM)
+             analysis = await strategy.process(message, from);
+        }
+        
         if (!analysis) {
              this.logger.warn(`Analysis failed or was skipped via strategy for message ${messageId}`);
              continue;
         }
         
-        this.logger.log(`LLM Analysis for ${from}: ${JSON.stringify(analysis)}`);
+        this.logger.log(`Analysis for ${from}: ${JSON.stringify(analysis)}`);
 
         // 3. Normalize Actions
         const actions = analysis.actions || (analysis.intent ? [{ intent: analysis.intent, data: analysis.data }] : []);
@@ -93,7 +103,9 @@ export class ProcessMessageUseCase {
                     senderPhoneNumber: from,
                     organizationId: organizationId || null,
                     messageId: messageId,
-                    missingFields: action.missing_fields
+                    messageBody: message.type === 'text' && message.text ? message.text.body : undefined,
+                    missingFields: action.missing_fields,
+                    language: user?.preferredLanguage || 'fr'
                 });
             } else {
                 this.logger.warn(`No handler found for intent: ${action.intent}`);

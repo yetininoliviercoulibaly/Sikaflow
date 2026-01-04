@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { IPaymentProvider } from '../domain/ports/payment-provider.interface';
+import { IPaymentProvider, PaymentVerificationResult } from '../domain/ports/payment-provider.interface';
 
 @Injectable()
 export class StripePaymentProvider implements IPaymentProvider {
@@ -51,12 +51,12 @@ export class StripePaymentProvider implements IPaymentProvider {
     }
   }
 
-  async verifyPayment(sessionId: string): Promise<boolean> {
+  async verifyPayment(sessionId: string): Promise<PaymentVerificationResult> {
     const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 
     if (!stripeSecretKey) {
       this.logger.warn('STRIPE_SECRET_KEY not set. Returning mock verification.');
-      return true; // Mock for dev
+      return { success: true, metadata: {} }; // Mock for dev
     }
 
     try {
@@ -64,10 +64,18 @@ export class StripePaymentProvider implements IPaymentProvider {
       const stripe = new Stripe(stripeSecretKey);
 
       const session = await stripe.checkout.sessions.retrieve(sessionId);
-      return session.payment_status === 'paid';
+      
+      const success = session.payment_status === 'paid';
+      
+      return {
+          success,
+          metadata: session.metadata || {},
+          amount: session.amount_total ? session.amount_total / 100 : undefined,
+          currency: session.currency || undefined
+      };
     } catch (error) {
       this.logger.error('Stripe payment verification failed', error);
-      return false;
+      return { success: false };
     }
   }
 

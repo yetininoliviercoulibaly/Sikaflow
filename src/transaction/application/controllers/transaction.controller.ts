@@ -1,7 +1,8 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards } from '@nestjs/common';
 import { CreateTransactionUseCase, CreateTransactionCommand } from '../use-cases/create-transaction.use-case';
 import { IsNotEmpty, IsNumber, IsString, IsEnum, IsOptional } from 'class-validator';
 import { TransactionType } from '../../domain/transaction.entity';
+import { ApiKeyGuard } from '../../../common/guards/api-key.guard';
 
 class CreateTransactionDto {
   @IsNotEmpty()
@@ -30,6 +31,7 @@ class CreateTransactionDto {
 }
 
 @Controller('transactions')
+@UseGuards(ApiKeyGuard)
 export class TransactionController {
   constructor(private readonly createTransactionUseCase: CreateTransactionUseCase) {}
 

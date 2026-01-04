@@ -8,12 +8,20 @@ import { I_SUBSCRIPTION_REPOSITORY } from './domain/ports/subscription.repositor
 import { MikroOrmSubscriptionRepository } from './infrastructure/persistence/mikro-orm-subscription.repository';
 import { ActivateEventPassUseCase } from './application/use-cases/activate-event-pass.use-case';
 import { CheckSubscriptionUseCase } from './application/use-cases/check-subscription.use-case';
+import { SubscribeUseCase } from './application/use-cases/subscribe.use-case';
+import { CheckFeatureUseCase } from './application/use-cases/check-feature.use-case';
 import { PaymentModule } from '../payment/payment.module';
 import { OrganizationModule } from '../organization/organization.module';
+import { FeatureGuard } from '../common/guards/feature.guard';
+
+import { PaymentMethodSchema } from '../payment/infrastructure/persistence/payment-method.schema';
+import { SubscriptionPlanSchema } from './infrastructure/persistence/subscription-plan.schema';
+import { I_SUBSCRIPTION_PLAN_REPOSITORY } from './domain/ports/subscription-plan.repository.interface';
+import { MikroOrmSubscriptionPlanRepository } from './infrastructure/persistence/mikro-orm-subscription-plan.repository';
 
 @Module({
   imports: [
-    MikroOrmModule.forFeature([EventPassSchema, SubscriptionSchema]),
+    MikroOrmModule.forFeature([EventPassSchema, SubscriptionSchema, SubscriptionPlanSchema, PaymentMethodSchema]),
     forwardRef(() => PaymentModule),
     OrganizationModule,
   ],
@@ -26,14 +34,26 @@ import { OrganizationModule } from '../organization/organization.module';
       provide: I_SUBSCRIPTION_REPOSITORY,
       useClass: MikroOrmSubscriptionRepository,
     },
+    {
+      provide: I_SUBSCRIPTION_PLAN_REPOSITORY,
+      useClass: MikroOrmSubscriptionPlanRepository,
+    },
     ActivateEventPassUseCase,
     CheckSubscriptionUseCase,
+    SubscribeUseCase,
+    CheckFeatureUseCase,
+    FeatureGuard,
   ],
   exports: [
     I_EVENT_PASS_REPOSITORY,
     I_SUBSCRIPTION_REPOSITORY,
+    I_SUBSCRIPTION_PLAN_REPOSITORY,
     ActivateEventPassUseCase,
     CheckSubscriptionUseCase,
+    SubscribeUseCase,
+    CheckFeatureUseCase,
+    FeatureGuard,
   ],
 })
 export class SubscriptionModule {}
+

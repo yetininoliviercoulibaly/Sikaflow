@@ -6,8 +6,8 @@ export const PromptTemplateSchema = new EntitySchema<PromptTemplate>({
   tableName: 'prompt_template',
   properties: {
     id: { type: 'uuid', primary: true },
-    key: { type: 'varchar', length: 100 },
-    content: { type: 'text' },
+    key: { type: 'varchar', length: 100, fieldName: 'code' },
+    content: { type: 'text', fieldName: 'template' },
     organizationId: { type: 'uuid', nullable: true },
     description: { type: 'text', nullable: true },
     metadata: { type: 'jsonb', default: '{}' },
