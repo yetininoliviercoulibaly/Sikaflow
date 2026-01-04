@@ -17,7 +17,23 @@ export class MikroOrmTransactionRepository implements ITransactionRepository {
     return newTx;
   }
 
-  async findByOrganization(organizationId: string): Promise<Transaction[]> {
-    return this.em.find(Transaction, { organizationId });
+  async findByOrganization(
+    organizationId: string,
+    options?: { limit?: number; offset?: number; startDate?: Date; endDate?: Date }
+  ): Promise<Transaction[]> {
+    const { limit = 100, offset = 0, startDate, endDate } = options || {};
+    
+    const where: any = { organizationId };
+    if (startDate || endDate) {
+      where.transactionDate = {};
+      if (startDate) where.transactionDate.$gte = startDate;
+      if (endDate) where.transactionDate.$lte = endDate;
+    }
+    
+    return this.em.find(Transaction, where, { 
+      limit, 
+      offset,
+      orderBy: { transactionDate: 'DESC' }
+    });
   }
 }

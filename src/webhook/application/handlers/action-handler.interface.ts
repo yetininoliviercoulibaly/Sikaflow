@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { User } from '../../../user/domain/user.entity';
 
 export interface ActionContext {
   organizationId: string | null;
@@ -7,6 +8,8 @@ export interface ActionContext {
   messageBody?: string;
   missingFields?: string[];
   language?: string;
+  /** Pre-fetched user to avoid duplicate DB lookups in handlers */
+  user?: User | null;
 }
 
 export interface IActionHandler {

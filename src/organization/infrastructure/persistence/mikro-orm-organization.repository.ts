@@ -38,10 +38,23 @@ export class MikroOrmOrganizationRepository implements IOrganizationRepository {
   }
 
   async findOrganizationsForUser(userId: string): Promise<Organization[]> {
-    const members = await this.em.find(OrganizationMember, { userId });
-    const organizationIds = members.map((m) => m.organizationId);
-    if (organizationIds.length === 0) return [];
-    return this.em.find(Organization, { id: { $in: organizationIds } });
+    // Optimized: Use native SQL query with JOIN instead of N+1 pattern
+    const knex = this.em.getKnex();
+    const rows = await knex('organization as o')
+      .select('o.*')
+      .innerJoin('organization_member as m', 'o.id', 'm.organization_id')
+      .where('m.user_id', userId);
+    
+    // Map raw rows back to entities
+    return rows.map((row: any) => new Organization(
+      row.id,
+      row.name,
+      row.owner_id,
+      row.settings || {},
+      row.created_at,
+      row.subscription_expires_at,
+      row.current_plan_id
+    ));
   }
 
   async removeMember(organizationId: string, userId: string): Promise<void> {
