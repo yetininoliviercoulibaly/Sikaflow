@@ -1,4 +1,4 @@
-# 🚀 EventPilot (v2.1)
+# 🚀 EventPilot (MVP)
 
 **The AI-Powered Orchestration OS for Modern Event Management**
 
