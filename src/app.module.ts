@@ -18,6 +18,7 @@ import { RawBodyMiddleware } from './common/middleware/raw-body.middleware';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     FeedbackModule,
     OnboardingModule,
     EventEmitterModule.forRoot(),
+    AuthModule,
   ],
   controllers: [],
   providers: [],

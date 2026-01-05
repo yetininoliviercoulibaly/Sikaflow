@@ -4,12 +4,14 @@ import { AddMemberUseCase } from '../use-cases/add-member.use-case';
 import { RemoveMemberUseCase } from '../use-cases/remove-member.use-case';
 import { CreateOrganizationDto, AddMemberDto } from '../dtos/organization.dtos';
 import { ApiKeyGuard } from '../../../common/guards/api-key.guard';
+import { CompositeAuthGuard } from '../../../common/guards/composite-auth.guard';
 import { ApiTags, ApiOperation, ApiResponse, ApiSecurity } from '@nestjs/swagger';
 
 @ApiTags('Organizations')
 @ApiSecurity('api-key')
+@ApiSecurity('bearer')
 @Controller('organizations')
-@UseGuards(ApiKeyGuard)
+@UseGuards(CompositeAuthGuard)
 export class OrganizationController {
   constructor(
     private readonly createOrganizationUseCase: CreateOrganizationUseCase,

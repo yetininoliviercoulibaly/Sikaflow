@@ -80,6 +80,7 @@ src/
 ├── report/           # Génération de rapports PDF
 ├── subscription/     # Plans d'abonnement & Event Pass
 ├── ticketing/        # Événements, billets, claims
+├── auth/            # Authentification (Magic Link, JWT, Guards)
 ├── transaction/      # Enregistrement des transactions
 ├── user/             # Gestion des utilisateurs
 └── webhook/          # Webhook WhatsApp & handlers IA
@@ -128,6 +129,11 @@ GEMINI_MODEL_NAME=gemini-1.5-flash
 PAYMENT_REGION=INTERNATIONAL  # ou AFRICA
 STRIPE_SECRET_KEY=sk_test_...
 WAVE_API_KEY=wave_sn_prod_...
+
+# AUTH (Dashboard)
+JWT_SECRET=your_jwt_secret
+ADMIN_API_KEY=your_admin_key
+ADMIN_PHONE_NUMBERS=+33612345678,+221771234567
 ```
 
 ### 3. Lancement
