@@ -31,9 +31,9 @@ export class VerifyMagicLinkUseCase {
     await this.authRepository.update(magicLinkToken);
 
     // 4. Resolve User & Role
-    const user = await this.userRepository.findByPhoneNumber(magicLinkToken.emailOrPhone);
+    const user = await this.userRepository.findByPhoneNumber(magicLinkToken.phoneNumber);
     let role = 'GUEST';
-    let userId = magicLinkToken.emailOrPhone; // Default to phone if no user
+    let userId = magicLinkToken.phoneNumber; // Default to phone if no user
 
     if (user) {
         userId = user.id;
@@ -59,7 +59,7 @@ export class VerifyMagicLinkUseCase {
     return this.tokenService.generateJwt({ 
         sub: userId, 
         role: role,
-        phone: magicLinkToken.emailOrPhone 
+        phone: magicLinkToken.phoneNumber 
     });
   }
 }

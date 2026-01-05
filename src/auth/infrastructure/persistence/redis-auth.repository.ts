@@ -38,7 +38,7 @@ export class RedisAuthRepository implements IAuthRepository, OnModuleInit, OnMod
     const parsed = JSON.parse(data);
     return new MagicLinkToken(
       parsed.token,
-      parsed.emailOrPhone,
+      parsed.phoneNumber,
       new Date(parsed.expiresAt),
       parsed.isUsed,
     );

@@ -2,7 +2,7 @@
 export class MagicLinkToken {
   constructor(
     public readonly token: string,
-    public readonly emailOrPhone: string,
+    public readonly phoneNumber: string,
     public readonly expiresAt: Date,
     public isUsed: boolean = false,
   ) {}
