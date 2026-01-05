@@ -5,13 +5,16 @@ import { RemoveMemberUseCase } from '../use-cases/remove-member.use-case';
 import { CreateOrganizationDto, AddMemberDto } from '../dtos/organization.dtos';
 import { ApiKeyGuard } from '../../../common/guards/api-key.guard';
 import { CompositeAuthGuard } from '../../../common/guards/composite-auth.guard';
+import { RolesGuard } from '../../../common/guards/roles.guard';
+import { Roles } from '../../../common/decorators/roles.decorator';
+import { UserRole } from '../../../organization/domain/organization-member.entity';
 import { ApiTags, ApiOperation, ApiResponse, ApiSecurity } from '@nestjs/swagger';
 
 @ApiTags('Organizations')
 @ApiSecurity('api-key')
 @ApiSecurity('bearer')
 @Controller('organizations')
-@UseGuards(CompositeAuthGuard)
+@UseGuards(CompositeAuthGuard, RolesGuard)
 export class OrganizationController {
   constructor(
     private readonly createOrganizationUseCase: CreateOrganizationUseCase,
@@ -20,6 +23,7 @@ export class OrganizationController {
   ) {}
 
   @Post()
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Create a new organization' })
   @ApiResponse({ status: 201, description: 'The organization has been successfully created.' })
   async create(@Body() createOrganizationDto: CreateOrganizationDto) {

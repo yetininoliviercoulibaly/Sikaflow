@@ -14,6 +14,7 @@ import { OrganizationModule } from '../organization/organization.module';
 import { JwtAuthGuard } from './infrastructure/guards/jwt-auth.guard';
 import { CompositeAuthGuard } from '../common/guards/composite-auth.guard';
 import { ApiKeyGuard } from '../common/guards/api-key.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
 
 @Module({
   imports: [
@@ -30,7 +31,8 @@ import { ApiKeyGuard } from '../common/guards/api-key.guard';
     JwtTokenService,
     JwtAuthGuard,
     CompositeAuthGuard,
-    ApiKeyGuard, 
+    ApiKeyGuard,
+    RolesGuard,
     {
       provide: I_AUTH_REPOSITORY,
       useClass: RedisAuthRepository,
@@ -48,7 +50,8 @@ import { ApiKeyGuard } from '../common/guards/api-key.guard';
     I_TOKEN_SERVICE,
     JwtAuthGuard,
     CompositeAuthGuard,
-    ApiKeyGuard
+    ApiKeyGuard,
+    RolesGuard
   ]
 })
 export class AuthModule {}

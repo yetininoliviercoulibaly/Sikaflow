@@ -20,6 +20,11 @@ export class ApiKeyGuard implements CanActivate {
       throw new ForbiddenException('Invalid API Key');
     }
 
+    request.user = {
+        id: 'system',
+        role: 'ADMIN', // UserRole.ADMIN
+        phoneNumber: 'SYSTEM'
+    };
     return true;
   }
 }
