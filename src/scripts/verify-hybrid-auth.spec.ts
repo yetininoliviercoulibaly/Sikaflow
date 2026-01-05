@@ -51,4 +51,12 @@ describe('Hybrid Auth Verification (E2E)', () => {
       .set('x-api-key', 'WRONG_KEY')
       .expect(401);
   });
+
+  it('5. Should return 403 when JWT has insufficient role', async () => {
+    const userJwt = jwtService.generateJwt({ sub: 'test-user', role: 'USER' });
+    await request(app.getHttpServer())
+      .post('/organizations')
+      .set('Authorization', `Bearer ${userJwt}`)
+      .expect(403);
+  });
 });

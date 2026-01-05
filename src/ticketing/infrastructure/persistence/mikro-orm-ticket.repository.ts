@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityManager } from '@mikro-orm/core';
 import { ITicketRepository } from '../../domain/ports/ticket.repository.interface';
-import { Ticket } from '../../domain/ticket.entity';
+import { Ticket, TicketStatus } from '../../domain/ticket.entity';
 import { TicketSchema } from './ticket.schema';
 
 @Injectable()
@@ -32,9 +32,12 @@ export class MikroOrmTicketRepository implements ITicketRepository {
 
   async findLastTicketForPhone(phone: string): Promise<Ticket | null> {
       const tickets = await this.repo.find(
-          { attendeePhone: phone }, 
           { 
-              orderBy: { createdAt: 'DESC' }, 
+            attendeePhone: phone,
+            status: { $in: [TicketStatus.USED, TicketStatus.VALID] }
+          }, 
+          { 
+              orderBy: { usedAt: 'DESC', createdAt: 'DESC' }, 
               limit: 1 
           }
       );
