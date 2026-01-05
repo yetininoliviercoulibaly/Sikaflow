@@ -1,0 +1,14 @@
+.main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--color-bg) 0%, hsl(var(--primary-h), 20%, 90%) 100%);
+  padding: 1rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .main {
+    background: linear-gradient(135deg, var(--color-bg) 0%, hsl(var(--primary-h), 20%, 10%) 100%);
+  }
+}
