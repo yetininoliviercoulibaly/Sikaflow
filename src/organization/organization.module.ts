@@ -11,11 +11,14 @@ import { ResolveContextUseCase } from './application/use-cases/resolve-context.u
 import { RemoveMemberUseCase } from './application/use-cases/remove-member.use-case';
 import { SwitchOrganizationUseCase } from './application/use-cases/switch-organization.use-case';
 import { UserModule } from '../user/user.module';
+import { AuthModule } from '../auth/auth.module';
+import { forwardRef } from '@nestjs/common';
 
 @Module({
   imports: [
     MikroOrmModule.forFeature([OrganizationSchema, OrganizationMemberSchema]),
     UserModule,
+    forwardRef(() => AuthModule),
   ],
   controllers: [OrganizationController],
   providers: [

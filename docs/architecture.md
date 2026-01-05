@@ -6,7 +6,7 @@ EventPilot est une application construite sur **NestJS** suivant une **Architect
 
 ## Modules Fonctionnels
 
-L'application est découpée en **12 modules** indépendants :
+L'application est découpée en **13 modules** indépendants :
 
 | Module           | Responsabilité                   | Couches                                         |
 | ---------------- | -------------------------------- | ----------------------------------------------- |
@@ -22,6 +22,7 @@ L'application est découpée en **12 modules** indépendants :
 | **Onboarding**   | Tutoriel interactif 5 étapes     | Domain, Application, Infrastructure             |
 | **Webhook**      | Point d'entrée WhatsApp          | Application (Controllers, Handlers, Strategies) |
 | **Common**       | LLM, Guards, WhatsApp Service    | Shared services                                 |
+| **Auth**         | Magic Link, JWT, Guards          | Domain, Application, Infrastructure             |
 
 ## Diagramme des Flux (Sequence & Components)
 
@@ -239,3 +240,19 @@ Collecte automatique des retours post-événement :
 - Envoi automatique après chaque événement terminé
 - Notation 1-5 étoiles via boutons interactifs
 - Stockage pour analyse et amélioration continue
+
+### 10. Module Auth (Dashboard)
+
+Module d'authentification pour le futur Dashboard Web :
+
+- **Magic Link** : Authentification sans mot de passe via WhatsApp
+- **JWTs** : Sessions utilisateur sécurisées (sub, role, phone)
+- **Hybrid Guards** :
+  - `ApiKeyGuard` : Pour accès M2M (scripts, crons)
+  - `JwtAuthGuard` : Pour accès utilisateur (Dashboard)
+  - `CompositeAuthGuard` : Combine les deux pour flexibilité
+
+**Endpoints :**
+
+- `POST /auth/magic-link` : Demande de lien de connexion
+- `GET /auth/verify?token=...` : Validation et génération JWT
