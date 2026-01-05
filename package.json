@@ -70,8 +70,10 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^25.0.3",
     "@types/pdfkit": "^0.17.4",
+    "@types/supertest": "^6.0.3",
     "html-to-docx": "^1.8.0",
     "marked": "^17.0.1",
+    "supertest": "^7.1.4",
     "ts-jest": "^29.4.6"
   }
 }
