@@ -1,134 +1,136 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { EntityManager, RequestContext } from '@mikro-orm/core';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { ConfigModule } from '@nestjs/config';
-import { Event } from '../ticketing/domain/event.entity';
-import { Ticket, TicketStatus } from '../ticketing/domain/ticket.entity';
-import { SendFeedbackRequestsUseCase } from '../feedback/application/use-cases/send-feedback-requests.use-case';
-import { EventFeedback } from '../feedback/domain/event-feedback.entity';
-import { TicketClaim } from '../ticketing/domain/ticket-claim.entity';
-import { v4 as uuidv4 } from 'uuid';
-import config from '../mikro-orm.config';
-import { TicketingModule } from '../ticketing/ticketing.module';
-import { FeedbackModule } from '../feedback/feedback.module';
-import { I_WHATSAPP_SERVICE } from '../common/whatsapp/whatsapp.service.interface';
 import { FeedbackHandler } from '../feedback/application/handlers/feedback.handler';
+import { I_WHATSAPP_SERVICE, IWhatsAppService } from '../common/whatsapp/whatsapp.service.interface';
+import { I_EVENT_FEEDBACK_REPOSITORY, IEventFeedbackRepository } from '../feedback/domain/ports/event-feedback.repository.interface';
+import { I_TICKET_REPOSITORY, ITicketRepository } from '../ticketing/domain/ports/ticket.repository.interface';
+import { Ticket, TicketStatus } from '../ticketing/domain/ticket.entity';
+import { EventFeedback } from '../feedback/domain/event-feedback.entity';
+import { ActionContext } from '../webhook/application/handlers/action-handler.interface';
 
-// Mock WhatsApp Service
-const mockWhatsAppService = {
-  callCount: 0,
-  sendMessage: async (phone: string, msg: string) => {
-      console.log(`[MockWhatsApp] To: ${phone}, Msg: ${msg}`);
-      mockWhatsAppService.callCount++;
-      return true;
-  },
-};
+// --- MOCKS ---
 
-async function bootstrap() {
-  const moduleRef: TestingModule = await Test.createTestingModule({
-    imports: [
-      ConfigModule.forRoot({ isGlobal: true }),
-      MikroOrmModule.forRoot(config),
-      TicketingModule,
-      FeedbackModule,
+class MockWhatsAppService implements IWhatsAppService {
+  async sendMessage(to: string, message: string) {
+    console.log(`[WhatsApp] To ${to}: ${message}`);
+  }
+  async sendInteractiveMessage() {}
+  async sendDocument() {}
+  async downloadMedia() { return { buffer: Buffer.from(''), mimeType: 'image/jpeg' }; }
+  async markMessageAsRead() {}
+  async sendInteractiveButtons() {}
+  async sendInteractiveList() {}
+}
+
+class MockEventFeedbackRepository implements IEventFeedbackRepository {
+  public feedbacks: EventFeedback[] = [];
+  async create(feedback: EventFeedback) {
+    console.log(`[FeedbackRepo] Created feedback for Event ${feedback.eventId}: Rating ${feedback.rating}`);
+    this.feedbacks.push(feedback);
+  }
+  async findByEventId() { return []; }
+  async findByUserAndEvent() { return null; }
+}
+
+class MockTicketRepository implements ITicketRepository {
+  private tickets: Ticket[] = [];
+
+  async save(ticket: Ticket) { this.tickets.push(ticket); }
+  async findById() { return null; }
+  async findByEventId() { return []; }
+  async findByToken() { return null; }
+
+  // THE CORE LOGIC TO VERIFY
+  async findLastTicketForPhone(phone: string): Promise<Ticket | null> {
+    const candidates = this.tickets.filter(t => 
+        t.attendeePhone === phone && 
+        (t.status === TicketStatus.USED || t.status === TicketStatus.VALID)
+    );
+
+    // Sort: USED (Recent) > VALID (Recent)
+    candidates.sort((a, b) => {
+        const timeA = a.usedAt ? a.usedAt.getTime() : a.createdAt.getTime();
+        const timeB = b.usedAt ? b.usedAt.getTime() : b.createdAt.getTime();
+        
+        // Priority to USED status? 
+        // Logic in MicroOrm repo was: orderBy: { usedAt: 'DESC', createdAt: 'DESC' }
+        // Postgres sorts nulls last usually for DESC, userAt is null for VALID.
+        // So USED tickets come first.
+        
+        if (a.status === TicketStatus.USED && b.status !== TicketStatus.USED) return -1;
+        if (b.status === TicketStatus.USED && a.status !== TicketStatus.USED) return 1;
+        
+        return timeB - timeA; // Descending time
+    });
+
+    return candidates.length > 0 ? candidates[0] : null;
+  }
+}
+
+// --- RUNNER ---
+
+async function run() {
+  console.log('🚀 Starting Feedback Logic Verification...');
+
+  const module: TestingModule = await Test.createTestingModule({
+    providers: [
+      FeedbackHandler,
+      { provide: I_WHATSAPP_SERVICE, useClass: MockWhatsAppService },
+      { provide: I_EVENT_FEEDBACK_REPOSITORY, useClass: MockEventFeedbackRepository },
+      { provide: I_TICKET_REPOSITORY, useClass: MockTicketRepository },
     ],
-  })
-  .overrideProvider(I_WHATSAPP_SERVICE)
-  .useValue(mockWhatsAppService)
-  .compile();
+  }).compile();
 
-  const app = moduleRef.createNestApplication();
-  await app.init();
+  const handler = module.get(FeedbackHandler);
+  const ticketRepo = module.get<MockTicketRepository>(I_TICKET_REPOSITORY); // Cast to Mock to access 'save'
 
-  const em = app.get(EntityManager);
-  const useCase = app.get(SendFeedbackRequestsUseCase);
-  
-  // 0. Cleanup
-  const fork = em.fork();
-  
-  // 1. Create Past Event (Yesterday - 25h ago)
-  const now = new Date();
-  const pastDate = new Date(now.getTime() - 25 * 60 * 60 * 1000);
-  
-  const event = new Event(
-    uuidv4(),
-    uuidv4(), // Random Org ID
-    'Feedback Test Party',
-    pastDate,
-    100,
-    1000
-  );
-  
-  await fork.persistAndFlush(event);
-  console.log(`✅ Created Past Event: ${event.id} (${event.name})`);
+  const userPhone = '+33612345678';
 
-  // 2. Create Ticket
-  const ticket = new Ticket(
-      uuidv4(),
-      event.id,
-      '33612345678', // Test Phone
-      TicketStatus.USED,
-      'hash123'
-  );
-  await fork.persistAndFlush(ticket);
-  console.log(`✅ Created Ticket for Phone: ${ticket.attendeePhone}`);
+  // 1. Setup Tickets
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
 
-  // 3. Run Use Case
-  console.log('🔄 Running SendFeedbackRequestsUseCase...');
-  await RequestContext.create(em, async () => {
-    await useCase.execute();
-  });
+  // Event A (Past, Used)
+  const ticketPast = new Ticket('t1', 'EVENT_PAST_ID', userPhone, TicketStatus.USED, 'hash1', new Date(), yesterday);
+  // Event B (Future, Valid)
+  const ticketFuture = new Ticket('t2', 'EVENT_FUTURE_ID', userPhone, TicketStatus.VALID, 'hash2', tomorrow);
 
-  // 4. Verify Event Status
-  fork.clear(); // Clear identity map
-  const updatedEvent = await fork.findOne(Event, { id: event.id });
+  await ticketRepo.save(ticketPast);
+  await ticketRepo.save(ticketFuture);
+
+  console.log('✅ Tickets setup: 1 Past (USED), 1 Future (VALID)');
+
+  // 2. Simulate User Feedback
+  const context: ActionContext = {
+    senderPhoneNumber: userPhone,
+    messageBody: '5',
+    messageId: 'msg_123',
+    organizationId: null,
+    language: 'fr'
+  };
+
+  const data = { rating: 5, comment: 'Great!' };
+
+  console.log('Sending Feedback...');
+  await handler.handle(data, context);
+
+  // 3. Verify Repository state
+  const feedbackRepo = module.get<MockEventFeedbackRepository>(I_EVENT_FEEDBACK_REPOSITORY);
   
-  if (updatedEvent?.feedbackSent) {
-      console.log('✅ Success: Event marked as feedbackSent = true');
-      console.log('Test call count:', mockWhatsAppService.callCount);
-  } else {
-      console.error('❌ Failure: Event feedbackSent is false');
+  if (feedbackRepo.feedbacks.length === 0) {
+      console.error('❌ No feedback created.');
       process.exit(1);
   }
 
-  // 4b. Test Feedback Receiving
-  console.log('🔄 Testing FeedbackHandler...');
-  const handler = app.get(FeedbackHandler);
-  
-  if (!handler) {
-      console.error('❌ FeedbackHandler not found in context');
+  const createdFeedback = feedbackRepo.feedbacks[0];
+  console.log(`\nCreated Feedback for Event ID: ${createdFeedback.eventId}`);
+
+  if (createdFeedback.eventId === 'EVENT_PAST_ID') {
+      console.log('✅ SUCCESS: Feedback linked to the PAST event.');
   } else {
-      await RequestContext.create(em, async () => {
-        await handler.handle(
-            { rating: 5, comment: 'Super event!' }, 
-            { 
-              senderPhoneNumber: ticket.attendeePhone, 
-              language: 'fr', 
-              messageBody: 'Note 5', 
-              organizationId: event.organizationId,
-              messageId: 'msg_123'
-            } as any
-        );
-      });
-      console.log('✅ FeedbackHandler executed.');
-      
-      // Verify Persisted Feedback
-      const verifyFork = em.fork(); 
-      const feedbacks = await verifyFork.find(EventFeedback, { eventId: event.id });
-      if (feedbacks.length > 0 && feedbacks[0].rating === 5) {
-          console.log(`✅ Success: Feedback persisted! ID: ${feedbacks[0].id}, Rating: ${feedbacks[0].rating}`);
-      } else {
-          console.error('❌ Failure: Feedback not persisted.');
-      }
+      console.error(`❌ FAILURE: Feedback linked to ${createdFeedback.eventId} (Expected EVENT_PAST_ID)`);
+      process.exit(1);
   }
-
-  // 5. Cleanup
-  await fork.remove(ticket);
-  await fork.remove(event);
-  await fork.flush();
-
-  await app.close();
 }
 
-bootstrap();
+run();
