@@ -1,0 +1,50 @@
+.container {
+  width: 100%;
+  max-width: 450px;
+  padding: 2.5rem;
+}
+
+.header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.header h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--color-text);
+}
+
+.header p {
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.success {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.success h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.success p {
+  color: var(--color-text-muted);
+}
+
+.backButton {
+  margin-top: 1rem;
+}
