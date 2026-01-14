@@ -13,8 +13,8 @@ export class WhatsAppMessagingProvider implements IMessagingProvider {
     const isEn = language === 'en';
     
     const message = isEn
-      ? `🔐 *EventPilot Dashboard Login*\n\nClick this link to access your dashboard (Valid for 15 min):\n\n${link}\n\n_If you did not request this, please ignore this message._`
-      : `🔐 *Connexion Dashboard EventPilot*\n\nCliquez sur ce lien pour accéder à votre tableau de bord (Valide 15 min) :\n\n${link}\n\n_Si vous n'êtes pas à l'origine de cette demande, ignorez ce message._`;
+      ? `🔐 *SikaFlow Dashboard Login*\n\nClick this link to access your dashboard (Valid for 15 min):\n\n${link}\n\n_If you did not request this, please ignore this message._`
+      : `🔐 *Connexion Dashboard SikaFlow*\n\nCliquez sur ce lien pour accéder à votre tableau de bord (Valide 15 min) :\n\n${link}\n\n_Si vous n'êtes pas à l'origine de cette demande, ignorez ce message._`;
     
     await this.whatsAppService.sendMessage(phoneNumber, message);
   }

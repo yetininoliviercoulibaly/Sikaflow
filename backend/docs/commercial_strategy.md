@@ -1,8 +1,8 @@
-# 🌍 Stratégie Commerciale & Roadmap - EventPilot
+# 🌍 Stratégie Commerciale & Roadmap - SikaFlow
 
 ## 📊 1. Analyse du Produit & Proposition de Valeur Unique (UVP)
 
-EventPilot se positionne comme un **"OS Événementiel WhatsApp-First"**, utilisant l'IA multimodale pour rompre avec les logiciels SaaS traditionnels complexes (dashboards web) et les applications mobiles coûteuses (friction de téléchargement).
+SikaFlow se positionne comme un **"OS Événementiel WhatsApp-First"**, utilisant l'IA multimodale pour rompre avec les logiciels SaaS traditionnels complexes (dashboards web) et les applications mobiles coûteuses (friction de téléchargement).
 
 ### Forces (Interne)
 
@@ -32,7 +32,7 @@ _Sous-bancarisés, Mobile-First, Économie Informelle_
 - **Approche Commerciale** : **"Le Contrôleur de Gestion dans votre Poche"**.
   - Ne vendez pas une "Billetterie" (trop de concurrence), vendez la **Sécurité du Cash** et le **Reporting Automatique** pour les sponsors.
   - **Cible** : Promoteurs de concerts, Festivals, Églises/Associations (cotisations).
-  - **Hook** : "Payez 15 000 FCFA pour débloquer le bot ce weekend. Recevez tout l'argent de vos tickets sur VOTRE Wave, nous ne touchons rien. EventPilot s'occupe juste des rapports."
+  - **Hook** : "Payez 15 000 FCFA pour débloquer le bot ce weekend. Recevez tout l'argent de vos tickets sur VOTRE Wave, nous ne touchons rien. SikaFlow s'occupe juste des rapports."
 
 ### B. 🇨🇦 Zone Québec (Cible : Montréal - Nightlife & Festivals)
 
@@ -71,7 +71,7 @@ _Saturé, Exigeant, Culture du "Face Control"_
 **Objectif** : Traction & Volume via le modèle "Prepaid"
 
 1.  **Partenariat Stratégique** : Cibler 5 promoteurs influents. Offrir les premiers "Pass 48h" gratuitement.
-2.  **Marketing** : Campagne "Votre argent reste chez vous". Insister sur le fait qu'EventPilot ne touche pas aux revenus de la billetterie (Argument de confiance majeur).
+2.  **Marketing** : Campagne "Votre argent reste chez vous". Insister sur le fait qu'SikaFlow ne touche pas aux revenus de la billetterie (Argument de confiance majeur).
 3.  **Feature Focus** : Optimiser `ActivateEventPassUseCase` pour que le paiement Wave soit fluide (Push USSD).
 
 ### Phase 2 : "La Niche Montréalaise" (Mois 3-6)
@@ -91,7 +91,7 @@ _Saturé, Exigeant, Culture du "Face Control"_
     - _Pour qui ?_ Les "Power Users" (Organisateurs qui gèrent >1000 personnes/mois).
 2.  **Stratégie d'Authentification : "Magic Link WhatsApp"**
     - Ne JAMAIS demander de mot de passe (Mdp oublié = Friction = Abandon).
-    - **Flux** : L'utilisateur écrit "Dashboard" sur WhatsApp -> Le bot répond avec un lien unique temporaire (`https://app.eventpilot.com/auth?token=xyz`).
+    - **Flux** : L'utilisateur écrit "Dashboard" sur WhatsApp -> Le bot répond avec un lien unique temporaire (`https://app.SikaFlow.com/auth?token=xyz`).
     - **Avantage** : Sécurité forte (le numéro WhatsApp est le facteur d'auth) et Zéro friction à l'inscription.
 
 ### 🔮 Phase 4 : Diversification Telegram (Opportunité)
@@ -135,3 +135,4 @@ _Saturé, Exigeant, Culture du "Face Control"_
 1.  **Santé du Numéro (Quality Score)** : Surveillance quotidienne dans le Meta Business Manager. Vert = OK, Jaune = DANGER.
 2.  **Latence** : Le Webhook doit répondre en <2s. L'infrastructure (Redis/BullMQ) est critique.
 3.  **Précision IA** : Les hallucinations sur les totaux financiers sont inacceptables. Les tests E2E financiers doivent être drastiques.
+

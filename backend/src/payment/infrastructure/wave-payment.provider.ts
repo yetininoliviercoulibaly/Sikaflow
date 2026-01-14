@@ -42,8 +42,8 @@ export class WavePaymentProvider implements IPaymentProvider {
           {
             amount: amount.toString(),
             currency: currency, // XOF for West Africa
-            error_url: `${process.env.APP_URL || 'https://eventpilot.app'}/payment/error`,
-            success_url: `${process.env.APP_URL || 'https://eventpilot.app'}/payment/success?wave_checkout_id={checkout_session_id}`,
+            error_url: `${process.env.APP_URL || 'https://sikaflow.app'}/payment/error`,
+            success_url: `${process.env.APP_URL || 'https://sikaflow.app'}/payment/success?wave_checkout_id={checkout_session_id}`,
             client_reference: metadata.organizationId,
             // Passing metadata if supported. If not, we might rely on client_reference containing ID 
             // and separate persistence.

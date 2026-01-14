@@ -19,8 +19,8 @@ async function bootstrap() {
 
   // Swagger Configuration
   const config = new DocumentBuilder()
-    .setTitle('EventPilot API')
-    .setDescription('The EventPilot API documentation')
+    .setTitle('SikaFlow API')
+    .setDescription('The SikaFlow API documentation')
     .setVersion('2.0')
     .addBearerAuth()
     .addApiKey({ type: 'apiKey', name: 'x-api-key', in: 'header' }, 'api-key')

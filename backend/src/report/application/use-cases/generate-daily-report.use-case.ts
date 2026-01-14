@@ -97,7 +97,7 @@ export class GenerateDailyReportUseCase {
 
 *Net* : ${fmt(revCurrent - expCurrent)} ${currency}
 
-_EventPilot AI_`;
+_SikaFlow AI_`;
 
           await this.whatsAppService.sendMessage(user.phoneNumber, message);
           this.logger.log(`Daily Report sent to ${orgId}`);

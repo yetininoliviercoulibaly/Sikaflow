@@ -9,7 +9,7 @@ interface SpinnerProps {
   color?: string; // Optional color override
 }
 
-export const Spinner = ({ size = 24, className, color }: SpinnerProps) => {
+const Spinner = ({ size = 24, className, color }: SpinnerProps) => {
   return (
     <Loader2 
       className={clsx("animate-spin", className)} 
@@ -18,3 +18,4 @@ export const Spinner = ({ size = 24, className, color }: SpinnerProps) => {
     />
   );
 };
+export default Spinner;

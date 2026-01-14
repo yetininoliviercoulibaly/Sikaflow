@@ -1,5 +1,5 @@
 /**
- * Performance Benchmark Script for EventPilot
+ * Performance Benchmark Script for SikaFlow
  * 
  * Tests the performance optimizations implemented:
  * - Prompt caching (5min TTL)
@@ -47,7 +47,7 @@ async function benchmark(name: string, iterations: number, fn: () => Promise<voi
 }
 
 async function main() {
-  console.log('🚀 EventPilot Performance Benchmark\n');
+  console.log('🚀 SikaFlow Performance Benchmark\n');
   console.log('='.repeat(60));
   
   const app = await NestFactory.createApplicationContext(AppModule, {

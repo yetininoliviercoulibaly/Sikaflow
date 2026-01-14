@@ -59,7 +59,8 @@ export class VerifyMagicLinkUseCase {
     return this.tokenService.generateJwt({ 
         sub: userId, 
         role: role,
-        phone: magicLinkToken.phoneNumber 
+        phone: magicLinkToken.phoneNumber,
+        orgId: (user && role !== UserRole.ADMIN) ? (await this.organizationRepository.findOrganizationsForUser(user.id))[0]?.id : undefined
     });
   }
 }

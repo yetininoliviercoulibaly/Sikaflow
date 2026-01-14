@@ -82,7 +82,7 @@ export class WhatsAppService implements IWhatsAppService {
         type: 'list',
         header: { type: 'text', text: header },
         body: { text: body },
-        footer: { text: 'EventPilot' },
+        footer: { text: 'SikaFlow' },
         action: {
           button: buttonText,
           sections: sections.map(s => ({

@@ -1,6 +1,6 @@
 # 🚀 Guide de Configuration CI/CD - GitHub Actions
 
-Ce guide vous accompagne pas à pas pour configurer le pipeline CI/CD d'EventPilot sur GitHub.
+Ce guide vous accompagne pas à pas pour configurer le pipeline CI/CD d'SikaFlow sur GitHub.
 
 ---
 
@@ -25,19 +25,19 @@ usermod -aG docker deploy
 ### 1.2 Générer une clé SSH (sur votre machine locale)
 
 ```bash
-ssh-keygen -t ed25519 -C "github-actions-deploy" -f ~/.ssh/eventpilot_deploy
+ssh-keygen -t ed25519 -C "github-actions-deploy" -f ~/.ssh/SikaFlow_deploy
 ```
 
 Cela crée deux fichiers :
 
-- `~/.ssh/eventpilot_deploy` (clé privée → pour GitHub)
-- `~/.ssh/eventpilot_deploy.pub` (clé publique → pour le VPS)
+- `~/.ssh/SikaFlow_deploy` (clé privée → pour GitHub)
+- `~/.ssh/SikaFlow_deploy.pub` (clé publique → pour le VPS)
 
 ### 1.3 Autoriser la clé sur le VPS
 
 ```bash
 # Copier la clé publique sur le VPS
-ssh-copy-id -i ~/.ssh/eventpilot_deploy.pub deploy@VOTRE_IP_VPS
+ssh-copy-id -i ~/.ssh/SikaFlow_deploy.pub deploy@VOTRE_IP_VPS
 ```
 
 Ou manuellement :
@@ -45,7 +45,7 @@ Ou manuellement :
 ```bash
 # Sur le VPS, en tant que 'deploy'
 mkdir -p ~/.ssh
-echo "CONTENU_DE_eventpilot_deploy.pub" >> ~/.ssh/authorized_keys
+echo "CONTENU_DE_SikaFlow_deploy.pub" >> ~/.ssh/authorized_keys
 chmod 600 ~/.ssh/authorized_keys
 ```
 
@@ -53,11 +53,11 @@ chmod 600 ~/.ssh/authorized_keys
 
 ```bash
 # Sur le VPS
-sudo mkdir -p /opt/eventpilot
-sudo chown deploy:deploy /opt/eventpilot
+sudo mkdir -p /opt/SikaFlow
+sudo chown deploy:deploy /opt/SikaFlow
 
 # Copier les fichiers Docker Compose
-cd /opt/eventpilot
+cd /opt/SikaFlow
 # Créez docker-compose.yml et .env.prod ici
 ```
 
@@ -73,7 +73,7 @@ cd /opt/eventpilot
 | :------------ | :------------------------------- | :-------------------------------------------------------------- |
 | `VPS_HOST`    | `123.45.67.89`                   | IP publique de votre VPS                                        |
 | `VPS_USER`    | `deploy`                         | Utilisateur SSH créé à l'étape 1.1                              |
-| `VPS_SSH_KEY` | _(contenu de eventpilot_deploy)_ | Clé **privée** SSH (tout le fichier, y compris `-----BEGIN...`) |
+| `VPS_SSH_KEY` | _(contenu de SikaFlow_deploy)_ | Clé **privée** SSH (tout le fichier, y compris `-----BEGIN...`) |
 
 > ⚠️ **Important** : Copiez le contenu **complet** de la clé privée, pas le chemin du fichier.
 
@@ -136,7 +136,7 @@ Le workflow CD publie l'image Docker sur `ghcr.io` automatiquement grâce au `GI
 
 - Connectez-vous au VPS et vérifiez les logs :
   ```bash
-  cd /opt/eventpilot
+  cd /opt/SikaFlow
   docker compose logs app
   ```
 
@@ -163,17 +163,18 @@ Le workflow CD publie l'image Docker sur `ghcr.io` automatiquement grâce au `GI
 ┌─────────────────────────────────────────────────────────────────┐
 │  CD Workflow                                                    │
 │  ├─ Build Docker Image (multi-stage)                            │
-│  ├─ Push to ghcr.io/yetininoliviercoulibaly/eventpilot         │
+│  ├─ Push to ghcr.io/yetininoliviercoulibaly/SikaFlow         │
 │  └─ SSH → docker compose pull && up -d                          │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                      🚀 VPS (Production)                        │
-│  └─ EventPilot running on port 3000                             │
+│  └─ SikaFlow running on port 3000                             │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 _Dernière mise à jour : Janvier 2026_
+

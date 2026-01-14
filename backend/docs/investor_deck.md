@@ -122,4 +122,5 @@ Event-Pilot est un **CFO (Directeur Financier) artificiel**.
 
 ---
 
-_Contactez-nous : team@eventpilot.app_
+_Contactez-nous : team@sikaflow.app_
+

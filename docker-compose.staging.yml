@@ -1,0 +1,111 @@
+version: "3.8"
+
+services:
+  # ---------------------------------------------------------------------------
+  # 1. DATABASE (PostgreSQL)
+  # ---------------------------------------------------------------------------
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data_staging:/var/lib/postgresql/data
+    networks:
+      - sikaflow_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # 2. CACHE (Redis)
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:alpine
+    restart: always
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data_staging:/data
+    networks:
+      - sikaflow_net
+
+  # ---------------------------------------------------------------------------
+  # 3. MIGRATION RUNNER (Job Init)
+  # ---------------------------------------------------------------------------
+  migration-runner:
+    image: sikaflow-api:staging
+    build:
+      context: .
+      target: production
+    command: sh -c "npx mikro-orm migration:up && npm run seed:run"
+    environment:
+      NODE_ENV: staging
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      MIKRO_ORM_MIGRATIONS_DISABLE_FOREIGN_KEYS: "false"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - sikaflow_net
+
+  # ---------------------------------------------------------------------------
+  # 4. API (NestJS)
+  # ---------------------------------------------------------------------------
+  app:
+    image: sikaflow-api:staging
+    restart: always
+    environment:
+      NODE_ENV: staging
+      PORT: 3000
+      APP_URL: ${APP_URL}
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # Keys
+      WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID}
+      WHATSAPP_ACCESS_TOKEN: ${WHATSAPP_ACCESS_TOKEN}
+      WHATSAPP_VERIFY_TOKEN: ${WHATSAPP_VERIFY_TOKEN}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      WAVE_API_KEY: ${WAVE_API_KEY}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      migration-runner:
+        condition: service_completed_successfully
+    networks:
+      - sikaflow_net
+
+  # ---------------------------------------------------------------------------
+  # 5. CLOUDFLARE TUNNEL (Expose to Internet)
+  # ---------------------------------------------------------------------------
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: always
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    networks:
+      - sikaflow_net
+
+volumes:
+  postgres_data_staging:
+  redis_data_staging:
+
+networks:
+  sikaflow_net:
+    driver: bridge

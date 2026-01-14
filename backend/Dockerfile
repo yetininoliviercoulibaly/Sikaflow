@@ -1,5 +1,5 @@
 # ===========================================
-# EventPilot - Production Dockerfile
+# SikaFlow - Production Dockerfile
 # Multi-stage build for smaller image size
 # ===========================================
 

@@ -5,7 +5,7 @@ services:
   # APPLICATION (NestJS)
   # ---------------------------------------------------------------------------
   app:
-    container_name: eventpilot_app
+    container_name: sikaflow_app
     build:
       context: ../
       dockerfile: Dockerfile
@@ -17,21 +17,21 @@ services:
     ports:
       - "3000:3000"
     networks:
-      - eventpilot_net
+      - sikaflow_net
 
   # ---------------------------------------------------------------------------
   # SECURE TUNNEL (Cloudflare)
   # ---------------------------------------------------------------------------
   cloudflared:
-    container_name: eventpilot_tunnel
+    container_name: sikaflow_tunnel
     image: cloudflare/cloudflared:latest
     restart: always
     command: tunnel run
     environment:
       - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
     networks:
-      - eventpilot_net
+      - sikaflow_net
 
 networks:
-  eventpilot_net:
+  sikaflow_net:
     driver: bridge

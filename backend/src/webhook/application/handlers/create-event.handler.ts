@@ -31,7 +31,8 @@ export class CreateEventHandler implements IActionHandler {
     }
 
     try {
-        const message = await this.createEventUseCase.execute(organizationId, event_name, date, parseInt(capacity), parseInt(price));
+        const event = await this.createEventUseCase.execute(organizationId, event_name, date, parseInt(capacity), parseInt(price));
+        const message = `✅ Événement '${event.name}' créé avec succès !\n📅 Date : ${event.date.toLocaleDateString()}\n🎟️ Places : ${event.totalCapacity}\n💰 Prix : ${event.price} FCFA`;
         await this.whatsAppService.sendMessage(senderPhoneNumber, message);
     } catch (e) {
         await this.whatsAppService.sendMessage(senderPhoneNumber, `❌ Erreur lors de la création: ${e.message}`);

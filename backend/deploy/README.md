@@ -1,6 +1,6 @@
-# 🚀 Guide de Déploiement - EventPilot
+# 🚀 Guide de Déploiement - SikaFlow
 
-Ce dossier contient les configurations prêtes à l'emploi pour déployer **EventPilot** en production.
+Ce dossier contient les configurations prêtes à l'emploi pour déployer **SikaFlow** en production.
 
 ## 📂 Contenu
 
@@ -71,3 +71,4 @@ Pour exposer votre API (port 3000) en HTTPS sans ouvrir de ports sur le pare-feu
 4.  Dans l'interface Cloudflare, pointez le tunnel vers le service Docker :
     - Service : `HTTP`
     - URL : `app:3000` (le nom du container dans le réseau Docker)
+

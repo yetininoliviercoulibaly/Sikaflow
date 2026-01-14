@@ -1,8 +1,8 @@
-# Architecture Technique Globale - EventPilot
+# Architecture Technique Globale - SikaFlow
 
 ## Vue d'Ensemble
 
-EventPilot est une application construite sur **NestJS** suivant une **Architecture Hexagonale (Ports & Adapters)** stricte. Elle utilise une approche événementielle asynchrone pour le traitement des messages WhatsApp.
+SikaFlow est une application construite sur **NestJS** suivant une **Architecture Hexagonale (Ports & Adapters)** stricte. Elle utilise une approche événementielle asynchrone pour le traitement des messages WhatsApp.
 
 ## Modules Fonctionnels
 
@@ -256,3 +256,4 @@ Module d'authentification pour le futur Dashboard Web :
 
 - `POST /auth/magic-link` : Demande de lien de connexion
 - `GET /auth/verify?token=...` : Validation et génération JWT
+

@@ -1,8 +1,8 @@
-# 🚀 EventPilot (MVP)
+# 🚀 SikaFlow (MVP)
 
 **The AI-Powered Orchestration OS for Modern Event Management**
 
-EventPilot est une plateforme "WhatsApp-First" conçue pour digitaliser la gestion opérationnelle et financière des événements. Elle utilise une **Intelligence Artificielle Multimodale (Gemini)** pour transformer conversations, images et documents en données structurées.
+SikaFlow est une plateforme "WhatsApp-First" conçue pour digitaliser la gestion opérationnelle et financière des événements. Elle utilise une **Intelligence Artificielle Multimodale (Gemini)** pour transformer conversations, images et documents en données structurées.
 
 ## 🌍 Vision & Dual Market
 
@@ -110,7 +110,7 @@ DB_HOST=localhost
 DB_PORT=5432
 DB_USER=postgres
 DB_PASSWORD=postgres
-DB_NAME=eventpilot
+DB_NAME=SikaFlow
 
 # REDIS
 REDIS_HOST=localhost
@@ -204,3 +204,4 @@ L'architecture **Hexagonale** doit être respectée :
 ---
 
 _Built with ❤️ by the Antigravity Team._
+

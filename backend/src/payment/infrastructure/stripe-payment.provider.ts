@@ -38,8 +38,8 @@ export class StripePaymentProvider implements IPaymentProvider {
           },
         ],
         mode: 'payment',
-        success_url: `${process.env.APP_URL || 'https://eventpilot.app'}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.APP_URL || 'https://eventpilot.app'}/payment/cancel`,
+        success_url: `${process.env.APP_URL || 'https://sikaflow.app'}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.APP_URL || 'https://sikaflow.app'}/payment/cancel`,
         metadata: metadata,
       });
 
@@ -100,8 +100,8 @@ export class StripePaymentProvider implements IPaymentProvider {
           },
         ],
         mode: 'subscription',
-        success_url: `${process.env.APP_URL || 'https://eventpilot.app'}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.APP_URL || 'https://eventpilot.app'}/payment/cancel`,
+        success_url: `${process.env.APP_URL || 'https://sikaflow.app'}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.APP_URL || 'https://sikaflow.app'}/payment/cancel`,
         metadata: metadata,
         subscription_data: {
             metadata: metadata // ensure metadata is on subscription object too

@@ -13,7 +13,7 @@ export class OnboardingStepSeeder extends Seeder {
         id: '11111111-1111-1111-1111-111111111111',
         stepId: OnboardingStepId.WELCOME,
         planId: null, // Base step
-        title: 'Bienvenue sur EventPilot',
+        title: 'Bienvenue sur SikaFlow',
         description: 'Découvrez comment gérer vos événements simplement.',
         tipMessage: 'Envoyez "Aide" pour voir les commandes disponibles.',
         completionMessage: 'Bienvenue à bord ! Passons à la suite.',
@@ -72,7 +72,7 @@ export class OnboardingStepSeeder extends Seeder {
         title: 'Activer un Abonnement',
         description: 'Passez au niveau supérieur (Illimité).',
         tipMessage: 'Tapez "Abonnement" pour voir nos offres.',
-        completionMessage: 'Merci pour votre confiance ! Profitez de EventPilot illimité.',
+        completionMessage: 'Merci pour votre confiance ! Profitez de SikaFlow illimité.',
         requiredRoles: ['OWNER'],
         order: 50,
         isActive: true,

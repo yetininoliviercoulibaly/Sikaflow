@@ -8,9 +8,10 @@ interface CardProps {
   className?: string;
   hoverable?: boolean;
   glass?: boolean;
+  onClick?: () => void;
 }
 
-export const Card = ({ children, className, hoverable, glass }: CardProps) => {
+const Card = ({ children, className, hoverable, glass, onClick }: CardProps) => {
   return (
     <div
       className={clsx(
@@ -19,8 +20,10 @@ export const Card = ({ children, className, hoverable, glass }: CardProps) => {
         glass && styles.glass,
         className
       )}
+      onClick={onClick}
     >
       {children}
     </div>
   );
 };
+export default Card;

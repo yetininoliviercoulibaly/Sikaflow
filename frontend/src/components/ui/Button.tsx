@@ -12,7 +12,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   startIcon?: React.ReactNode;
 }
 
-export const Button = ({
+const Button = ({
   children,
   className,
   variant = 'primary',
@@ -41,3 +41,4 @@ export const Button = ({
     </button>
   );
 };
+export default Button;

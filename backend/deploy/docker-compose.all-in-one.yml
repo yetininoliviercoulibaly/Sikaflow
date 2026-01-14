@@ -5,7 +5,7 @@ services:
   # 1. APPLICATION (NestJS)
   # ---------------------------------------------------------------------------
   app:
-    container_name: eventpilot_app
+    container_name: sikaflow_app
     build:
       context: ../
       dockerfile: Dockerfile
@@ -23,20 +23,20 @@ services:
       redis:
         condition: service_started
     networks:
-      - eventpilot_net
+      - sikaflow_net
 
   # ---------------------------------------------------------------------------
   # 2. DATABASE (PostgreSQL)
   # ---------------------------------------------------------------------------
   db:
-    container_name: eventpilot_db
+    container_name: sikaflow_db
     image: postgres:15-alpine
     restart: always
     env_file: .env.prod
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - eventpilot_net
+      - sikaflow_net
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -47,32 +47,32 @@ services:
   # 3. CACHE & QUEUE (Redis)
   # ---------------------------------------------------------------------------
   redis:
-    container_name: eventpilot_redis
+    container_name: sikaflow_redis
     image: redis:alpine
     restart: always
     command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
     networks:
-      - eventpilot_net
+      - sikaflow_net
 
   # ---------------------------------------------------------------------------
   # 4. SECURE TUNNEL (Cloudflare)
   # ---------------------------------------------------------------------------
   cloudflared:
-    container_name: eventpilot_tunnel
+    container_name: sikaflow_tunnel
     image: cloudflare/cloudflared:latest
     restart: always
     command: tunnel run
     environment:
       - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
     networks:
-      - eventpilot_net
+      - sikaflow_net
 
 volumes:
   postgres_data:
   redis_data:
 
 networks:
-  eventpilot_net:
+  sikaflow_net:
     driver: bridge

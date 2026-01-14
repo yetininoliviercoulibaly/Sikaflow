@@ -1,5 +1,5 @@
 
-import { Button } from "@/components/ui/Button"; // Example usage
+import Button from "@/components/ui/Button"; // Example usage
 
 export default function Home() {
   return (

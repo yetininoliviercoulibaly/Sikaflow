@@ -11,7 +11,7 @@ export class CreateEventUseCase {
     private readonly eventRepository: IEventRepository,
   ) {}
 
-  async execute(organizationId: string, name: string, dateStr: string, capacity: number, price: number): Promise<string> {
+  async execute(organizationId: string, name: string, dateStr: string, capacity: number, price: number): Promise<Event> {
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) {
         throw new Error('Invalid Date format');
@@ -31,6 +31,6 @@ export class CreateEventUseCase {
 
     await this.eventRepository.save(event);
     
-    return `✅ Événement '${name}' créé avec succès !\n📅 Date : ${date.toLocaleDateString()}\n🎟️ Places : ${capacity}\n💰 Prix : ${price} FCFA`;
+    return event;
   }
 }

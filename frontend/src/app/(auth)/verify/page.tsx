@@ -2,9 +2,9 @@
 
 import { Suspense, useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Spinner } from '@/components/ui/Spinner';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import Spinner from '@/components/ui/Spinner';
+import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
 import { authService } from '@/features/auth/services/auth.service';
 import styles from './VerifyPage.module.css';
 
