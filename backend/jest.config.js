@@ -11,4 +11,5 @@ module.exports = {
   moduleNameMapper: {
     '^uuid$': '<rootDir>/src/__mocks__/uuid.ts',
   },
+  testPathIgnorePatterns: ['<rootDir>/src/scripts/'],
 };
