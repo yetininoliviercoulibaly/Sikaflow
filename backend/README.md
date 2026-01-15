@@ -68,10 +68,21 @@ Consultez le [Diagramme d'Architecture détaillé](docs/architecture.md) pour pl
 
 ## 📁 Structure du Projet
 
+Chaque module suit l'**Architecture Hexagonale** stricte :
+
 ```
 src/
 ├── common/           # Services partagés (WhatsApp, LLM, Guards)
 ├── database/         # Migrations & Seeders
+├── [module]/
+│   ├── domain/           # Entités, Value Objects, Ports (Interfaces)
+│   ├── application/      # Use Cases, DTOs, Controllers
+│   │   ├── use-cases/    # Logique métier
+│   │   ├── dtos/         # Data Transfer Objects
+│   │   └── controllers/  # Controllers HTTP (REST API)
+│   └── infrastructure/   # Adapters (Persistence, Services externes)
+│       └── persistence/  # Schemas ORM, Repositories
+│
 ├── feedback/         # Module de feedback post-événement
 ├── incident/         # Gestion des incidents
 ├── onboarding/       # Agent d'onboarding interactif
@@ -80,7 +91,7 @@ src/
 ├── report/           # Génération de rapports PDF
 ├── subscription/     # Plans d'abonnement & Event Pass
 ├── ticketing/        # Événements, billets, claims
-├── auth/            # Authentification (Magic Link, JWT, Guards)
+├── auth/             # Authentification (Magic Link, JWT, Guards)
 ├── transaction/      # Enregistrement des transactions
 ├── user/             # Gestion des utilisateurs
 └── webhook/          # Webhook WhatsApp & handlers IA
@@ -204,4 +215,3 @@ L'architecture **Hexagonale** doit être respectée :
 ---
 
 _Built with ❤️ by the Antigravity Team._
-
