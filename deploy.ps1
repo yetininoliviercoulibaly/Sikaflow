@@ -1,61 +1,41 @@
 # ====================================================================
-# SikaFlow - Script de déploiement manuel
-# Usage: .\deploy.ps1 -env staging  OU  .\deploy.ps1 -env production
+# SikaFlow - Script de déploiement (Final v3)
 # ====================================================================
 
 param(
     [Parameter(Mandatory=$true)]
     [ValidateSet("staging", "production")]
-    [string]$env
+    [string]$TargetEnv
 )
 
-# Configuration
 $VPS_USER = Read-Host "Nom d'utilisateur VPS (ex: ubuntu)"
 $VPS_IP = Read-Host "Adresse IP du VPS"
+$UserHost = "${VPS_USER}@${VPS_IP}"
 
-Write-Host "`n🚀 Déploiement de SikaFlow en environnement: $env" -ForegroundColor Cyan
+Write-Host "`n🚀 Deploiement sur $TargetEnv ($VPS_IP)" -ForegroundColor Cyan
+Write-Host "NOTE: Assurez-vous que le build GitHub Actions est termine !" -ForegroundColor Yellow
 
-# Étape 1 : Copier les fichiers docker-compose vers le VPS
-Write-Host "`n📦 Copie des fichiers docker-compose..." -ForegroundColor Yellow
-if ($env -eq "staging") {
-    scp docker-compose.staging.yml "${VPS_USER}@${VPS_IP}:~/sikaflow/"
+if ($TargetEnv -eq "staging") {
+    $ComposeFile = "docker-compose.staging.yml"
 } else {
-    scp docker-compose.prod.yml "${VPS_USER}@${VPS_IP}:~/sikaflow/"
+    $ComposeFile = "docker-compose.prod.yml"
 }
 
-# Étape 2 : Connexion SSH et déploiement
-Write-Host "`n🔄 Connexion au VPS et déploiement..." -ForegroundColor Yellow
+# 1. Copie des fichiers
+Write-Host "`n1️⃣  [Mot de passe requis] Copie des fichiers..." -ForegroundColor Cyan
+scp deploy.sh $ComposeFile "${UserHost}:~/"
 
-$deployScript = @"
-cd ~/sikaflow
-echo "GITHUB_REPOSITORY_OWNER=$env:GITHUB_REPOSITORY_OWNER" > .env.deploy
-cat .env >> .env.deploy
-mv .env.deploy .env
+if ($LASTEXITCODE -ne 0) { Write-Error "Echec copie SCP."; exit 1 }
 
-# Login to GHCR
-echo 'Connexion à GitHub Container Registry...'
-docker login ghcr.io
+# 2. Execution (Commande unique sur une seule ligne)
+Write-Host "`n2️⃣  [Mot de passe requis] Lancement..." -ForegroundColor Cyan
 
-# Pull et démarrage des conteneurs
-if [ "$env" = "staging" ]; then
-    echo '📥 Téléchargement des images staging...'
-    docker compose -f docker-compose.staging.yml pull
-    echo '🚀 Démarrage des conteneurs staging...'
-    docker compose -f docker-compose.staging.yml up -d --remove-orphans
-else
-    echo '📥 Téléchargement des images production...'
-    docker compose -f docker-compose.prod.yml pull
-    echo '🚀 Démarrage des conteneurs production...'
-    docker compose -f docker-compose.prod.yml up -d --remove-orphans
-fi
+# Astuce: On chaine tout avec '&&' sur une seule ligne PowerShell pour eviter les problemes CRLF
+ssh $UserHost "mkdir -p ~/sikaflow && mv ~/$ComposeFile ~/sikaflow/ && tr -d '\r' < ~/deploy.sh > ~/sikaflow/deploy.sh && rm ~/deploy.sh && chmod +x ~/sikaflow/deploy.sh && ~/sikaflow/deploy.sh $TargetEnv"
 
-# Nettoyage
-docker image prune -f
+if ($LASTEXITCODE -ne 0) { 
+    Write-Error "Echec du deploiement distant."
+    exit 1 
+}
 
-echo '✅ Déploiement terminé !'
-"@
-
-ssh "${VPS_USER}@${VPS_IP}" $deployScript
-
-Write-Host "`n✅ Déploiement terminé avec succès !" -ForegroundColor Green
-Write-Host "🔗 Vérifiez vos services sur votre domaine Cloudflare" -ForegroundColor Cyan
+Write-Host "`n✅ SUCCES ! Deploiement termine." -ForegroundColor Green
