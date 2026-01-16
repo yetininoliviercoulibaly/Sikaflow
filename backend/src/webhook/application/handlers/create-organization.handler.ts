@@ -2,14 +2,12 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IActionHandler, ActionContext } from './action-handler.interface';
-import { WhatsAppService } from '../../../common/whatsapp/whatsapp.service';
 import { CreateOrganizationUseCase } from '../../../organization/application/use-cases/create-organization.use-case';
 
 @Injectable()
 export class CreateOrganizationHandler implements IActionHandler {
     constructor(
         private readonly createOrganizationUseCase: CreateOrganizationUseCase,
-        private readonly whatsAppService: WhatsAppService,
         private readonly configService: ConfigService,
     ) {}
 
@@ -18,11 +16,11 @@ export class CreateOrganizationHandler implements IActionHandler {
     }
 
     async handle(data: any, context: ActionContext): Promise<void> {
-        const { senderPhoneNumber } = context;
+        const { senderPhoneNumber, messagingService } = context;
         const orgName = data.name;
 
         if (!orgName) {
-            await this.whatsAppService.sendMessage(senderPhoneNumber, "Quel est le nom de votre établissement ? (ex: 'Créer le club Miami')");
+            await messagingService.sendMessage(senderPhoneNumber, "Quel est le nom de votre établissement ? (ex: 'Créer le club Miami')");
             return;
         }
 
@@ -33,12 +31,12 @@ export class CreateOrganizationHandler implements IActionHandler {
             });
 
             const countryCode = this.configService.get<string>('DEFAULT_COUNTRY_CODE') || '+225';
-            await this.whatsAppService.sendMessage(
+            await messagingService.sendMessage(
                 senderPhoneNumber,
                 `✅ Félicitiations ! Votre organisation *${orgName}* a été créée.\n\nVous êtes maintenant l'Administrateur (Owner).\n\n🚀 Prochaines étapes :\n1. Ajoutez votre équipe : "Ajoute ${countryCode}... comme Manager"\n2. Activez votre accès : "Abonnement"`
             );
         } catch (error) {
-            await this.whatsAppService.sendMessage(senderPhoneNumber, "❌ Une erreur est survenue lors de la création de l'organisation.");
+            await messagingService.sendMessage(senderPhoneNumber, "❌ Une erreur est survenue lors de la création de l'organisation.");
             console.error(error);
         }
     }

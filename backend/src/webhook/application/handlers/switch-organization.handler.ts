@@ -1,9 +1,9 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { IActionHandler, ActionContext, ACTION_HANDLER_TOKEN } from './action-handler.interface';
+import { IActionHandler, ActionContext } from './action-handler.interface';
 import { SwitchOrganizationUseCase } from '../../../organization/application/use-cases/switch-organization.use-case';
-import { WhatsAppService } from '../../../common/whatsapp/whatsapp.service';
 import { IOrganizationRepository, I_ORGANIZATION_REPOSITORY } from '../../../organization/domain/ports/organization.repository.interface';
 import { IUserRepository, I_USER_REPOSITORY } from '../../../user/domain/ports/user.repository.interface';
+import { IMessagingService } from '../../../common/messaging/messaging.service.interface';
 
 @Injectable()
 export class SwitchOrganizationHandler implements IActionHandler {
@@ -11,7 +11,6 @@ export class SwitchOrganizationHandler implements IActionHandler {
 
   constructor(
       private readonly switchOrganizationUseCase: SwitchOrganizationUseCase,
-      private readonly whatsAppService: WhatsAppService,
       @Inject(I_ORGANIZATION_REPOSITORY) private readonly organizationRepository: IOrganizationRepository,
       @Inject(I_USER_REPOSITORY) private readonly userRepository: IUserRepository,
   ) {}
@@ -21,7 +20,7 @@ export class SwitchOrganizationHandler implements IActionHandler {
   }
 
   async handle(data: Record<string, any>, context: ActionContext): Promise<void> {
-    const { senderPhoneNumber, missingFields } = context;
+    const { senderPhoneNumber, missingFields, messagingService } = context;
     const organizationName = data.organization_name;
     const targetOrganizationId = data.targetOrganizationId;
 
@@ -35,8 +34,7 @@ export class SwitchOrganizationHandler implements IActionHandler {
             targetOrganizationId: targetOrganizationId
         });
 
-        await this.whatsAppService.sendMessage(senderPhoneNumber, result.message);
-        // Note: No fallback list needed here because the ID came from a valid list.
+        await messagingService.sendMessage(senderPhoneNumber, result.message);
         return;
     }
 
@@ -47,33 +45,33 @@ export class SwitchOrganizationHandler implements IActionHandler {
             targetOrganizationName: organizationName
         });
 
-        await this.whatsAppService.sendMessage(senderPhoneNumber, result.message);
+        await messagingService.sendMessage(senderPhoneNumber, result.message);
 
         if (!result.success) {
-             await this.sendOrganizationList(senderPhoneNumber, user.id);
+             await this.sendOrganizationList(senderPhoneNumber, user.id, messagingService);
         }
         return;
     }
 
     // 3. No Name/ID provided -> Show List
-    await this.sendOrganizationList(senderPhoneNumber, user.id);
+    await this.sendOrganizationList(senderPhoneNumber, user.id, messagingService);
   }
 
-  private async sendOrganizationList(phoneNumber: string, userId: string): Promise<void> {
+  private async sendOrganizationList(phoneNumber: string, userId: string, messagingService: IMessagingService): Promise<void> {
       const orgs = await this.organizationRepository.findOrganizationsForUser(userId);
       
       if (orgs.length === 0) {
-          await this.whatsAppService.sendMessage(phoneNumber, "Vous n'êtes membre d'aucune organisation.");
+          await messagingService.sendMessage(phoneNumber, "Vous n'êtes membre d'aucune organisation.");
           return;
       }
 
       const rows = orgs.map(org => ({
           id: `SWITCH_ORG_ID_${org.id}`,
-          title: org.name.substring(0, 24), // Max 24 chars for title
+          title: org.name.substring(0, 24),
           description: "Sélectionner"
       }));
 
-      await this.whatsAppService.sendInteractiveList(
+      await messagingService.sendInteractiveList(
           phoneNumber,
           "Changer d'organisation",
           "Veuillez choisir votre contexte actif :",

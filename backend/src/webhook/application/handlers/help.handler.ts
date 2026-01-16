@@ -2,7 +2,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IActionHandler, ActionContext } from './action-handler.interface';
-import { WhatsAppService } from '../../../common/whatsapp/whatsapp.service';
 import { IUserRepository, I_USER_REPOSITORY } from '../../../user/domain/ports/user.repository.interface';
 import { IOrganizationRepository, I_ORGANIZATION_REPOSITORY } from '../../../organization/domain/ports/organization.repository.interface';
 import { UserRole } from '../../../organization/domain/organization-member.entity';
@@ -10,7 +9,6 @@ import { UserRole } from '../../../organization/domain/organization-member.entit
 @Injectable()
 export class HelpHandler implements IActionHandler {
     constructor(
-        private readonly whatsAppService: WhatsAppService,
         @Inject(I_USER_REPOSITORY) private readonly userRepository: IUserRepository,
         @Inject(I_ORGANIZATION_REPOSITORY) private readonly organizationRepository: IOrganizationRepository,
         private readonly configService: ConfigService,
@@ -21,7 +19,7 @@ export class HelpHandler implements IActionHandler {
     }
 
     async handle(data: any, context: ActionContext): Promise<void> {
-        const { senderPhoneNumber, organizationId } = context;
+        const { senderPhoneNumber, organizationId, messagingService } = context;
 
         const user = await this.userRepository.findByPhoneNumber(senderPhoneNumber);
         
@@ -62,6 +60,6 @@ export class HelpHandler implements IActionHandler {
             }
         }
 
-        await this.whatsAppService.sendMessage(senderPhoneNumber, message);
+        await messagingService.sendMessage(senderPhoneNumber, message);
     }
 }

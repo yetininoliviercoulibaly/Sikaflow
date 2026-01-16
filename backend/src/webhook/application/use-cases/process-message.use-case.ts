@@ -1,26 +1,20 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { WhatsAppPayloadDto } from '../dtos/whatsapp-payload.dto';
 import { IMessageStrategy, MESSAGE_STRATEGY_TOKEN } from '../strategies/message-strategy.interface';
-import { IActionHandler, ACTION_HANDLER_TOKEN } from '../handlers/action-handler.interface';
-import { WhatsAppService } from '../../../common/whatsapp/whatsapp.service';
-import { CheckSubscriptionUseCase } from '../../../subscription/application/use-cases/check-subscription.use-case';
 import { IUserRepository, I_USER_REPOSITORY } from '../../../user/domain/ports/user.repository.interface';
+import { WhatsAppMessagingAdapter } from '../../../common/messaging/whatsapp-messaging.adapter';
+import { ActionExecutionService } from '../services/action-execution.service';
 
 @Injectable()
 export class ProcessMessageUseCase {
   private readonly logger = new Logger(ProcessMessageUseCase.name);
 
-  // Intents that bypass subscription check (allow users to activate pass)
-  private readonly BYPASS_INTENTS = ['ACTIVATE_EVENT_PASS', 'UNKNOWN', 'GREETING', 'CREATE_ORGANIZATION', 'HELP'];
-
   constructor(
     @Inject(MESSAGE_STRATEGY_TOKEN)
     private readonly strategies: IMessageStrategy[],
-    @Inject(ACTION_HANDLER_TOKEN)
-    private readonly actionHandlers: IActionHandler[],
-    private readonly whatsAppService: WhatsAppService,
-    private readonly checkSubscriptionUseCase: CheckSubscriptionUseCase,
+    private readonly whatsAppMessagingAdapter: WhatsAppMessagingAdapter,
     @Inject(I_USER_REPOSITORY) private readonly userRepository: IUserRepository,
+    private readonly actionExecutionService: ActionExecutionService,
   ) {}
 
   async execute(payload: WhatsAppPayloadDto): Promise<void> {
@@ -57,7 +51,7 @@ export class ProcessMessageUseCase {
         if (message.type === 'text' && message.text?.body?.startsWith('CLAIM-')) {
              analysis = {
                  intent: 'CLAIM_TICKET',
-                 data: { token: message.text.body }, // We don't parse it fully here, usage in handler
+                 data: { token: message.text.body },
                  actions: [{ intent: 'CLAIM_TICKET', data: { raw_message: message.text.body } }]
              };
         } else {
@@ -75,50 +69,20 @@ export class ProcessMessageUseCase {
         // 3. Normalize Actions
         const actions = analysis.actions || (analysis.intent ? [{ intent: analysis.intent, data: analysis.data }] : []);
 
-        // US.13: Pre-check subscription status (before handlers)
+        // 4. Fetch User
         const user = await this.userRepository.findByPhoneNumber(from);
-        const organizationId = user?.lastActiveOrganizationId;
 
-        for (const action of actions) {
-            // Skip subscription check for bypass intents
-            if (!this.BYPASS_INTENTS.includes(action.intent) && organizationId) {
-                const access = await this.checkSubscriptionUseCase.execute({ organizationId });
-                if (!access.hasAccess) {
-                    await this.whatsAppService.sendMessage(
-                        from,
-                        "⛔ Accès expiré. Activez un Pass Événement (48h) ou un Abonnement pour continuer.\n\n👉 Envoyez \"Activer pass\" pour débloquer l'accès."
-                    );
-                    continue; // Skip this action
-                }
-            }
+        // 5. Execute Actions via Service
+        await this.actionExecutionService.execute({
+            actions,
+            messagingService: this.whatsAppMessagingAdapter,
+            user,
+            senderPhoneNumber: from,
+            messageId,
+            messageBody: message.type === 'text' && message.text ? message.text.body : undefined,
+            platform: 'whatsapp'
+        });
 
-            // Check for Missing Fields
-            if (action.missing_fields && action.missing_fields.length > 0) {
-                 await this.whatsAppService.sendMessage(from, `Il manque des informations : ${action.missing_fields.join(', ')}. Pouvez-vous préciser ?`);
-                 continue; 
-            }
-
-            // Handle Context Switch
-            if (action.organization_name) {
-                 this.logger.log(`Context switch requested to: ${action.organization_name}`);
-            }
-
-            // 4. Delegate to Action Handler
-            const handler = this.actionHandlers.find(h => h.canHandle(action.intent));
-            if (handler) {
-                await handler.handle(action.data, {
-                    senderPhoneNumber: from,
-                    organizationId: organizationId || null,
-                    messageId: messageId,
-                    messageBody: message.type === 'text' && message.text ? message.text.body : undefined,
-                    missingFields: action.missing_fields,
-                    language: user?.preferredLanguage || 'fr',
-                    user: user, // Pass pre-fetched user to avoid duplicate DB lookups
-                });
-            } else {
-                this.logger.warn(`No handler found for intent: ${action.intent}`);
-            }
-        }
       } catch (error) {
         this.logger.error(`Error processing message ${messageId} from ${from}`, error);
       }

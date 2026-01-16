@@ -1,7 +1,9 @@
 
 import { Module } from '@nestjs/common';
 import { WhatsAppController } from './application/controllers/whatsapp.controller';
+import { TelegramController } from './application/controllers/telegram.controller';
 import { ProcessMessageUseCase } from './application/use-cases/process-message.use-case';
+import { ProcessTelegramMessageUseCase } from './application/use-cases/process-telegram-message.use-case';
 import { TextMessageStrategy } from './application/strategies/text-message.strategy';
 import { OrganizationModule } from '../organization/organization.module';
 import { UserModule } from '../user/user.module';
@@ -11,8 +13,11 @@ import { GeminiLLMProvider } from '../common/llm/gemini-llm.provider';
 import { PromptModule } from '../common/prompt/prompt.module';
 import { BullModule } from '@nestjs/bullmq';
 import { MessageProcessor } from './application/processors/message.processor';
+import { TelegramMessageProcessor } from './application/processors/telegram-message.processor';
 import { ReportModule } from '../report/report.module'; 
 import { WhatsAppModule } from '../common/whatsapp/whatsapp.module';
+import { TelegramModule } from '../common/telegram/telegram.module';
+import { MessagingModule } from '../common/messaging/messaging.module';
 import { LlmModule } from '../common/llm/llm.module';
 import { SubscriptionModule } from '../subscription/subscription.module';
 import { TicketingModule } from '../ticketing/ticketing.module'; 
@@ -40,6 +45,7 @@ import { NotImplementedHandler } from './application/handlers/not-implemented.ha
 import { GenerateReportHandler } from './application/handlers/generate-report.handler';
 import { ActivateEventPassHandler } from './application/handlers/activate-event-pass.handler';
 import { SubscribeHandler } from './application/handlers/subscribe.handler';
+import { SubscribeMonthlyHandler } from './application/handlers/subscribe-monthly.handler';
 import { ACTION_HANDLER_TOKEN } from './application/handlers/action-handler.interface';
 import { GreetingHandler } from './application/handlers/greeting.handler';
 import { CreateOrganizationHandler } from './application/handlers/create-organization.handler';
@@ -47,11 +53,15 @@ import { AddMemberHandler } from './application/handlers/add-member.handler';
 import { HelpHandler } from './application/handlers/help.handler';
 import { OnboardingHandler } from './application/handlers/onboarding.handler';
 import { FeatureGuard } from '../common/guards/feature.guard';
+import { UnknownIntentHandler } from './application/handlers/unknown-intent.handler';
 
 @Module({
   imports: [
     BullModule.registerQueue({
         name: 'whatsapp',
+    }),
+    BullModule.registerQueue({
+        name: 'telegram',
     }),
     UserModule,
     OrganizationModule, 
@@ -59,6 +69,8 @@ import { FeatureGuard } from '../common/guards/feature.guard';
     PromptModule,
     ReportModule,
     WhatsAppModule,
+    TelegramModule,
+    MessagingModule,
     SubscriptionModule,
     TicketingModule,
     LlmModule,
@@ -66,10 +78,12 @@ import { FeatureGuard } from '../common/guards/feature.guard';
     FeedbackModule,
     OnboardingModule,
   ],
-  controllers: [WhatsAppController],
+  controllers: [WhatsAppController, TelegramController],
   providers: [
     ProcessMessageUseCase,
+    ProcessTelegramMessageUseCase,
     MessageProcessor,
+    TelegramMessageProcessor,
     TextMessageStrategy,
     AudioMessageStrategy,
     ImageMessageStrategy,
@@ -104,6 +118,7 @@ import { FeatureGuard } from '../common/guards/feature.guard';
     GenerateClaimHandler,
     ClaimTicketHandler,
     OnboardingHandler,
+    UnknownIntentHandler,
     FeatureGuard,
     {
         provide: ACTION_HANDLER_TOKEN,
@@ -125,7 +140,8 @@ import { FeatureGuard } from '../common/guards/feature.guard';
             claimTicket,
             checkStock,
             feedbackHandler,
-            onboardingHandler
+            onboardingHandler,
+            unknownIntentHandler
         ) => [
             createTransaction, 
             askData, 
@@ -144,7 +160,8 @@ import { FeatureGuard } from '../common/guards/feature.guard';
             claimTicket,
             checkStock,
             feedbackHandler,
-            onboardingHandler
+            onboardingHandler,
+            unknownIntentHandler
         ],
         inject: [
             CreateTransactionHandler, 
@@ -164,7 +181,8 @@ import { FeatureGuard } from '../common/guards/feature.guard';
             ClaimTicketHandler,
             CheckStockHandler,
             FeedbackHandler,
-            OnboardingHandler
+            OnboardingHandler,
+            UnknownIntentHandler
         ]
     }
   ],

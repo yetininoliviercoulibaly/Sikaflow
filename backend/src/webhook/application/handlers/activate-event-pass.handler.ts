@@ -1,7 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { IActionHandler, ActionContext } from './action-handler.interface';
 import { ActivateEventPassUseCase } from '../../../subscription/application/use-cases/activate-event-pass.use-case';
-import { WhatsAppService } from '../../../common/whatsapp/whatsapp.service';
 import { IUserRepository, I_USER_REPOSITORY } from '../../../user/domain/ports/user.repository.interface';
 
 @Injectable()
@@ -10,7 +9,6 @@ export class ActivateEventPassHandler implements IActionHandler {
 
   constructor(
     private readonly activateEventPassUseCase: ActivateEventPassUseCase,
-    private readonly whatsAppService: WhatsAppService,
     @Inject(I_USER_REPOSITORY) private readonly userRepository: IUserRepository,
   ) {}
 
@@ -19,12 +17,12 @@ export class ActivateEventPassHandler implements IActionHandler {
   }
 
   async handle(data: any, context: ActionContext): Promise<void> {
-    const { senderPhoneNumber } = context;
+    const { senderPhoneNumber, messagingService } = context;
 
     // Resolve user and organization
     const user = await this.userRepository.findByPhoneNumber(senderPhoneNumber);
     if (!user || !user.lastActiveOrganizationId) {
-      await this.whatsAppService.sendMessage(
+      await messagingService.sendMessage(
         senderPhoneNumber,
         "❌ Veuillez d'abord sélectionner une organisation.",
       );
@@ -39,6 +37,6 @@ export class ActivateEventPassHandler implements IActionHandler {
       paymentReference,
     });
 
-    await this.whatsAppService.sendMessage(senderPhoneNumber, result.message);
+    await messagingService.sendMessage(senderPhoneNumber, result.message);
   }
 }

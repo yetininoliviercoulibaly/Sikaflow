@@ -2,14 +2,12 @@
 import { Injectable } from '@nestjs/common';
 import { IActionHandler, ActionContext } from './action-handler.interface';
 import { SubscribeUseCase } from '../../../subscription/application/use-cases/subscribe.use-case';
-import { WhatsAppService } from '../../../common/whatsapp/whatsapp.service';
 import { SubscriptionPlan } from '../../../subscription/domain/subscription-plan.entity';
 
 @Injectable()
 export class SubscribeHandler implements IActionHandler {
   constructor(
     private readonly subscribeUseCase: SubscribeUseCase,
-    private readonly whatsAppService: WhatsAppService,
   ) {}
 
   canHandle(intent: string): boolean {
@@ -17,10 +15,10 @@ export class SubscribeHandler implements IActionHandler {
   }
 
   async handle(data: any, context: ActionContext): Promise<void> {
-    const { senderPhoneNumber, organizationId } = context;
+    const { senderPhoneNumber, organizationId, messagingService } = context;
 
     if (!organizationId) {
-       await this.whatsAppService.sendMessage(senderPhoneNumber, '❌ Veuillez d\'abord sélectionner une organisation.');
+       await messagingService.sendMessage(senderPhoneNumber, '❌ Veuillez d\'abord sélectionner une organisation.');
        return;
     }
 
@@ -32,7 +30,7 @@ export class SubscribeHandler implements IActionHandler {
         const plans = await this.subscribeUseCase.getPlansData(providerArg);
         
         if (plans.length === 0) {
-             await this.whatsAppService.sendMessage(senderPhoneNumber, `❌ Désolé, le paiement via ${providerArg} n'est pas disponible pour le moment.`);
+             await messagingService.sendMessage(senderPhoneNumber, `❌ Désolé, le paiement via ${providerArg} n'est pas disponible pour le moment.`);
              return;
         }
 
@@ -55,9 +53,9 @@ export class SubscribeHandler implements IActionHandler {
             // DIRECT EXECUTION
              try {
                 const { paymentLink } = await this.subscribeUseCase.execute(selectedPlan.id, organizationId);
-                await this.whatsAppService.sendMessage(senderPhoneNumber, `💎 *Abonnement ${selectedPlan.name}*\n\nCliquez pour payer (${selectedPlan.price} ${selectedPlan.currency}) :\n${paymentLink}`);
+                await messagingService.sendMessage(senderPhoneNumber, `💎 *Abonnement ${selectedPlan.name}*\n\nCliquez pour payer (${selectedPlan.price} ${selectedPlan.currency}) :\n${paymentLink}`);
             } catch (e) {
-                await this.whatsAppService.sendMessage(senderPhoneNumber, "❌ Erreur lors de la création du lien.");
+                await messagingService.sendMessage(senderPhoneNumber, "❌ Erreur lors de la création du lien.");
             }
             return;
         } else {
@@ -67,7 +65,7 @@ export class SubscribeHandler implements IActionHandler {
                  msg += `${index + 1}. *${p.name}* : ${p.price} ${p.currency} / ${p.durationMonths} mois\n`;
              });
              msg += `\nRépondez avec le numéro ou "3 mois".`;
-             await this.whatsAppService.sendMessage(senderPhoneNumber, msg);
+             await messagingService.sendMessage(senderPhoneNumber, msg);
              return;
         }
     }
@@ -81,6 +79,6 @@ export class SubscribeHandler implements IActionHandler {
     });
     msg += `\nExemple : "Abonnement Wave" ou "Abonnement 3 mois Wave"`;
     
-    await this.whatsAppService.sendMessage(senderPhoneNumber, msg);
+    await messagingService.sendMessage(senderPhoneNumber, msg);
   }
 }
