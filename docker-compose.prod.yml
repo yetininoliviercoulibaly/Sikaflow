@@ -81,6 +81,10 @@ services:
       WAVE_API_KEY: ${WAVE_API_KEY}
       GOOGLE_API_KEY: ${GOOGLE_API_KEY}
       GEMINI_MODEL_NAME: ${GEMINI_MODEL_NAME:-gemini-1.5-flash}
+      # Telegram
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET}
+      TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME}
     depends_on:
       db:
         condition: service_healthy
