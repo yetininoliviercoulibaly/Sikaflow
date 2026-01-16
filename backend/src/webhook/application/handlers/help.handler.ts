@@ -5,6 +5,7 @@ import { IActionHandler, ActionContext } from './action-handler.interface';
 import { IUserRepository, I_USER_REPOSITORY } from '../../../user/domain/ports/user.repository.interface';
 import { IOrganizationRepository, I_ORGANIZATION_REPOSITORY } from '../../../organization/domain/ports/organization.repository.interface';
 import { UserRole } from '../../../organization/domain/organization-member.entity';
+import { LLMIntent } from '../../../common/llm/llm-types';
 
 @Injectable()
 export class HelpHandler implements IActionHandler {
@@ -15,7 +16,7 @@ export class HelpHandler implements IActionHandler {
     ) {}
 
     canHandle(intent: string): boolean {
-        return intent === 'HELP';
+        return intent === LLMIntent.HELP;
     }
 
     async handle(data: any, context: ActionContext): Promise<void> {

@@ -2,6 +2,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { IActionHandler, ActionContext } from './action-handler.interface';
 import { ClaimTicketUseCase } from '../../../ticketing/application/use-cases/claim-ticket.use-case';
+import { LLMIntent } from '../../../common/llm/llm-types';
 
 @Injectable()
 export class ClaimTicketHandler implements IActionHandler {
@@ -12,7 +13,7 @@ export class ClaimTicketHandler implements IActionHandler {
   ) {}
 
   canHandle(intent: string): boolean {
-    return intent === 'CLAIM_TICKET_REGEX';
+    return intent === LLMIntent.CLAIM_TICKET_REGEX;
   }
 
   async handle(data: any, context: ActionContext): Promise<void> {

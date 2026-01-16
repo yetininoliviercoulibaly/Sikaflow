@@ -4,6 +4,8 @@ import { ACTION_HANDLER_TOKEN, IActionHandler } from '../../application/handlers
 import { CheckSubscriptionUseCase } from '../../../subscription/application/use-cases/check-subscription.use-case';
 import { IMessagingService } from '../../../common/messaging/messaging.service.interface';
 import { User } from '../../../user/domain/user.entity';
+import { MessagingPlatforms } from '../../../common/messaging/domain/constants/messaging-platforms.enum';
+import { LLMIntent } from '../../../common/llm/llm-types';
 
 describe('ActionExecutionService', () => {
   let service: ActionExecutionService;
@@ -58,7 +60,7 @@ describe('ActionExecutionService', () => {
         senderPhoneNumber: '+123',
         messageId: 'msg1',
         messageBody: 'test',
-        platform: 'whatsapp'
+        platform: MessagingPlatforms.WHATSAPP
     };
 
     mockCheckSubscriptionUseCase.execute.mockResolvedValue({ hasAccess: true, planName: 'Test' } as any);
@@ -77,7 +79,7 @@ describe('ActionExecutionService', () => {
         user: { lastActiveOrganizationId: 'org1' } as User,
         senderPhoneNumber: '+123',
         messageId: 'msg1',
-        platform: 'whatsapp'
+        platform: MessagingPlatforms.WHATSAPP
     };
 
     mockCheckSubscriptionUseCase.execute.mockResolvedValue({ hasAccess: false, planName: 'Test' } as any);
@@ -90,12 +92,12 @@ describe('ActionExecutionService', () => {
 
   it('should bypass subscription check for specific intents', async () => {
     const params: ActionExecutionParams = {
-        actions: [{ intent: 'GREETING' }],
+        actions: [{ intent: LLMIntent.GREETING }],
         messagingService: mockMessagingService,
         user: { lastActiveOrganizationId: 'org1' } as User, // Even with org, it should skip check
         senderPhoneNumber: '+123',
         messageId: 'msg1',
-        platform: 'whatsapp'
+        platform: MessagingPlatforms.WHATSAPP
     };
 
     mockHandler.canHandle.mockReturnValue(true);
@@ -113,7 +115,7 @@ describe('ActionExecutionService', () => {
         user: null,
         senderPhoneNumber: '+123',
         messageId: 'msg1',
-        platform: 'telegram'
+        platform: MessagingPlatforms.TELEGRAM
     };
 
     await service.execute(params);
@@ -124,19 +126,19 @@ describe('ActionExecutionService', () => {
 
   it('should find and execute handler for UNKNOWN intent', async () => {
     const params: ActionExecutionParams = {
-        actions: [{ intent: 'UNKNOWN' }],
+        actions: [{ intent: LLMIntent.UNKNOWN }],
         messagingService: mockMessagingService,
         user: { lastActiveOrganizationId: 'org1' } as User,
         senderPhoneNumber: '+123',
         messageId: 'msg1',
-        platform: 'whatsapp'
+        platform: MessagingPlatforms.WHATSAPP
     };
 
-    mockHandler.canHandle.mockImplementation((intent) => intent === 'UNKNOWN');
+    mockHandler.canHandle.mockImplementation((intent) => intent === LLMIntent.UNKNOWN);
 
     await service.execute(params);
 
-    expect(mockHandler.canHandle).toHaveBeenCalledWith('UNKNOWN');
+    expect(mockHandler.canHandle).toHaveBeenCalledWith(LLMIntent.UNKNOWN);
     expect(mockHandler.handle).toHaveBeenCalled();
   });
 });

@@ -4,6 +4,7 @@ import { SwitchOrganizationUseCase } from '../../../organization/application/use
 import { IOrganizationRepository, I_ORGANIZATION_REPOSITORY } from '../../../organization/domain/ports/organization.repository.interface';
 import { IUserRepository, I_USER_REPOSITORY } from '../../../user/domain/ports/user.repository.interface';
 import { IMessagingService } from '../../../common/messaging/messaging.service.interface';
+import { LLMIntent } from '../../../common/llm/llm-types';
 
 @Injectable()
 export class SwitchOrganizationHandler implements IActionHandler {
@@ -16,7 +17,7 @@ export class SwitchOrganizationHandler implements IActionHandler {
   ) {}
 
   canHandle(intent: string): boolean {
-    return intent === 'SWITCH_ORGANIZATION';
+    return intent === LLMIntent.SWITCH_ORGANIZATION;
   }
 
   async handle(data: Record<string, any>, context: ActionContext): Promise<void> {

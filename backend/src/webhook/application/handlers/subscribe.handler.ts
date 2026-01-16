@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { IActionHandler, ActionContext } from './action-handler.interface';
 import { SubscribeUseCase } from '../../../subscription/application/use-cases/subscribe.use-case';
 import { SubscriptionPlan } from '../../../subscription/domain/subscription-plan.entity';
+import { LLMIntent } from '../../../common/llm/llm-types';
 
 @Injectable()
 export class SubscribeHandler implements IActionHandler {
@@ -11,7 +12,7 @@ export class SubscribeHandler implements IActionHandler {
   ) {}
 
   canHandle(intent: string): boolean {
-    return intent === 'SUBSCRIBE';
+    return intent === LLMIntent.SUBSCRIBE;
   }
 
   async handle(data: any, context: ActionContext): Promise<void> {

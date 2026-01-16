@@ -7,6 +7,7 @@ import { StartOnboardingUseCase } from '../../../onboarding/application/use-case
 import { GetNextStepUseCase } from '../../../onboarding/application/use-cases/get-next-step.use-case';
 import { FeatureGuard } from '../../../common/guards/feature.guard';
 import { FeatureFlag } from '../../../subscription/domain/feature-flag.enum';
+import { LLMIntent } from '../../../common/llm/llm-types';
 
 @Injectable()
 export class GreetingHandler implements IActionHandler {
@@ -21,7 +22,7 @@ export class GreetingHandler implements IActionHandler {
     ) {}
 
     canHandle(intent: string): boolean {
-        return intent === 'GREETING';
+        return intent === LLMIntent.GREETING;
     }
 
     async handle(data: any, context: ActionContext): Promise<void> {

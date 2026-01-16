@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { IActionHandler, ActionContext } from './action-handler.interface';
 import { ActivateEventPassUseCase } from '../../../subscription/application/use-cases/activate-event-pass.use-case';
 import { IUserRepository, I_USER_REPOSITORY } from '../../../user/domain/ports/user.repository.interface';
+import { LLMIntent } from '../../../common/llm/llm-types';
 
 @Injectable()
 export class ActivateEventPassHandler implements IActionHandler {
@@ -13,7 +14,7 @@ export class ActivateEventPassHandler implements IActionHandler {
   ) {}
 
   canHandle(intent: string): boolean {
-    return intent === 'ACTIVATE_EVENT_PASS';
+    return intent === LLMIntent.ACTIVATE_EVENT_PASS;
   }
 
   async handle(data: any, context: ActionContext): Promise<void> {

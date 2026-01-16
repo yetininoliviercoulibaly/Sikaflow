@@ -4,6 +4,8 @@ import { IMessageStrategy, MESSAGE_STRATEGY_TOKEN } from '../strategies/message-
 import { IUserRepository, I_USER_REPOSITORY } from '../../../user/domain/ports/user.repository.interface';
 import { WhatsAppMessagingAdapter } from '../../../common/messaging/whatsapp-messaging.adapter';
 import { ActionExecutionService } from '../services/action-execution.service';
+import { LLMIntent } from '../../../common/llm/llm-types';
+import { MessagingPlatforms } from '../../../common/messaging/domain/constants/messaging-platforms.enum';
 
 @Injectable()
 export class ProcessMessageUseCase {
@@ -50,9 +52,9 @@ export class ProcessMessageUseCase {
         let analysis: any = null;
         if (message.type === 'text' && message.text?.body?.startsWith('CLAIM-')) {
              analysis = {
-                 intent: 'CLAIM_TICKET',
+                 intent: LLMIntent.CLAIM_TICKET,
                  data: { token: message.text.body },
-                 actions: [{ intent: 'CLAIM_TICKET', data: { raw_message: message.text.body } }]
+                 actions: [{ intent: LLMIntent.CLAIM_TICKET, data: { raw_message: message.text.body } }]
              };
         } else {
              // 2. Process via Strategy (LLM)
@@ -80,7 +82,7 @@ export class ProcessMessageUseCase {
             senderPhoneNumber: from,
             messageId,
             messageBody: message.type === 'text' && message.text ? message.text.body : undefined,
-            platform: 'whatsapp'
+            platform: MessagingPlatforms.WHATSAPP
         });
 
       } catch (error) {

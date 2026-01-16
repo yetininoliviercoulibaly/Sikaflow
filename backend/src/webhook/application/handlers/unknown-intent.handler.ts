@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { IActionHandler, ActionContext } from './action-handler.interface';
+import { LLMIntent } from '../../../common/llm/llm-types';
 
 @Injectable()
 export class UnknownIntentHandler implements IActionHandler {
     canHandle(intent: string): boolean {
-        return intent === 'UNKNOWN';
+        return intent === LLMIntent.UNKNOWN;
     }
 
     async handle(_data: Record<string, unknown>, context: ActionContext): Promise<void> {

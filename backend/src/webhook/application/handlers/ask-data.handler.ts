@@ -4,6 +4,7 @@ import { BusinessIntelligenceService } from '../../../report/application/service
 import { IUserRepository, I_USER_REPOSITORY } from '../../../user/domain/ports/user.repository.interface';
 import { IOrganizationRepository, I_ORGANIZATION_REPOSITORY } from '../../../organization/domain/ports/organization.repository.interface';
 import { UserRole } from '../../../organization/domain/organization-member.entity';
+import { LLMIntent } from '../../../common/llm/llm-types';
 
 @Injectable()
 export class AskDataHandler implements IActionHandler {
@@ -14,7 +15,7 @@ export class AskDataHandler implements IActionHandler {
     ) {}
 
     canHandle(intent: string): boolean {
-        return intent === 'ASK_DATA';
+        return intent === LLMIntent.ASK_DATA;
     }
 
      async handle(data: any, context: ActionContext): Promise<void> {

@@ -3,6 +3,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { IActionHandler, ActionContext } from './action-handler.interface';
 import { CreateTransactionUseCase } from '../../../transaction/application/use-cases/create-transaction.use-case';
 import { TransactionType } from '../../../transaction/domain/transaction.entity';
+import { LLMIntent } from '../../../common/llm/llm-types';
 
 @Injectable()
 export class CreateTransactionHandler implements IActionHandler {
@@ -12,7 +13,7 @@ export class CreateTransactionHandler implements IActionHandler {
     ) {}
 
     canHandle(intent: string): boolean {
-        return intent === 'CREATE_TRANSACTION';
+        return intent === LLMIntent.CREATE_TRANSACTION;
     }
 
     async handle(data: any, context: ActionContext): Promise<void> {

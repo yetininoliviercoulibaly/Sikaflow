@@ -1,6 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { TelegramUpdateDto, TelegramMessageDto } from '../dtos/telegram-payload.dto';
 import { LLMAnalysisResult } from '../strategies/message-strategy.interface';
+import { LLMIntent } from '../../../common/llm/llm-types';
+import { MessagingPlatforms } from '../../../common/messaging/domain/constants/messaging-platforms.enum';
 import { IUserRepository, I_USER_REPOSITORY } from '../../../user/domain/ports/user.repository.interface';
 import { ILLMProvider, LLM_PROVIDER_TOKEN } from '../../../common/llm/llm-provider.interface';
 import { IPromptRepository, I_PROMPT_REPOSITORY } from '../../../common/prompt/domain/ports/prompt.repository.interface';
@@ -59,7 +61,7 @@ export class ProcessTelegramMessageUseCase {
         user,
         senderPhoneNumber: String(chatId),
         messageId: callbackQuery.id,
-        platform: 'telegram',
+        platform: MessagingPlatforms.TELEGRAM,
     });
   }
 
@@ -86,9 +88,9 @@ export class ProcessTelegramMessageUseCase {
       let analysis: LLMAnalysisResult;
       if (type === 'text' && content?.startsWith('CLAIM-')) {
         analysis = {
-          intent: 'CLAIM_TICKET',
+          intent: LLMIntent.CLAIM_TICKET,
           data: { token: content },
-          actions: [{ intent: 'CLAIM_TICKET', data: { raw_message: content } }],
+          actions: [{ intent: LLMIntent.CLAIM_TICKET, data: { raw_message: content } }],
         };
       } else if (type === 'text' && content) {
         // Analyze via LLM
@@ -118,7 +120,7 @@ export class ProcessTelegramMessageUseCase {
           senderPhoneNumber: String(chatId),
           messageId: String(messageId),
           messageBody: content,
-          platform: 'telegram',
+          platform: MessagingPlatforms.TELEGRAM,
       });
 
     } catch (error) {

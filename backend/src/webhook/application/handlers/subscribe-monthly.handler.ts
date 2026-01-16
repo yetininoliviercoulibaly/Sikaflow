@@ -2,6 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { IActionHandler, ActionContext } from './action-handler.interface';
 import { SubscribeMonthlyUseCase } from '../../../subscription/application/use-cases/subscribe-monthly.use-case';
 import { IOrganizationRepository, I_ORGANIZATION_REPOSITORY } from '../../../organization/domain/ports/organization.repository.interface';
+import { LLMIntent } from '../../../common/llm/llm-types';
 
 @Injectable()
 export class SubscribeMonthlyHandler implements IActionHandler {
@@ -11,7 +12,7 @@ export class SubscribeMonthlyHandler implements IActionHandler {
   ) {}
 
   canHandle(intent: string): boolean {
-    return intent === 'SUBSCRIBE_MONTHLY';
+    return intent === LLMIntent.SUBSCRIBE_MONTHLY;
   }
 
   async handle(data: any, context: ActionContext): Promise<void> {

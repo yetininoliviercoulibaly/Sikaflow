@@ -4,6 +4,7 @@ import { IActionHandler, ActionContext } from './action-handler.interface';
 import { GenerateClaimLinkUseCase } from '../../../ticketing/application/use-cases/generate-claim-link.use-case';
 import { IEventRepository, I_EVENT_REPOSITORY } from '../../../ticketing/domain/ports/event.repository.interface';
 import { LLMIntent } from '../../../common/llm/llm-types';
+import { MessagingPlatforms } from '../../../common/messaging/domain/constants/messaging-platforms.enum';
 
 @Injectable()
 export class GenerateClaimHandler implements IActionHandler {
@@ -82,7 +83,7 @@ export class GenerateClaimHandler implements IActionHandler {
         claims.forEach((c, idx) => {
              // Create Deep Link based on platform
              let link: string;
-             if (platform === 'telegram') {
+             if (platform === MessagingPlatforms.TELEGRAM) {
                  // Telegram deep link format
                  const botUsername = process.env.TELEGRAM_BOT_USERNAME || 'SikaFlowBot';
                  link = `https://t.me/${botUsername}?start=CLAIM-${c.token}`;

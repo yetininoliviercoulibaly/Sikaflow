@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IActionHandler, ActionContext } from './action-handler.interface';
 import { CreateOrganizationUseCase } from '../../../organization/application/use-cases/create-organization.use-case';
+import { LLMIntent } from '../../../common/llm/llm-types';
 
 @Injectable()
 export class CreateOrganizationHandler implements IActionHandler {
@@ -12,7 +13,7 @@ export class CreateOrganizationHandler implements IActionHandler {
     ) {}
 
     canHandle(intent: string): boolean {
-        return intent === 'CREATE_ORGANIZATION';
+        return intent === LLMIntent.CREATE_ORGANIZATION;
     }
 
     async handle(data: any, context: ActionContext): Promise<void> {

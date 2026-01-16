@@ -3,6 +3,8 @@ import { IActionHandler, ACTION_HANDLER_TOKEN, ActionContext } from '../handlers
 import { CheckSubscriptionUseCase } from '../../../subscription/application/use-cases/check-subscription.use-case';
 import { IMessagingService } from '../../../common/messaging/messaging.service.interface';
 import { User } from '../../../user/domain/user.entity';
+import { LLMIntent } from '../../../common/llm/llm-types';
+import { MessagingPlatforms } from '../../../common/messaging/domain/constants/messaging-platforms.enum';
 
 export interface ActionExecutionParams {
   actions: any[];
@@ -11,7 +13,7 @@ export interface ActionExecutionParams {
   senderPhoneNumber: string;
   messageId: string;
   messageBody?: string;
-  platform: 'whatsapp' | 'telegram';
+  platform: MessagingPlatforms;
 }
 
 @Injectable()
@@ -19,7 +21,13 @@ export class ActionExecutionService {
   private readonly logger = new Logger(ActionExecutionService.name);
   
   // Intents that bypass subscription check
-  private readonly BYPASS_INTENTS = ['ACTIVATE_EVENT_PASS', 'UNKNOWN', 'GREETING', 'CREATE_ORGANIZATION', 'HELP'];
+  private readonly BYPASS_INTENTS = [
+    LLMIntent.ACTIVATE_EVENT_PASS,
+    LLMIntent.UNKNOWN,
+    LLMIntent.GREETING,
+    LLMIntent.CREATE_ORGANIZATION,
+    LLMIntent.HELP
+  ];
 
   constructor(
     @Inject(ACTION_HANDLER_TOKEN)

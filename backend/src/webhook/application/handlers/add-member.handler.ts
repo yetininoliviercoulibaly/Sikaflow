@@ -7,6 +7,7 @@ import { OrganizationMember, UserRole } from '../../../organization/domain/organ
 import { IUserRepository, I_USER_REPOSITORY } from '../../../user/domain/ports/user.repository.interface';
 import { User } from '../../../user/domain/user.entity';
 import { v4 as uuidv4 } from 'uuid';
+import { LLMIntent } from '../../../common/llm/llm-types';
 
 @Injectable()
 export class AddMemberHandler implements IActionHandler {
@@ -17,7 +18,7 @@ export class AddMemberHandler implements IActionHandler {
     ) {}
 
     canHandle(intent: string): boolean {
-        return intent === 'ADD_MEMBER';
+        return intent === LLMIntent.ADD_MEMBER;
     }
 
     async handle(data: any, context: ActionContext): Promise<void> {

@@ -1,10 +1,11 @@
 import { User } from '../../../user/domain/user.entity';
 import { IMessagingService } from '../../../common/messaging/messaging.service.interface';
+import { MessagingPlatforms } from '../../../common/messaging/domain/constants/messaging-platforms.enum';
 
 /**
  * Platform type for messaging (WhatsApp or Telegram)
  */
-export type MessagingPlatform = 'whatsapp' | 'telegram';
+export type MessagingPlatform = MessagingPlatforms.WHATSAPP | MessagingPlatforms.TELEGRAM;
 
 /**
  * Context passed to action handlers containing all necessary information

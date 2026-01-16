@@ -2,6 +2,7 @@
 import { Injectable } from '@nestjs/common';
 import { IActionHandler, ActionContext } from './action-handler.interface';
 import { ScanTicketUseCase } from '../../../ticketing/application/use-cases/scan-ticket.use-case';
+import { LLMIntent } from '../../../common/llm/llm-types';
 
 @Injectable()
 export class ScanTicketHandler implements IActionHandler {
@@ -10,7 +11,7 @@ export class ScanTicketHandler implements IActionHandler {
   ) {}
 
   canHandle(intent: string): boolean {
-    return intent === 'SCAN_TICKET' || intent === 'SCAN_RESULT';
+    return intent === LLMIntent.SCAN_TICKET || intent === LLMIntent.SCAN_RESULT;
   }
 
   async handle(data: any, context: ActionContext): Promise<void> {
