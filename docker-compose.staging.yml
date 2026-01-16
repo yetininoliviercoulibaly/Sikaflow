@@ -37,7 +37,8 @@ services:
   # 3. MIGRATION RUNNER (Job Init)
   # ---------------------------------------------------------------------------
   migration-runner:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/sikaflow-backend:staging
+    # HARDCODED IMAGE to avoid variable expansion issues
+    image: ghcr.io/softilab/sikaflow-backend:develop
     command: sh -c "npx mikro-orm migration:up && npm run seed:run"
     environment:
       NODE_ENV: staging
@@ -57,7 +58,8 @@ services:
   # 4. API (NestJS)
   # ---------------------------------------------------------------------------
   backend:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/sikaflow-backend:staging
+    # HARDCODED IMAGE to avoid variable expansion issues
+    image: ghcr.io/softilab/sikaflow-backend:develop
     restart: always
     environment:
       NODE_ENV: staging
@@ -88,7 +90,20 @@ services:
       - sikaflow_net
 
   # ---------------------------------------------------------------------------
-  # 5. CLOUDFLARE TUNNEL (Expose to Internet)
+  # 5. FRONTEND (Next.js) - AJOUT MANQUANT
+  # ---------------------------------------------------------------------------
+  frontend:
+    # HARDCODED IMAGE
+    image: ghcr.io/softilab/sikaflow-frontend:develop
+    restart: always
+    environment:
+      NODE_ENV: staging
+      NEXT_PUBLIC_API_URL: https://api-staging.sika-flow.com
+    networks:
+      - sikaflow_net
+
+  # ---------------------------------------------------------------------------
+  # 6. CLOUDFLARE TUNNEL (Expose to Internet)
   # ---------------------------------------------------------------------------
   cloudflared:
     image: cloudflare/cloudflared:latest

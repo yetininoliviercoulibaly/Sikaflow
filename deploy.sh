@@ -2,7 +2,7 @@
 
 # Nettoyage des arguments (suppression des espaces/retours à la ligne résiduels)
 TARGET_ENV=$(echo "$1" | tr -d '[:space:]')
-REPO_OWNER="yetininoliviercoulibaly"
+REPO_OWNER="softilab"
 
 echo "🚀 Début du déploiement pour: [$TARGET_ENV]"
 

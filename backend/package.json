@@ -65,7 +65,7 @@
     "uuid": "^13.0.0"
   },
   "devDependencies": {
-    "@mikro-orm/cli": "^6.6.2",
+    "@mikro-orm/cli": "^6.6.4",
     "@nestjs/cli": "^11.0.16",
     "@nestjs/testing": "^11.1.11",
     "@types/jest": "^30.0.0",
