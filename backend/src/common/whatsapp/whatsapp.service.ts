@@ -130,18 +130,16 @@ export class WhatsAppService implements IWhatsAppService {
     };
 
     try {
-      await firstValueFrom(
+      const response = await firstValueFrom(
         this.httpService.post(
           `${this.apiUrl}/${this.phoneNumberId}/messages`,
           payload,
           { headers: this.headers }
         )
       );
-      this.logger.log(`Message sent to ${to} type=${content.type}`);
+      this.logger.log(`Message sent to ${to} type=${content.type}. Meta Response: ${JSON.stringify(response.data)}`);
     } catch (error) {
       this.logger.error(`Failed to send message to ${to}`, error.response?.data || error.message);
-      // Don't throw for MVP if one message fails? Or throw?
-      // Better to throw so caller knows.
       throw error;
     }
   }
