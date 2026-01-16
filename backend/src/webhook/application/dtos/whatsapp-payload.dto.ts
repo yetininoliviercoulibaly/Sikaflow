@@ -95,6 +95,10 @@ export class WhatsAppValueDto {
   @IsOptional()
   messages?: WhatsAppMessageDto[];
 
+  @IsArray()
+  @IsOptional()
+  statuses?: any[];
+
   @IsObject()
   metadata: {
     display_phone_number: string;
