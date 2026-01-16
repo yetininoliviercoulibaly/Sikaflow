@@ -3,17 +3,15 @@ import { IActionHandler, ActionContext } from './action-handler.interface';
 import { LLMIntent } from '../../../common/llm/llm-types';
 
 @Injectable()
-export class NotImplementedHandler implements IActionHandler {
-    constructor() {}
-
+export class UnknownIntentHandler implements IActionHandler {
     canHandle(intent: string): boolean {
-        return [LLMIntent.CANCEL_LAST_ACTION, LLMIntent.UPDATE_LAST_ACTION].includes(intent as LLMIntent);
+        return intent === LLMIntent.UNKNOWN;
     }
 
-    async handle(data: any, context: ActionContext): Promise<void> {
+    async handle(_data: Record<string, unknown>, context: ActionContext): Promise<void> {
         await context.messagingService.sendMessage(
             context.senderPhoneNumber,
-            "Désolé, cette fonctionnalité n'est pas encore disponible.",
+            "Je n'ai pas compris votre demande. Tapez 'Aide' pour voir les options disponibles."
         );
     }
 }
