@@ -28,8 +28,15 @@ export class ProcessMessageUseCase {
     const changes = entry?.changes?.[0];
     const value = changes?.value;
     const messages = value?.messages;
+    const statuses = value?.statuses;
+    
+    if (statuses && statuses.length > 0) {
+        this.logger.log(`Received status update from Meta: ${JSON.stringify(statuses)}`);
+        return;
+    }
 
     if (!messages || messages.length === 0) {
+      this.logger.debug('No messages or statuses found in payload');
       return;
     }
 
