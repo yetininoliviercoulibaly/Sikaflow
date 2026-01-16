@@ -19,15 +19,7 @@ export class Migration20240102000000 extends Migration {
 
       create table "incident" ("id" uuid not null, "organization_id" uuid not null, "reported_by_user_id" uuid null, "origin_message_id" uuid null, "severity" text check ("severity" in ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')) not null, "description" text null, "status" text check ("status" in ('OPEN', 'RESOLVED')) not null, "occurred_at" timestamptz not null, "created_at" timestamptz not null, constraint "incident_pkey" primary key ("id"));
 
-      create table "onboarding_progress" ("id" uuid not null, "user_id" varchar(255) not null, "organization_id" varchar(255) not null, "role" varchar(255) not null, "completed_steps" jsonb not null default '[]', "current_step" varchar(255) null, "started_at" timestamptz not null, "completed_at" timestamptz null, constraint "onboarding_progress_pkey" primary key ("id"));
-      create index "onboarding_progress_user_id_index" on "onboarding_progress" ("user_id");
-      create index "onboarding_progress_organization_id_index" on "onboarding_progress" ("organization_id");
-      create index "idx_onboarding_user_org" on "onboarding_progress" ("user_id", "organization_id");
 
-      create table "onboarding_step_config" ("id" uuid not null, "step_id" varchar(255) not null, "plan_id" varchar(255) null, "title" varchar(255) not null, "description" text not null, "tip_message" text not null, "completion_message" text not null, "required_roles" jsonb not null default '[]', "order" int not null default 0, "is_active" boolean not null default true, "created_at" timestamptz not null, "updated_at" timestamptz not null, constraint "onboarding_step_config_pkey" primary key ("id"));
-      create index "onboarding_step_config_step_id_index" on "onboarding_step_config" ("step_id");
-      create index "onboarding_step_config_plan_id_index" on "onboarding_step_config" ("plan_id");
-      create index "idx_step_config_plan_step" on "onboarding_step_config" ("plan_id", "step_id");
 
       create table "report" ("id" uuid not null, "organization_id" uuid not null, "type" text check ("type" in ('FLASH', 'WEEKLY')) not null, "period_start" timestamptz null, "period_end" timestamptz null, "data" jsonb not null, "generated_at" timestamptz not null, constraint "report_pkey" primary key ("id"));
       alter table "report" add constraint "report_organization_id_foreign" foreign key ("organization_id") references "organization" ("id") on update cascade;
