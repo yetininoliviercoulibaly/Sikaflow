@@ -4,6 +4,7 @@ import { WhatsAppController } from './application/controllers/whatsapp.controlle
 import { TelegramController } from './application/controllers/telegram.controller';
 import { ProcessMessageUseCase } from './application/use-cases/process-message.use-case';
 import { ProcessTelegramMessageUseCase } from './application/use-cases/process-telegram-message.use-case';
+import { ActionExecutionService } from './application/services/action-execution.service';
 import { TextMessageStrategy } from './application/strategies/text-message.strategy';
 import { OrganizationModule } from '../organization/organization.module';
 import { UserModule } from '../user/user.module';
@@ -82,6 +83,7 @@ import { UnknownIntentHandler } from './application/handlers/unknown-intent.hand
   providers: [
     ProcessMessageUseCase,
     ProcessTelegramMessageUseCase,
+    ActionExecutionService,
     MessageProcessor,
     TelegramMessageProcessor,
     TextMessageStrategy,
