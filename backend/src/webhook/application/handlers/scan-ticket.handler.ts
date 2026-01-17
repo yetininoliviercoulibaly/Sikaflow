@@ -2,12 +2,15 @@
 import { Injectable } from '@nestjs/common';
 import { IActionHandler, ActionContext } from './action-handler.interface';
 import { ScanTicketUseCase } from '../../../ticketing/application/use-cases/scan-ticket.use-case';
+import { CheckFeatureUseCase } from '../../../subscription/application/use-cases/check-feature.use-case';
+import { FeatureFlag } from '../../../subscription/domain/feature-flag.enum';
 import { LLMIntent } from '../../../common/llm/llm-types';
 
 @Injectable()
 export class ScanTicketHandler implements IActionHandler {
   constructor(
     private readonly scanTicketUseCase: ScanTicketUseCase,
+    private readonly checkFeatureUseCase: CheckFeatureUseCase,
   ) {}
 
   canHandle(intent: string): boolean {
@@ -23,6 +26,22 @@ export class ScanTicketHandler implements IActionHandler {
     if (!mediaId) {
         return;
     }
+
+    // Check Feature Access (Stock/Ticketing)
+    const organizationId = context.organizationId;
+    if (organizationId) {
+        const { hasAccess } = await this.checkFeatureUseCase.execute({
+            organizationId,
+            feature: FeatureFlag.STOCK_MANAGEMENT // Using STOCK as proxy for Ticketing
+        });
+
+        if (!hasAccess) {
+             await messagingService.sendMessage(senderPhoneNumber, "🔒 Fonctionnalité non incluse dans votre abonnement.");
+             return;
+        }
+    }
+
+
 
     try {
         // Download Image using platform-agnostic service

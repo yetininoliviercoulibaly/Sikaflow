@@ -3,6 +3,7 @@ import { HelpHandler } from './help.handler';
 import { I_USER_REPOSITORY } from '../../../user/domain/ports/user.repository.interface';
 import { I_ORGANIZATION_REPOSITORY } from '../../../organization/domain/ports/organization.repository.interface';
 import { ConfigService } from '@nestjs/config';
+import { CheckFeatureUseCase } from '../../../subscription/application/use-cases/check-feature.use-case';
 import { ActionContext } from './action-handler.interface';
 import { MessagingPlatforms } from '../../../common/messaging/domain/constants/messaging-platforms.enum';
 import { User } from '../../../user/domain/user.entity';
@@ -13,6 +14,7 @@ describe('HelpHandler', () => {
     let mockOrganizationRepository: any;
     let mockMessagingService: any;
     let mockConfigService: any;
+    let mockCheckFeatureUseCase: any;
 
     beforeEach(async () => {
         mockUserRepository = {
@@ -33,12 +35,17 @@ describe('HelpHandler', () => {
             get: jest.fn(),
         };
 
+        mockCheckFeatureUseCase = {
+            execute: jest.fn().mockResolvedValue({ hasAccess: true }),
+        };
+
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 HelpHandler,
                 { provide: I_USER_REPOSITORY, useValue: mockUserRepository },
                 { provide: I_ORGANIZATION_REPOSITORY, useValue: mockOrganizationRepository },
                 { provide: ConfigService, useValue: mockConfigService },
+                { provide: CheckFeatureUseCase, useValue: mockCheckFeatureUseCase },
             ],
         }).compile();
 

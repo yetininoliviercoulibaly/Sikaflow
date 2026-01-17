@@ -2,12 +2,15 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { IActionHandler, ActionContext } from './action-handler.interface';
 import { IEventRepository, I_EVENT_REPOSITORY } from '../../../ticketing/domain/ports/event.repository.interface';
+import { CheckFeatureUseCase } from '../../../subscription/application/use-cases/check-feature.use-case';
+import { FeatureFlag } from '../../../subscription/domain/feature-flag.enum';
 import { LLMIntent } from '../../../common/llm/llm-types';
 
 @Injectable()
 export class CheckStockHandler implements IActionHandler {
   constructor(
     @Inject(I_EVENT_REPOSITORY) private readonly eventRepository: IEventRepository,
+    private readonly checkFeatureUseCase: CheckFeatureUseCase,
   ) {}
 
   canHandle(intent: string): boolean {
@@ -23,6 +26,18 @@ export class CheckStockHandler implements IActionHandler {
         await messagingService.sendMessage(senderPhoneNumber, isEn 
             ? "❌ You must be in an organization context." 
             : "❌ Vous devez être dans le contexte d'une organisation.");
+        return;
+    }
+
+    const { hasAccess } = await this.checkFeatureUseCase.execute({
+        organizationId,
+        feature: FeatureFlag.STOCK_MANAGEMENT
+    });
+
+    if (!hasAccess) {
+        await messagingService.sendMessage(senderPhoneNumber, isEn 
+            ? "🔒 Feature not available in your plan." 
+            : "🔒 Fonctionnalité non incluse dans votre abonnement.");
         return;
     }
 
