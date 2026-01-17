@@ -89,6 +89,23 @@ export class CommandIntentMapper {
       }
     }
 
+    // SELECT_PROVIDER|Provider
+    if (id.startsWith('SELECT_PROVIDER|')) {
+      return {
+        intent: LLMIntent.SUBSCRIBE,
+        data: { provider: id.replace('SELECT_PROVIDER|', '') }
+      };
+    }
+
+    // SELECT_DURATION|Duration
+    if (id.startsWith('SELECT_DURATION|')) {
+        const duration = parseInt(id.replace('SELECT_DURATION|', ''), 10);
+        return {
+            intent: LLMIntent.SUBSCRIBE,
+            data: { duration }
+        };
+    }
+
     // 3. Fallback: If it's a raw intent name, pass it through
     if (Object.values(LLMIntent).includes(id as any)) {
       return { intent: id, data: {} };

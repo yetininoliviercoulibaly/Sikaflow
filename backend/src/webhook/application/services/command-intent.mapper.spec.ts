@@ -23,14 +23,14 @@ describe('CommandIntentMapper', () => {
       expect(expenseMapping).toEqual({
         intent: LLMIntent.CREATE_TRANSACTION,
         data: { type: 'EXPENSE' },
-        missing_fields: ['amount'],
+        missing_fields: ['amount', 'category'],
       });
 
       const incomeMapping = mapper.map('CMD_TX_INCOME');
       expect(incomeMapping).toEqual({
         intent: LLMIntent.CREATE_TRANSACTION,
         data: { type: 'INCOME' },
-        missing_fields: ['amount'],
+        missing_fields: ['amount', 'category'],
       });
 
       const helpMapping = mapper.map('HELP_CMD');
@@ -59,6 +59,24 @@ describe('CommandIntentMapper', () => {
           confidence: 1.0,
         },
       });
+    });
+
+    it('should parse SELECT_PROVIDER| data', () => {
+        const id = 'SELECT_PROVIDER|STRIPE';
+        const result = mapper.map(id);
+        expect(result).toEqual({
+            intent: LLMIntent.SUBSCRIBE,
+            data: { provider: 'STRIPE' }
+        });
+    });
+
+    it('should parse SELECT_DURATION| data', () => {
+        const id = 'SELECT_DURATION|12';
+        const result = mapper.map(id);
+        expect(result).toEqual({
+            intent: LLMIntent.SUBSCRIBE,
+            data: { duration: 12 }
+        });
     });
 
     it('should handle FEEDBACK| prefix', () => {
