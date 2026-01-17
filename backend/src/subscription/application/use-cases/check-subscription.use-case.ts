@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { IEventPassRepository, I_EVENT_PASS_REPOSITORY } from '../../domain/ports/event-pass.repository.interface';
 import { ISubscriptionRepository, I_SUBSCRIPTION_REPOSITORY } from '../../domain/ports/subscription.repository.interface';
 import { SubscriptionStatus } from '../../domain/subscription.entity';
