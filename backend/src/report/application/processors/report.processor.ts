@@ -62,8 +62,10 @@ export class ReportProcessor extends WorkerHost {
           });
 
           // 3. Send via platform-agnostic messaging
-          this.logger.debug(`[Job:${job.id}] Sending document (${pdfBuffer.length} bytes)...`);
-          await messagingService.sendDocument(phoneNumber, pdfBuffer, 'report.pdf', 'Voici votre Flash Report');
+          const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 16);
+          const filename = `report_${timestamp}.pdf`;
+          this.logger.debug(`[Job:${job.id}] Sending document ${filename} (${pdfBuffer.length} bytes)...`);
+          await messagingService.sendDocument(phoneNumber, pdfBuffer, filename, 'Voici votre Flash Report');
           
           this.logger.log(`[Job:${job.id}] Report sent to ${phoneNumber} via ${platform || 'WHATSAPP'}`);
       } catch (error) {
