@@ -83,6 +83,7 @@ import { UnknownIntentHandler } from './application/handlers/unknown-intent.hand
   controllers: [WhatsAppController, TelegramController],
   providers: [
     ProcessMessageUseCase,
+    ProcessTelegramMessageUseCase,
     ActionExecutionService,
     CommandIntentMapper,
     MessageProcessor,
