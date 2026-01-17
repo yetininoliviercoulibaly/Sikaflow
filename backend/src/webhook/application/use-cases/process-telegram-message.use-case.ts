@@ -211,11 +211,37 @@ export class ProcessTelegramMessageUseCase {
           if (!mergedData['amount'] && (pending.missing_fields || []).includes('amount')) {
                // Match first number in string (supports 50, 50.5, 50,5)
                const numberMatch = content.match(/(\d+([.,]\d+)?)/);
-               if (numberMatch) {
-                   const rawAmount = numberMatch[0].replace(',', '.');
-                   mergedData['amount'] = parseFloat(rawAmount);
+                if (numberMatch) {
+                    const rawAmount = numberMatch[0].replace(',', '.');
+                    mergedData['amount'] = parseFloat(rawAmount);
+                }
+           }
+
+           // HEURISTIC: If 'period' is missing, check for common French keywords
+           if (!mergedData['period'] && (pending.missing_fields || []).includes('period')) {
+               const lowerContent = content.toLowerCase();
+               if (lowerContent.includes("aujourd'hui") || lowerContent.includes("ce jour")) {
+                   mergedData['period'] = 'today';
+               } else if (lowerContent.includes("hier")) {
+                   mergedData['period'] = 'yesterday';
+               } else if (lowerContent.includes("cette semaine")) {
+                   mergedData['period'] = 'this_week';
+               } else if (lowerContent.includes("mois dernier")) {
+                   mergedData['period'] = 'last_month';
+               } else if (lowerContent.includes("ce mois")) {
+                   mergedData['period'] = 'this_month';
+               } else if (lowerContent.includes("cette année")) {
+                   mergedData['period'] = 'this_year';
+               } else if (lowerContent.includes("ce semestre")) {
+                   mergedData['period'] = 'this_semester';
+               } else if (lowerContent.includes("semestre dernier")) {
+                   mergedData['period'] = 'last_semester';
+               } else if (lowerContent.includes("ce trimestre")) {
+                   mergedData['period'] = 'this_quarter';
+               } else if (lowerContent.includes("trimestre dernier")) {
+                   mergedData['period'] = 'last_quarter';
                }
-          }
+           }
 
           // Determine remaining missing fields
           const remainingMissing = (pending.missing_fields || []).filter(field => {

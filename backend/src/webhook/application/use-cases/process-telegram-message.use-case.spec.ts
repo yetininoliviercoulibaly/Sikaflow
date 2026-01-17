@@ -201,4 +201,44 @@ describe('ProcessTelegramMessageUseCase', () => {
            })]
        }));
   });
+  it('should apply heuristic to extract period matching "Aujourd\'hui"', async () => {
+    const chatId = 666;
+    const update = {
+      update_id: 6,
+      message: {
+        message_id: 128,
+        chat: { id: chatId, type: 'private' },
+        from: { id: 666, first_name: 'PeriodUser', is_bot: false },
+        text: "Aujourd'hui"
+      } as TelegramMessageDto
+    } as TelegramUpdateDto;
+
+    const mockPending = {
+      intent: 'ASK_DATA',
+      data: { metric: 'NET_PROFIT' },
+      missing_fields: ['period'],
+      createdAt: new Date(),
+    };
+
+    mockLLM.analyzeText.mockResolvedValue({ intent: null, data: {} });
+    mockUserRepo.findByPhoneNumber.mockResolvedValue({});
+
+    const conversationService = (useCase as any).conversationState;
+    conversationService.getPendingAction.mockReturnValue(mockPending);
+
+    await useCase.execute(update);
+
+    const actionService = (useCase as any).actionExecutionService;
+    expect(actionService.execute).toHaveBeenCalledWith(expect.objectContaining({
+      actions: [expect.objectContaining({
+        intent: 'ASK_DATA',
+        data: expect.objectContaining({
+          metric: 'NET_PROFIT',
+          period: 'today'
+        })
+      })]
+    }));
+
+    expect(conversationService.clearPendingAction).toHaveBeenCalledWith('666');
+  });
 });
