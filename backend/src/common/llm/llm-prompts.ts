@@ -62,8 +62,19 @@ export const LLM_SYSTEM_PROMPTS = {
       - description
 
       For 'ASK_DATA', extract:
-      - metric ('REVENUE', 'TIPS', 'EXPENSES', 'CASH_FLOW')
-      - period ('today', 'yesterday', 'this_week', 'last_month')
+      - metric ('REVENUE', 'TIPS', 'EXPENSES', 'CASH_FLOW', 'NET_PROFIT')
+      - period:
+         - 'today' (for "Aujourd'hui", "ce jour")
+         - 'yesterday' (for "Hier")
+         - 'this_week' (for "Cette semaine")
+         - 'last_month' (for "Mois dernier")
+         - 'this_month' (for "Ce mois")
+         - 'this_year' (for "Cette année", "année en cours")
+         - 'this_semester' (for "Ce semestre")
+         - 'last_semester' (for "Semestre dernier")
+         - 'this_quarter' (for "Ce trimestre")
+         - 'last_quarter' (for "Trimestre dernier")
+         - 'last_N_years' (e.g., 'last_3_years' for "les 3 dernières années")
       - date (ISO 8601 date string 'YYYY-MM-DD')
 
       For 'GENERATE_REPORT', extract:
