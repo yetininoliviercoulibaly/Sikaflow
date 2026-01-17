@@ -34,7 +34,7 @@ Consultez le [Diagramme d'Architecture détaillé](docs/architecture.md) pour pl
 
 | Fonctionnalité               | Description                                   |
 | :--------------------------- | :-------------------------------------------- |
-| **📱 WhatsApp Webhook**      | Réception temps réel, validation de signature |
+| **📱 WhatsApp & Telegram**   | Réception temps réel, validation de signature |
 | **👋 Onboarding Automatisé** | Tutoriel interactif guidé étape par étape     |
 | **🧠 IA Multimodale**        | Analyse texte, audio, images et PDF           |
 | **📊 Reporting Instantané**  | Génération de rapports PDF à la demande       |
@@ -108,6 +108,7 @@ src/
 - Redis (v6+)
 - Clé API Google Gemini
 - Token WhatsApp Cloud API
+- Token Telegram Bot API
 
 ### 2. Configuration (`.env`)
 
@@ -131,6 +132,12 @@ REDIS_PORT=6379
 WHATSAPP_ACCESS_TOKEN=votre_token
 WHATSAPP_VERIFY_TOKEN=votre_verify_token
 WHATSAPP_PHONE_NUMBER_ID=votre_phone_id
+
+# TELEGRAM
+TELEGRAM_BOT_TOKEN=votre_bot_token
+TELEGRAM_WEBHOOK_SECRET=votre_webhook_secret
+TELEGRAM_BOT_USERNAME=votre_bot_username
+BYPASS_SUBSCRIPTION_CHECK=false
 
 # AI (Gemini)
 GOOGLE_API_KEY=votre_api_key

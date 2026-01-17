@@ -3,7 +3,7 @@ Voici la version mise à jour et enrichie de la Documentation Fonctionnelle d'Ev
 📑 DOCUMENTATION FONCTIONNELLE : EVENT-COPILOTE (v2.0)
 
 1. VISION DU PRODUIT
-   Event-Copilote est un assistant intelligent omnicanal (principalement via WhatsApp) conçu pour les propriétaires et gestionnaires d'établissements (clubs, restaurants, événements). Il centralise la gestion financière, le suivi opérationnel du staff et la sécurité en temps réel, tout en générant des analyses stratégiques automatisées.
+   Event-Copilote est un assistant intelligent omnicanal (WhatsApp et Telegram) conçu pour les propriétaires et gestionnaires d'établissements (clubs, restaurants, événements). Il centralise la gestion financière, le suivi opérationnel du staff et la sécurité en temps réel, tout en générant des analyses stratégiques automatisées.
 
 2. ARCHITECTURE & FLUX DE DONNÉES
    L'intelligence repose sur trois piliers :
@@ -23,7 +23,7 @@ Voici la version mise à jour et enrichie de la Documentation Fonctionnelle d'Ev
    Devenir l'administrateur principal de cette entité.
    US.2
    Propriétaire
-   Ajouter un numéro WhatsApp à mon Organisation en lui attribuant un rôle (Manager ou Staff).
+   Ajouter un numéro WhatsApp ou Telegram à mon Organisation en lui attribuant un rôle (Manager ou Staff).
    Déléguer la saisie des données tout en contrôlant les accès.
    US.3
    Système
@@ -34,7 +34,7 @@ Voici la version mise à jour et enrichie de la Documentation Fonctionnelle d'Ev
    Quitter une Organisation ou être révoqué par le Propriétaire.
    Couper instantanément l'accès aux données de l'entreprise.
 
-4. Interactions WhatsApp Contextuelles (Multi-Organisation)
+4. Interactions Contextuelles (Multi-Plateforme)
    L'IA doit savoir de quel projet on parle sans que l'utilisateur ait à le préciser à chaque message.
    ID
    En tant que...
@@ -50,7 +50,7 @@ Voici la version mise à jour et enrichie de la Documentation Fonctionnelle d'Ev
    Sécuriser l'outil contre les utilisations non autorisées.
    US.7
    Propriétaire multi-sites
-   Envoyer une commande "Switch [Nom du Club]" par WhatsApp.
+   Envoyer une commande "Switch [Nom du Club]" par WhatsApp ou Telegram.
    Basculer mon contexte de saisie d'un établissement à un autre.
 
 5. Reporting & Confidentialité (Scoping)

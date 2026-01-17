@@ -2,9 +2,9 @@
 
 ## 1. Vision du Produit
 
-**Event-Pilot** est le premier **Système d'Exploitation (OS) Orchestral** pour la gestion d'événements et d'établissements de nuit (Clubs, Maquis, Festivals), entièrement piloté par **Intelligence Artificielle** via une interface **WhatsApp**.
+**Event-Pilot** est le premier **Système d'Exploitation (OS) Orchestral** pour la gestion d'événements et d'établissements de nuit (Clubs, Maquis, Festivals), entièrement piloté par **Intelligence Artificielle** via une interface **WhatsApp et Telegram**.
 
-L'objectif est de supprimer la friction des applications traditionnelles (téléchargement, login, formation) en s'intégrant là où les équipes communiquent déjà : WhatsApp.
+L'objectif est de supprimer la friction des applications traditionnelles (téléchargement, login, formation) en s'intégrant là où les équipes communiquent déjà : leurs messageries instantanées préférées.
 
 ## 2. Architecture Technique
 
@@ -14,8 +14,8 @@ Le projet repose sur une architecture **Hexagonale (Ports & Adapters)** stricte,
 
 ```mermaid
 graph TD
-    User((Utilisateur)) -->|WhatsApp| WA_Cloud[WhatsApp Cloud API]
-    WA_Cloud -->|Webhook| EP_Webhook[Event-Pilot Webhook]
+    User((Utilisateur)) -->|WhatsApp / Telegram| Cloud_API[Messaging APIs]
+    Cloud_API -->|Webhook| EP_Webhook[Event-Pilot Webhook]
 
     subgraph "Event-Pilot Core - NestJS"
         EP_Webhook --> Strategy[Message Strategy<br/>Text/Audio/Image/Doc/Interactive]
@@ -198,13 +198,13 @@ Les données sont stockées dans PostgreSQL avec une structure relationnelle for
 
 ### 4.1 Entités Principales
 
-| Entité                 | Description                 | Propriétés clés                                                |
-| ---------------------- | --------------------------- | -------------------------------------------------------------- |
-| **User**               | Utilisateur WhatsApp unique | `phoneNumber`, `lastActiveOrganizationId`, `preferredLanguage` |
-| **Organization**       | Entité légale ou lieu       | `name`, `ownerId`, `subscriptionExpiresAt`, `settings`         |
-| **OrganizationMember** | Relation User-Organization  | `organizationId`, `userId`, `role`, `joinedAt`                 |
-| **Transaction**        | Écriture financière validée | `amount`, `type`, `category`, `organizationId`                 |
-| **Incident**           | Signalement sécurité        | `severity`, `status`, `description`, `occurredAt`              |
+| Entité                 | Description                 | Propriétés clés                                                                  |
+| ---------------------- | --------------------------- | -------------------------------------------------------------------------------- |
+| **User**               | Utilisateur unique          | `phoneNumber` (ou `telegramId`), `lastActiveOrganizationId`, `preferredLanguage` |
+| **Organization**       | Entité légale ou lieu       | `name`, `ownerId`, `subscriptionExpiresAt`, `settings`                           |
+| **OrganizationMember** | Relation User-Organization  | `organizationId`, `userId`, `role`, `joinedAt`                                   |
+| **Transaction**        | Écriture financière validée | `amount`, `type`, `category`, `organizationId`                                   |
+| **Incident**           | Signalement sécurité        | `severity`, `status`, `description`, `occurredAt`                                |
 
 ### 4.2 Entités Abonnement
 
@@ -232,8 +232,8 @@ Les données sont stockées dans PostgreSQL avec une structure relationnelle for
 
 ## 5. Sécurité
 
-- **Authentification** : Basée sur le numéro de téléphone WhatsApp (vérifié par Meta).
+- **Authentification** : Basée sur le numéro de téléphone WhatsApp ou l'ID Telegram (vérifié par les plateformes respectives).
 - **Autorisation** : RBAC (Role-Based Access Control) vérifié à chaque action critique.
 - **Context-Isolation** : Un utilisateur ne peut interagir qu'avec l'organisation "active". Pour changer, il doit explicitement demander un "Switch".
-- **Validation Signature** : Tous les webhooks WhatsApp sont validés via HMAC.
+- **Validation Signature** : Tous les webhooks (WhatsApp & Telegram) sont validés via signature cryptographique (HMAC).
 - **Encryption** : Hash sécurisé pour les billets (protection QR).
