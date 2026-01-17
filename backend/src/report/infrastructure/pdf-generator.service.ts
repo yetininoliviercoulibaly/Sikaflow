@@ -16,7 +16,7 @@ export class PdfGeneratorServiceImpl implements IPdfGeneratorService {
       });
 
       // Header
-      doc.fontSize(25).text('Event Pilot Report', { align: 'center' });
+      doc.fontSize(25).text('SikaFlow Report', { align: 'center' });
       doc.moveDown();
 
       // Content

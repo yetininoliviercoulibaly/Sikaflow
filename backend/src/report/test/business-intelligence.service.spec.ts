@@ -10,7 +10,7 @@ describe('BusinessIntelligenceService', () => {
 
   beforeEach(async () => {
     mockConnection = {
-      execute: jest.fn(),
+      execute: jest.fn().mockResolvedValue([{ settings: { currency: 'EUR' } }]),
     };
     mockEm = {
       getConnection: jest.fn().mockReturnValue(mockConnection),
@@ -47,14 +47,15 @@ describe('BusinessIntelligenceService', () => {
     });
 
     it('should support "NET_PROFIT" by calculating Income - Expense', async () => {
-        // Mock sequence: Income first, then Expense
+        // Mock sequence: Currency first, then Income, then Expense
         mockConnection.execute
+            .mockResolvedValueOnce([{ settings: { currency: 'EUR' } }]) // Currency
             .mockResolvedValueOnce([{ sum: 5000 }]) // Income
             .mockResolvedValueOnce([{ sum: 2000 }]); // Expense
         
         const result = await service.getMetric('org1', 'NET_PROFIT', 'this_month', undefined, UserRole.OWNER);
 
-        expect(mockConnection.execute).toHaveBeenCalledTimes(2);
+        expect(mockConnection.execute).toHaveBeenCalledTimes(3);
         // Matching formatted string roughly. Intl format might include non-breaking spaces.
         // 5000 - 2000 = 3000. 
         expect(result).toContain('Bénéfice Net');
@@ -90,6 +91,18 @@ describe('BusinessIntelligenceService', () => {
              expect.anything(),
              expect.arrayContaining([expect.stringContaining(expectedStart.toISOString())])
         );
+    });
+    it('should use the currency from organization settings', async () => {
+        // Mock sequence: 1 for currency lookup, 1 for metric sum
+        mockConnection.execute
+            .mockResolvedValueOnce([{ settings: { currency: 'EUR' } }]) // getOrganizationCurrency
+            .mockResolvedValueOnce([{ sum: 1000 }]); // REVENUE
+        
+        const result = await service.getMetric('org1', 'REVENUE', 'this_month', undefined, UserRole.OWNER);
+
+        expect(result).toContain('€');
+        // Match 1 000,00 with any kind of space as separator
+        expect(result).toMatch(/1[\s\u00A0\u202F]000,00/); 
     });
   });
 });

@@ -1,6 +1,6 @@
-# 📘 Guide Technique du Développeur - Event-Pilot (Backend)
+# 📘 Guide Technique du Développeur - SikaFlow (Backend)
 
-Ce document est destiné aux développeurs souhaitant comprendre, installer et contribuer au projet **Event-Pilot**.
+Ce document est destiné aux développeurs souhaitant comprendre, installer et contribuer au projet **SikaFlow**.
 
 ## 🏗️ Architecture & Stack Technique
 

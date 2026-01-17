@@ -31,7 +31,7 @@ export class HelpHandler implements IActionHandler {
         const user = await this.userRepository.findByPhoneNumber(senderPhoneNumber);
         
         // 1. Initial Greetings (Text)
-        const headerText = "🤖 *Event-Pilot Aide*";
+        const headerText = "🤖 *SikaFlow Aide*";
         let bodyText = "🎤 *Astuce :* Vous pouvez envoyer des notes vocales ou écrire naturellement (ex: '50€ pour le taxi') !\n\nSinon, voici les boutons actions :";
 
         if (!user || !user.lastActiveOrganizationId) {

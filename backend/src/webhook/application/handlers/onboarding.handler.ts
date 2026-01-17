@@ -104,7 +104,7 @@ export class OnboardingHandler implements IActionHandler {
       await messagingService.sendMessage(
         senderPhoneNumber,
         `🎊 *Tutoriel terminé !*\n\n` +
-        `Vous maîtrisez maintenant Event-Pilot.\n\n` +
+        `Vous maîtrisez maintenant SikaFlow.\n\n` +
         `Envoyez "Aide" pour voir toutes les commandes disponibles.`,
       );
       return;
