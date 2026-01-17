@@ -1,6 +1,6 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { BusinessIntelligenceService } from '../services/business-intelligence.service';
-import { WhatsAppService } from '../../../common/whatsapp/whatsapp.service';
+import { IMessagingService, I_MESSAGING_SERVICE } from '../../../common/messaging/messaging.service.interface';
 import { ISubscriptionRepository, I_SUBSCRIPTION_REPOSITORY } from '../../../subscription/domain/ports/subscription.repository.interface';
 import { IOrganizationRepository, I_ORGANIZATION_REPOSITORY } from '../../../organization/domain/ports/organization.repository.interface';
 import { IUserRepository, I_USER_REPOSITORY } from '../../../user/domain/ports/user.repository.interface';
@@ -11,7 +11,7 @@ export class GenerateDailyReportUseCase {
 
   constructor(
     private readonly biService: BusinessIntelligenceService,
-    private readonly whatsAppService: WhatsAppService,
+    @Inject(I_MESSAGING_SERVICE) private readonly messagingService: IMessagingService,
     @Inject(I_SUBSCRIPTION_REPOSITORY) private readonly subscriptionRepository: ISubscriptionRepository,
     @Inject(I_ORGANIZATION_REPOSITORY) private readonly organizationRepository: IOrganizationRepository,
     @Inject(I_USER_REPOSITORY) private readonly userRepository: IUserRepository,
@@ -99,7 +99,7 @@ export class GenerateDailyReportUseCase {
 
 _SikaFlow AI_`;
 
-          await this.whatsAppService.sendMessage(user.phoneNumber, message);
+          await this.messagingService.sendMessage(user.phoneNumber, message);
           this.logger.log(`Daily Report sent to ${orgId}`);
 
       } catch (e) {
