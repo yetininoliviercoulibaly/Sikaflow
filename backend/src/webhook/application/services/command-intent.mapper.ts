@@ -71,6 +71,24 @@ export class CommandIntentMapper {
       }
     }
 
+    // SELECT_CAT|Type|Amount|Currency|Category - Category selection with full context
+    if (id.startsWith('SELECT_CAT|')) {
+      const parts = id.split('|');
+      // Format: SELECT_CAT|Type|Amount|Currency|Category
+      if (parts.length >= 5) {
+        return {
+          intent: LLMIntent.CREATE_TRANSACTION,
+          data: {
+            type: parts[1],
+            amount: parseFloat(parts[2]),
+            currency: parts[3],
+            category: parts[4],
+            confidence: 1.0  // User explicitly selected, high confidence
+          }
+        };
+      }
+    }
+
     // 3. Fallback: If it's a raw intent name, pass it through
     if (Object.values(LLMIntent).includes(id as any)) {
       return { intent: id, data: {} };

@@ -29,26 +29,29 @@ describe('ConversationalGuidanceService', () => {
       expect(result.message).toContain("Quel est le montant de cette dépense");
     });
 
-    it('should return interactive buttons for missing category in transactions', () => {
+    it('should return interactive buttons for missing category in transactions with encoded context', () => {
       const result = service.getGuidance(
         LLMIntent.CREATE_TRANSACTION,
         'category',
         MessagingPlatforms.TELEGRAM,
-        { type: 'EXPENSE' }
+        { type: 'EXPENSE', amount: 50, currency: 'EUR' }
       );
       expect(result.message).toContain("Dans quelle catégorie");
       expect(result.buttons).toBeDefined();
       expect(result.buttons?.length).toBeGreaterThan(3); // Telegram gets more
+      // Verify button IDs contain encoded context
+      expect(result.buttons?.[0].id).toContain('SELECT_CAT|EXPENSE|50|EUR|');
     });
 
-    it('should limit buttons to 3 for WhatsApp categories', () => {
+    it('should limit buttons to 3 for WhatsApp categories with encoded context', () => {
         const result = service.getGuidance(
           LLMIntent.CREATE_TRANSACTION,
           'category',
           MessagingPlatforms.WHATSAPP,
-          { type: 'EXPENSE' }
+          { type: 'INCOME', amount: 100, currency: 'XOF' }
         );
         expect(result.buttons?.length).toBe(3);
+        expect(result.buttons?.[0].id).toContain('SELECT_CAT|INCOME|100|XOF|');
       });
 
     it('should return friendly prompt for organization name', () => {

@@ -5,6 +5,7 @@ import { CheckSubscriptionUseCase } from '../../../subscription/application/use-
 import { IMessagingService } from '../../../common/messaging/messaging.service.interface';
 import { User } from '../../../user/domain/user.entity';
 import { ConversationalGuidanceService } from './conversational-guidance.service';
+import { ConversationStateService } from './conversation-state.service';
 import { LLMIntent } from '../../../common/llm/llm-types';
 import { MessagingPlatforms } from '../../../common/messaging/domain/constants/messaging-platforms.enum';
 
@@ -43,6 +44,7 @@ export class ActionExecutionService {
     private readonly checkSubscriptionUseCase: CheckSubscriptionUseCase,
     private readonly configService: ConfigService,
     private readonly guidanceService: ConversationalGuidanceService,
+    private readonly conversationState: ConversationStateService,
   ) {}
 
   async execute(params: ActionExecutionParams): Promise<void> {
@@ -68,6 +70,14 @@ export class ActionExecutionService {
         if (action.missing_fields && action.missing_fields.length > 0) {
              const firstField = action.missing_fields[0];
              const guidance = this.guidanceService.getGuidance(action.intent, firstField, platform, action.data);
+             
+             // Store pending action so we can merge context when user responds
+             this.conversationState.setPendingAction(senderPhoneNumber, {
+               intent: action.intent,
+               data: action.data || {},
+               missing_fields: action.missing_fields,
+               createdAt: new Date(),
+             });
              
              if (guidance.buttons && guidance.buttons.length > 0) {
                  await messagingService.sendInteractiveButtons(

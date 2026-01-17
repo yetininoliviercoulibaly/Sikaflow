@@ -9,6 +9,7 @@ import { IPromptRepository, I_PROMPT_REPOSITORY } from '../../../common/prompt/d
 import { TelegramMessagingAdapter } from '../../../common/messaging/telegram-messaging.adapter';
 import { ActionExecutionService } from '../services/action-execution.service';
 import { CommandIntentMapper } from '../services/command-intent.mapper';
+import { ConversationStateService } from '../services/conversation-state.service';
 
 /**
  * Use case for processing incoming Telegram messages
@@ -25,6 +26,7 @@ export class ProcessTelegramMessageUseCase {
     @Inject(I_PROMPT_REPOSITORY) private readonly promptRepository: IPromptRepository,
     private readonly actionExecutionService: ActionExecutionService,
     private readonly commandIntentMapper: CommandIntentMapper,
+    private readonly conversationState: ConversationStateService,
   ) {}
 
   async execute(update: TelegramUpdateDto): Promise<void> {
@@ -102,6 +104,52 @@ export class ProcessTelegramMessageUseCase {
       } else if (type === 'text' && content) {
         // Analyze via LLM
         analysis = await this.analyzeText(content, String(userId));
+        
+        // CONTEXT MERGE: Check for pending action and merge context
+        const pending = this.conversationState.getPendingAction(String(chatId));
+        if (pending) {
+          this.logger.log(`Merging pending context for ${chatId}: ${JSON.stringify(pending)}`);
+          
+          // If LLM extracted an amount and we have pending transaction context, merge them
+          if (pending.intent === LLMIntent.CREATE_TRANSACTION) {
+            const llmData = analysis.data || {};
+            
+            // Merge pending data with new LLM data (LLM data takes precedence for new fields)
+            const mergedData = { ...pending.data, ...llmData };
+            
+            // Determine remaining missing fields
+            const remainingMissing = (pending.missing_fields || []).filter(field => {
+              if (field === 'amount' && mergedData.amount) return false;
+              if (field === 'category' && mergedData.category) return false;
+              if (field === 'type' && mergedData.type) return false;
+              return true;
+            });
+            
+            // Update analysis to use merged intent and data
+            analysis = {
+              intent: pending.intent,
+              data: mergedData,
+              actions: [{
+                intent: pending.intent,
+                data: mergedData,
+                missing_fields: remainingMissing
+              }]
+            };
+            
+            // Update pending state with new data
+            if (remainingMissing.length > 0) {
+              this.conversationState.setPendingAction(String(chatId), {
+                intent: pending.intent,
+                data: mergedData,
+                missing_fields: remainingMissing,
+                createdAt: new Date()
+              });
+            } else {
+              // All fields collected, clear pending
+              this.conversationState.clearPendingAction(String(chatId));
+            }
+          }
+        }
       } else {
         // For non-text messages, we might want specific handling
         await this.telegramMessagingAdapter.sendMessage(
