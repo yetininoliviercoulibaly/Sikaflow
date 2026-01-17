@@ -6,6 +6,7 @@ import { IMessagingService } from '../../../common/messaging/messaging.service.i
 import { User } from '../../../user/domain/user.entity';
 import { MessagingPlatforms } from '../../../common/messaging/domain/constants/messaging-platforms.enum';
 import { LLMIntent } from '../../../common/llm/llm-types';
+import { ConfigService } from '@nestjs/config';
 
 describe('ActionExecutionService', () => {
   let service: ActionExecutionService;
@@ -41,6 +42,10 @@ describe('ActionExecutionService', () => {
         {
             provide: CheckSubscriptionUseCase,
             useValue: mockCheckSubscriptionUseCase,
+        },
+        {
+          provide: ConfigService,
+          useValue: { get: jest.fn().mockReturnValue('false') },
         }
       ],
     }).compile();
