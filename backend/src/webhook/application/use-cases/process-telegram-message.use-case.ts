@@ -207,12 +207,14 @@ export class ProcessTelegramMessageUseCase {
           // Merge pending data with new LLM data (LLM data takes precedence for new fields)
           const mergedData = { ...pending.data, ...llmData };
           
-          // HEURISTIC: If 'amount' is missing but user sent a number, force it.
+          // HEURISTIC: If 'amount' is missing but user sent a number (potentially with text/currency), extract it.
           if (!mergedData['amount'] && (pending.missing_fields || []).includes('amount')) {
-              const cleaned = content.trim().replace(',', '.');
-              if (/^\d+(\.\d+)?$/.test(cleaned)) {
-                  mergedData['amount'] = parseFloat(cleaned);
-              }
+               // Match first number in string (supports 50, 50.5, 50,5)
+               const numberMatch = content.match(/(\d+([.,]\d+)?)/);
+               if (numberMatch) {
+                   const rawAmount = numberMatch[0].replace(',', '.');
+                   mergedData['amount'] = parseFloat(rawAmount);
+               }
           }
 
           // Determine remaining missing fields
