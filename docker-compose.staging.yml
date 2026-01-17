@@ -37,11 +37,9 @@ services:
   # 3. MIGRATION RUNNER (Job Init)
   # ---------------------------------------------------------------------------
   migration-runner:
-    image: sikaflow-api:staging
-    build:
-      context: .
-      target: production
-    command: sh -c "npx mikro-orm migration:up && npm run seed:run"
+    # HARDCODED IMAGE to avoid variable expansion issues
+    image: ghcr.io/softilab/sikaflow-backend:develop
+    command: sh -c "npx mikro-orm migration:up --config ./dist/mikro-orm.config.js && npx mikro-orm seeder:run --config ./dist/mikro-orm.config.js"
     environment:
       NODE_ENV: staging
       DB_HOST: db
@@ -59,8 +57,9 @@ services:
   # ---------------------------------------------------------------------------
   # 4. API (NestJS)
   # ---------------------------------------------------------------------------
-  app:
-    image: sikaflow-api:staging
+  backend:
+    # HARDCODED IMAGE to avoid variable expansion issues
+    image: ghcr.io/softilab/sikaflow-backend:develop
     restart: always
     environment:
       NODE_ENV: staging
@@ -77,9 +76,19 @@ services:
       WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID}
       WHATSAPP_ACCESS_TOKEN: ${WHATSAPP_ACCESS_TOKEN}
       WHATSAPP_VERIFY_TOKEN: ${WHATSAPP_VERIFY_TOKEN}
+      WHATSAPP_APP_SECRET: ${WHATSAPP_APP_SECRET}
+      WHATSAPP_VERIFY_SIGNATURE: ${WHATSAPP_VERIFY_SIGNATURE}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
       WAVE_API_KEY: ${WAVE_API_KEY}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      GEMINI_MODEL_NAME: ${GEMINI_MODEL_NAME:-gemini-1.5-flash}
+      # Telegram
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET}
+      TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME}
+      # Feature Flags
+      BYPASS_SUBSCRIPTION_CHECK: ${BYPASS_SUBSCRIPTION_CHECK:-true}
     depends_on:
       db:
         condition: service_healthy
@@ -91,7 +100,20 @@ services:
       - sikaflow_net
 
   # ---------------------------------------------------------------------------
-  # 5. CLOUDFLARE TUNNEL (Expose to Internet)
+  # 5. FRONTEND (Next.js) - AJOUT MANQUANT
+  # ---------------------------------------------------------------------------
+  frontend:
+    # HARDCODED IMAGE
+    image: ghcr.io/softilab/sikaflow-frontend:develop
+    restart: always
+    environment:
+      NODE_ENV: staging
+      NEXT_PUBLIC_API_URL: https://api-staging.sika-flow.com
+    networks:
+      - sikaflow_net
+
+  # ---------------------------------------------------------------------------
+  # 6. CLOUDFLARE TUNNEL (Expose to Internet)
   # ---------------------------------------------------------------------------
   cloudflared:
     image: cloudflare/cloudflared:latest

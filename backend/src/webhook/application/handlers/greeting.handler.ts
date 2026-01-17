@@ -1,20 +1,19 @@
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { IActionHandler, ActionContext } from './action-handler.interface';
-import { WhatsAppService } from '../../../common/whatsapp/whatsapp.service';
 import { IUserRepository, I_USER_REPOSITORY } from '../../../user/domain/ports/user.repository.interface';
 import { IOrganizationRepository, I_ORGANIZATION_REPOSITORY } from '../../../organization/domain/ports/organization.repository.interface';
 import { StartOnboardingUseCase } from '../../../onboarding/application/use-cases/start-onboarding.use-case';
 import { GetNextStepUseCase } from '../../../onboarding/application/use-cases/get-next-step.use-case';
 import { FeatureGuard } from '../../../common/guards/feature.guard';
 import { FeatureFlag } from '../../../subscription/domain/feature-flag.enum';
+import { LLMIntent } from '../../../common/llm/llm-types';
 
 @Injectable()
 export class GreetingHandler implements IActionHandler {
     private readonly logger = new Logger(GreetingHandler.name);
 
     constructor(
-        private readonly whatsAppService: WhatsAppService,
         @Inject(I_USER_REPOSITORY) private readonly userRepository: IUserRepository,
         @Inject(I_ORGANIZATION_REPOSITORY) private readonly organizationRepository: IOrganizationRepository,
         private readonly startOnboardingUseCase: StartOnboardingUseCase,
@@ -23,11 +22,11 @@ export class GreetingHandler implements IActionHandler {
     ) {}
 
     canHandle(intent: string): boolean {
-        return intent === 'GREETING';
+        return intent === LLMIntent.GREETING;
     }
 
     async handle(data: any, context: ActionContext): Promise<void> {
-        const { senderPhoneNumber, user } = context;
+        const { senderPhoneNumber, user, messagingService } = context;
 
         // Use pre-fetched user from context instead of DB lookup
         if (user && user.lastActiveOrganizationId) {
@@ -55,7 +54,7 @@ export class GreetingHandler implements IActionHandler {
 
                 if (nextStep.step && !nextStep.isCompleted) {
                     const tipMessage = 'tipMessage' in nextStep.step ? nextStep.step.tipMessage : '';
-                    await this.whatsAppService.sendMessage(
+                    await messagingService.sendMessage(
                         senderPhoneNumber,
                         `👋 Re-bonjour !\n\n📝 *Étape ${nextStep.currentStepNumber}/${nextStep.totalSteps}*\n\n${tipMessage}`,
                     );
@@ -63,12 +62,12 @@ export class GreetingHandler implements IActionHandler {
                 }
             }
 
-            await this.whatsAppService.sendMessage(
+            await messagingService.sendMessage(
                 senderPhoneNumber,
                 `👋 Re-bonjour ! \n\nVous êtes connecté à votre organisation active.\n\nEnvoyez "Aide" pour voir les commandes disponibles.`,
             );
         } else {
-            await this.whatsAppService.sendMessage(
+            await messagingService.sendMessage(
                 senderPhoneNumber,
                 `👋 Bonjour et bienvenue sur Event-Pilot !\n\nJe suis votre assistant pour gérer votre établissement.\n\nJe ne trouve pas encore d'organisation liée à votre numéro.\n👉 Pour commencer, envoyez : "Créer le club [Nom]" (ex: Créer le club Miami 225)`,
             );

@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { IEventPassRepository, I_EVENT_PASS_REPOSITORY } from '../../domain/ports/event-pass.repository.interface';
 import { ISubscriptionRepository, I_SUBSCRIPTION_REPOSITORY } from '../../domain/ports/subscription.repository.interface';
 import { SubscriptionStatus } from '../../domain/subscription.entity';
@@ -24,10 +25,21 @@ export class CheckSubscriptionUseCase {
     private readonly eventPassRepository: IEventPassRepository,
     @Inject(I_SUBSCRIPTION_REPOSITORY)
     private readonly subscriptionRepository: ISubscriptionRepository,
+    private readonly configService: ConfigService,
   ) {}
 
   async execute(command: CheckSubscriptionCommand): Promise<CheckSubscriptionResult> {
     const { organizationId } = command;
+
+    // Check for bypass flag (Staging/Dev)
+    if (this.configService.get('BYPASS_SUBSCRIPTION_CHECK') === 'true') {
+        const result: CheckSubscriptionResult = {
+            hasAccess: true,
+            reason: 'Bypass (Staging)',
+            expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) // 1 year
+        };
+        return result;
+    }
 
     // Check cache first
     const cached = this.accessCache.get(organizationId);

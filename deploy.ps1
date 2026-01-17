@@ -1,0 +1,41 @@
+# ====================================================================
+# SikaFlow - Script de déploiement (Final v3)
+# ====================================================================
+
+param(
+    [Parameter(Mandatory=$true)]
+    [ValidateSet("staging", "production")]
+    [string]$TargetEnv
+)
+
+$VPS_USER = Read-Host "Nom d'utilisateur VPS (ex: ubuntu)"
+$VPS_IP = Read-Host "Adresse IP du VPS"
+$UserHost = "${VPS_USER}@${VPS_IP}"
+
+Write-Host "`n🚀 Deploiement sur $TargetEnv ($VPS_IP)" -ForegroundColor Cyan
+Write-Host "NOTE: Assurez-vous que le build GitHub Actions est termine !" -ForegroundColor Yellow
+
+if ($TargetEnv -eq "staging") {
+    $ComposeFile = "docker-compose.staging.yml"
+} else {
+    $ComposeFile = "docker-compose.prod.yml"
+}
+
+# 1. Copie des fichiers
+Write-Host "`n1️⃣  [Mot de passe requis] Copie des fichiers..." -ForegroundColor Cyan
+scp deploy.sh $ComposeFile "${UserHost}:~/"
+
+if ($LASTEXITCODE -ne 0) { Write-Error "Echec copie SCP."; exit 1 }
+
+# 2. Execution (Commande unique sur une seule ligne)
+Write-Host "`n2️⃣  [Mot de passe requis] Lancement..." -ForegroundColor Cyan
+
+# Astuce: On chaine tout avec '&&' sur une seule ligne PowerShell pour eviter les problemes CRLF
+ssh $UserHost "mkdir -p ~/sikaflow && mv ~/$ComposeFile ~/sikaflow/ && tr -d '\r' < ~/deploy.sh > ~/sikaflow/deploy.sh && rm ~/deploy.sh && chmod +x ~/sikaflow/deploy.sh && ~/sikaflow/deploy.sh $TargetEnv"
+
+if ($LASTEXITCODE -ne 0) { 
+    Write-Error "Echec du deploiement distant."
+    exit 1 
+}
+
+Write-Host "`n✅ SUCCES ! Deploiement termine." -ForegroundColor Green

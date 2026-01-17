@@ -38,20 +38,20 @@ export class Migration20240103193000 extends Migration {
       -- 4. Seed Data
       -- Payment Methods
       INSERT INTO payment_method (id, code, name, is_active, supported_currencies) VALUES 
-      ('a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1', 'WAVE', 'Wave Mobile Money', true, '["XOF"]'),
-      ('b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2', 'STRIPE', 'Carte Bancaire', true, '["EUR", "USD"]')
+      ('a1a1a1a1-a1a1-4a1a-8a1a-a1a1a1a1a1a1', 'WAVE', 'Wave Mobile Money', true, '["XOF"]'),
+      ('b2b2b2b2-b2b2-4b2b-8b2b-b2b2b2b2b2b2', 'STRIPE', 'Carte Bancaire', true, '["EUR", "USD"]')
       ON CONFLICT (code) DO NOTHING;
 
       -- Subscription Plans
       -- Wave (15k for 3 months, 50k for 1 year)
       INSERT INTO subscription_plan (id, name, price, currency, duration_months, payment_method_id, description) VALUES
-      ('c3c3c3c3-c3c3-c3c3-c3c3-c3c3c3c3c3c3', 'Pass Trimestriel', 15000, 'XOF', 3, 'a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1', 'Abonnement 3 Mois'),
-      ('d4d4d4d4-d4d4-d4d4-d4d4-d4d4d4d4d4d4', 'Pass Annuel', 50000, 'XOF', 12, 'a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1', 'Abonnement 1 An (Best Value)')
+      ('c3c3c3c3-c3c3-4c3c-8c3c-c3c3c3c3c3c3', 'Pass Trimestriel', 15000, 'XOF', 3, 'a1a1a1a1-a1a1-4a1a-8a1a-a1a1a1a1a1a1', 'Abonnement 3 Mois'),
+      ('d4d4d4d4-d4d4-4d4d-8d4d-d4d4d4d4d4d4', 'Pass Annuel', 50000, 'XOF', 12, 'a1a1a1a1-a1a1-4a1a-8a1a-a1a1a1a1a1a1', 'Abonnement 1 An (Best Value)')
       ON CONFLICT DO NOTHING;
 
       -- Stripe (9.99 EUR Monthly)
       INSERT INTO subscription_plan (id, name, price, currency, duration_months, payment_method_id, description) VALUES
-      ('e5e5e5e5-e5e5e5e5-e5e5e5e5-e5e5e5e5-e5e5e5e5', 'Premium Mensuel', 9.99, 'EUR', 1, 'b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2', 'Abonnement Mensuel Flexible')
+      ('e5e5e5e5-e5e5-4e5e-8e5e-e5e5e5e5e5e5', 'Premium Mensuel', 9.99, 'EUR', 1, 'b2b2b2b2-b2b2-4b2b-8b2b-b2b2b2b2b2b2', 'Abonnement Mensuel Flexible')
       ON CONFLICT DO NOTHING;
     `);
   }

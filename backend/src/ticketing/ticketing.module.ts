@@ -23,12 +23,16 @@ import { GetEventStatsUseCase } from './application/use-cases/get-event-stats.us
 import { EventController } from './application/controllers/event.controller';
 import { WhatsAppModule } from '../common/whatsapp/whatsapp.module';
 import { LlmModule } from '../common/llm/llm.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
     MikroOrmModule.forFeature([EventSchema, TicketSchema, TicketClaimSchema]),
     WhatsAppModule,
+    MikroOrmModule.forFeature([EventSchema, TicketSchema, TicketClaimSchema]),
+    WhatsAppModule,
     LlmModule,
+    AuthModule,
   ],
   controllers: [EventController],
   providers: [

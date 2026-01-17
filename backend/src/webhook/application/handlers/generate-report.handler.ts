@@ -5,6 +5,7 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { IUserRepository, I_USER_REPOSITORY } from '../../../user/domain/ports/user.repository.interface';
 import { Inject } from '@nestjs/common';
+import { LLMIntent } from '../../../common/llm/llm-types';
 
 @Injectable()
 export class GenerateReportHandler implements IActionHandler {
@@ -15,7 +16,7 @@ export class GenerateReportHandler implements IActionHandler {
     ) {}
 
     canHandle(intent: string): boolean {
-        return intent === 'GENERATE_REPORT';
+        return intent === LLMIntent.GENERATE_REPORT;
     }
 
 

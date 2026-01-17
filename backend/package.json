@@ -1,7 +1,7 @@
 {
   "name": "sikaflow",
   "version": "1.0.0",
-  "description": "🚀 Event-Pilot (v2.0)The AI-Powered Orchestration OS for Modern Event ManagementEvent-Pilot est une plateforme SaaS \"WhatsApp-First\" conçue pour digitaliser la gestion opérationnelle et financière des événements de masse et des établissements de nuit. Grâce à l'IA multimodale (Gemini), elle transforme le chaos des communications informelles en données structurées et en rapports professionnels.🌍 Dual Market FocusAfrique Francophone : Optimisé pour les promoteurs de concerts et matchs de foot (Gestion du cash, Mobile Money, rapports sponsors).Québec (Montréal) : Spécifiquement adapté au Nightlife (Calcul des taxes TPS/TVQ, pourboires, conformité RACJ/Sécurité).✨ Caractéristiques Clés📱 WhatsApp-First : Aucune application à télécharger. Tout se passe via l'interface de messagerie préférée des utilisateurs.🎙️ Ingestion Multimodale : \\* Vocal-to-Data : Extraction intelligente des dépenses depuis des notes vocales (comprend le Nouchi et le Joual).Smart OCR : Numérisation de factures et reçus avec extraction automatique des taxes et tips.🏢 Mode Organisation : Gestion multi-utilisateurs avec rôles hiérarchiques (Admin, Manager, Staff).🛡️ Registre de Sécurité : Consignation instantanée des incidents pour une traçabilité légale.📄 Reporting Automatisé : Génération de rapports PDF \"Sponsor-Ready\" ou \"Comptable-Ready\" en un clic.🛠️ Stack TechniqueRuntime : Node.js (Express)Intelligence Artificielle : Google Vertex AI (Gemini 1.5/3 Pro)Base de Données : PostgreSQL 15 (JSONB pour les métadonnées IA)Cache & Sessions : Redis 7 (State Machine conversationnelle)Interface : WhatsApp Cloud API (Meta)Conteneurisation : Docker & Docker-ComposeCI/CD : GitHub Actions🏗️ Architecture du SystèmeExtrait de codegraph TD\r User[📱 Utilisateurs Multiples] --> WA[☁️ WhatsApp Cloud API]\r WA --> WH[🚀 Webhook Node.js]",
+  "description": "🚀 SikaFlow (v2.0) The AI-Powered Orchestration OS for Modern Event Management. SikaFlow est une plateforme SaaS \"WhatsApp-First\" conçue pour digitaliser la gestion opérationnelle et financière des événements de masse et des établissements de nuit. Grâce à l'IA multimodale (Gemini), elle transforme le chaos des communications informelles en données structurées et en rapports professionnels.🌍 Dual Market FocusAfrique Francophone : Optimisé pour les promoteurs de concerts et matchs de foot (Gestion du cash, Mobile Money, rapports sponsors).Québec (Montréal) : Spécifiquement adapté au Nightlife (Calcul des taxes TPS/TVQ, pourboires, conformité RACJ/Sécurité).✨ Caractéristiques Clés📱 WhatsApp-First : Aucune application à télécharger. Tout se passe via l'interface de messagerie préférée des utilisateurs.🎙️ Ingestion Multimodale : \\* Vocal-to-Data : Extraction intelligente des dépenses depuis des notes vocales (comprend le Nouchi et le Joual).Smart OCR : Numérisation de factures et reçus avec extraction automatique des taxes et tips.🏢 Mode Organisation : Gestion multi-utilisateurs avec rôles hiérarchiques (Admin, Manager, Staff).🛡️ Registre de Sécurité : Consignation instantanée des incidents pour une traçabilité légale.📄 Reporting Automatisé : Génération de rapports PDF \"Sponsor-Ready\" ou \"Comptable-Ready\" en un clic.🛠️ Stack TechniqueRuntime : Node.js (Express)Intelligence Artificielle : Google Vertex AI (Gemini 1.5/3 Pro)Base de Données : PostgreSQL 15 (JSONB pour les métadonnées IA)Cache & Sessions : Redis 7 (State Machine conversationnelle)Interface : WhatsApp Cloud API (Meta)Conteneurisation : Docker & Docker-ComposeCI/CD : GitHub Actions🏗️ Architecture du SystèmeExtrait de codegraph TD\r User[📱 Utilisateurs Multiples] --> WA[☁️ WhatsApp Cloud API]\r WA --> WH[🚀 Webhook Node.js]",
   "main": "index.js",
   "directories": {
     "doc": "docs"
@@ -30,11 +30,12 @@
   "homepage": "https://github.com/yetininoliviercoulibaly/SikaFlow#readme",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
-    "@mikro-orm/core": "^6.6.2",
-    "@mikro-orm/migrations": "^6.6.2",
+    "@mikro-orm/cli": "6.6.4",
+    "@mikro-orm/core": "6.6.4",
+    "@mikro-orm/migrations": "6.6.4",
     "@mikro-orm/nestjs": "^6.1.1",
-    "@mikro-orm/postgresql": "^6.6.2",
-    "@mikro-orm/seeder": "^6.6.2",
+    "@mikro-orm/postgresql": "6.6.4",
+    "@mikro-orm/seeder": "6.6.4",
     "@nestjs/axios": "^4.0.1",
     "@nestjs/bullmq": "^11.0.4",
     "@nestjs/common": "^11.1.11",
@@ -65,7 +66,7 @@
     "uuid": "^13.0.0"
   },
   "devDependencies": {
-    "@mikro-orm/cli": "^6.6.2",
+    "@nestjs/cli": "^11.0.16",
     "@nestjs/testing": "^11.1.11",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.0.3",

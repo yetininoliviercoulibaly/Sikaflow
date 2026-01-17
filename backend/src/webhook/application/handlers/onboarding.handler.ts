@@ -1,6 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { IActionHandler, ActionContext } from './action-handler.interface';
-import { WhatsAppService } from '../../../common/whatsapp/whatsapp.service';
 import { FeatureGuard } from '../../../common/guards/feature.guard';
 import { FeatureFlag } from '../../../subscription/domain/feature-flag.enum';
 import { IUserRepository, I_USER_REPOSITORY } from '../../../user/domain/ports/user.repository.interface';
@@ -9,13 +8,13 @@ import { StartOnboardingUseCase } from '../../../onboarding/application/use-case
 import { GetNextStepUseCase } from '../../../onboarding/application/use-cases/get-next-step.use-case';
 import { GetAdoptionReportUseCase } from '../../../onboarding/application/use-cases/get-adoption-report.use-case';
 import { LLMIntent } from '../../../common/llm/llm-types';
+import { IMessagingService } from '../../../common/messaging/messaging.service.interface';
 
 @Injectable()
 export class OnboardingHandler implements IActionHandler {
   private readonly logger = new Logger(OnboardingHandler.name);
 
   constructor(
-    private readonly whatsAppService: WhatsAppService,
     private readonly featureGuard: FeatureGuard,
     @Inject(I_USER_REPOSITORY) private readonly userRepository: IUserRepository,
     @Inject(I_ORGANIZATION_REPOSITORY) private readonly organizationRepository: IOrganizationRepository,
@@ -33,7 +32,7 @@ export class OnboardingHandler implements IActionHandler {
   }
 
   async handle(data: any, context: ActionContext): Promise<void> {
-    const { senderPhoneNumber, organizationId } = context;
+    const { senderPhoneNumber, organizationId, messagingService } = context;
 
     // Check if feature is enabled for this organization
     if (organizationId) {
@@ -43,7 +42,7 @@ export class OnboardingHandler implements IActionHandler {
       );
 
       if (!hasAccess) {
-        await this.whatsAppService.sendMessage(
+        await messagingService.sendMessage(
           senderPhoneNumber,
           `⚡ *Fonctionnalité Premium*\n\n` +
           `Le tutoriel interactif n'est pas inclus dans votre plan actuel.\n\n` +
@@ -58,24 +57,25 @@ export class OnboardingHandler implements IActionHandler {
     switch (intent) {
       case LLMIntent.START_ONBOARDING:
       case LLMIntent.ONBOARDING_NEXT:
-        await this.handleOnboardingFlow(senderPhoneNumber, organizationId);
+        await this.handleOnboardingFlow(senderPhoneNumber, organizationId, messagingService);
         break;
       case LLMIntent.ADOPTION_REPORT:
-        await this.handleAdoptionReport(senderPhoneNumber, organizationId);
+        await this.handleAdoptionReport(senderPhoneNumber, organizationId, messagingService);
         break;
       default:
-        await this.handleOnboardingFlow(senderPhoneNumber, organizationId);
+        await this.handleOnboardingFlow(senderPhoneNumber, organizationId, messagingService);
     }
   }
 
   private async handleOnboardingFlow(
     senderPhoneNumber: string,
     organizationId: string | null,
+    messagingService: IMessagingService,
   ): Promise<void> {
     const user = await this.userRepository.findByPhoneNumber(senderPhoneNumber);
     
     if (!user || !organizationId) {
-      await this.whatsAppService.sendMessage(
+      await messagingService.sendMessage(
         senderPhoneNumber,
         `👋 Bienvenue ! Pour commencer le tutoriel, vous devez d'abord créer une organisation.\n\n` +
         `👉 Envoyez : "Créer le club [Nom]"`,
@@ -101,7 +101,7 @@ export class OnboardingHandler implements IActionHandler {
     });
 
     if (nextStepResult.isCompleted) {
-      await this.whatsAppService.sendMessage(
+      await messagingService.sendMessage(
         senderPhoneNumber,
         `🎊 *Tutoriel terminé !*\n\n` +
         `Vous maîtrisez maintenant Event-Pilot.\n\n` +
@@ -112,7 +112,7 @@ export class OnboardingHandler implements IActionHandler {
 
     if (nextStepResult.step) {
       const stepInfo = `📝 *Étape ${nextStepResult.currentStepNumber}/${nextStepResult.totalSteps}*\n\n`;
-      await this.whatsAppService.sendMessage(
+      await messagingService.sendMessage(
         senderPhoneNumber,
         stepInfo + nextStepResult.step.tipMessage,
       );
@@ -122,9 +122,10 @@ export class OnboardingHandler implements IActionHandler {
   private async handleAdoptionReport(
     senderPhoneNumber: string,
     organizationId: string | null,
+    messagingService: IMessagingService,
   ): Promise<void> {
     if (!organizationId) {
-      await this.whatsAppService.sendMessage(
+      await messagingService.sendMessage(
         senderPhoneNumber,
         `❌ Vous devez être connecté à une organisation pour voir le rapport d'adoption.`,
       );
@@ -145,6 +146,6 @@ export class OnboardingHandler implements IActionHandler {
       }
     }
 
-    await this.whatsAppService.sendMessage(senderPhoneNumber, message);
+    await messagingService.sendMessage(senderPhoneNumber, message);
   }
 }

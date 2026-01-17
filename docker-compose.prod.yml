@@ -1,0 +1,130 @@
+version: "3.8"
+
+services:
+  # ---------------------------------------------------------------------------
+  # 1. DATABASE (PostgreSQL)
+  # ---------------------------------------------------------------------------
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+    networks:
+      - sikaflow_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # 2. CACHE (Redis)
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:alpine
+    restart: always
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data_prod:/data
+    networks:
+      - sikaflow_net
+
+  # ---------------------------------------------------------------------------
+  # 3. MIGRATION RUNNER (Job Init)
+  # ---------------------------------------------------------------------------
+  migration-runner:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/sikaflow-backend:latest
+    command: sh -c "npx mikro-orm migration:up"
+    environment:
+      NODE_ENV: production
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      MIKRO_ORM_MIGRATIONS_DISABLE_FOREIGN_KEYS: "false"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - sikaflow_net
+
+  # ---------------------------------------------------------------------------
+  # 4. API (NestJS)
+  # ---------------------------------------------------------------------------
+  backend:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/sikaflow-backend:latest
+    restart: always
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      APP_URL: ${APP_URL}
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # Keys
+      WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID}
+      WHATSAPP_ACCESS_TOKEN: ${WHATSAPP_ACCESS_TOKEN}
+      WHATSAPP_VERIFY_TOKEN: ${WHATSAPP_VERIFY_TOKEN}
+      WHATSAPP_APP_SECRET: ${WHATSAPP_APP_SECRET}
+      WHATSAPP_VERIFY_SIGNATURE: "true"
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      WAVE_API_KEY: ${WAVE_API_KEY}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      GEMINI_MODEL_NAME: ${GEMINI_MODEL_NAME:-gemini-1.5-flash}
+      # Telegram
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET}
+      TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME}
+      # Feature Flags
+      BYPASS_SUBSCRIPTION_CHECK: ${BYPASS_SUBSCRIPTION_CHECK:-false}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      migration-runner:
+        condition: service_completed_successfully
+    networks:
+      - sikaflow_net
+
+  # ---------------------------------------------------------------------------
+  # 5. FRONTEND (Next.js)
+  # ---------------------------------------------------------------------------
+  frontend:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/sikaflow-frontend:latest
+    restart: always
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: ${APP_URL}
+    networks:
+      - sikaflow_net
+
+  # ---------------------------------------------------------------------------
+  # 6. CLOUDFLARE TUNNEL (Expose to Internet)
+  # ---------------------------------------------------------------------------
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: always
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    networks:
+      - sikaflow_net
+
+volumes:
+  postgres_data_prod:
+  redis_data_prod:
+
+networks:
+  sikaflow_net:
+    driver: bridge
