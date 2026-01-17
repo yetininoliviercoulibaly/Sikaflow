@@ -6,14 +6,18 @@ import { IPdfGeneratorService } from '../domain/ports/pdf-generator-service.inte
 export class PdfGeneratorServiceImpl implements IPdfGeneratorService {
   async generateReportPdf(data: any): Promise<Buffer> {
     return new Promise((resolve, reject) => {
-      const doc = new PDFDocument();
-      const buffers: Buffer[] = [];
+      try {
+        const doc = new PDFDocument();
+        const buffers: Buffer[] = [];
 
-      doc.on('data', buffers.push.bind(buffers));
-      doc.on('end', () => {
-        const pdfData = Buffer.concat(buffers);
-        resolve(pdfData);
-      });
+        doc.on('data', buffers.push.bind(buffers));
+        doc.on('end', () => {
+          const pdfData = Buffer.concat(buffers);
+          resolve(pdfData);
+        });
+        doc.on('error', (err) => {
+          reject(err);
+        });
 
       // Header
       doc.fontSize(25).text('SikaFlow Report', { align: 'center' });
@@ -39,6 +43,9 @@ export class PdfGeneratorServiceImpl implements IPdfGeneratorService {
       }
 
       doc.end();
+    } catch (err) {
+      reject(err);
+    }
     });
   }
 }
