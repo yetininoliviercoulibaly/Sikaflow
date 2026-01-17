@@ -8,6 +8,7 @@ import { ILLMProvider, LLM_PROVIDER_TOKEN } from '../../../common/llm/llm-provid
 import { IPromptRepository, I_PROMPT_REPOSITORY } from '../../../common/prompt/domain/ports/prompt.repository.interface';
 import { TelegramMessagingAdapter } from '../../../common/messaging/telegram-messaging.adapter';
 import { ActionExecutionService } from '../services/action-execution.service';
+import { CommandIntentMapper } from '../services/command-intent.mapper';
 
 /**
  * Use case for processing incoming Telegram messages
@@ -23,6 +24,7 @@ export class ProcessTelegramMessageUseCase {
     @Inject(LLM_PROVIDER_TOKEN) private readonly llmProvider: ILLMProvider,
     @Inject(I_PROMPT_REPOSITORY) private readonly promptRepository: IPromptRepository,
     private readonly actionExecutionService: ActionExecutionService,
+    private readonly commandIntentMapper: CommandIntentMapper,
   ) {}
 
   async execute(update: TelegramUpdateDto): Promise<void> {
@@ -48,15 +50,20 @@ export class ProcessTelegramMessageUseCase {
 
     if (!chatId || !data) return;
 
-    // Process callback data as an action
-    // Format expected: INTENT:param1:param2
-    const [intent, ...params] = data.split(':');
+    // Map callback data to action
+    const mapped = this.commandIntentMapper.map(data);
+    const actions = mapped ? [mapped] : [];
+    
+    if (actions.length === 0) {
+        this.logger.warn(`No mapping found for callback data: ${data}`);
+        return;
+    }
     
     // Find user by Telegram ID
     const user = await this.userRepository.findByPhoneNumber(String(chatId));
 
     await this.actionExecutionService.execute({
-        actions: [{ intent, data: { params } }],
+        actions,
         messagingService: this.telegramMessagingAdapter,
         user,
         senderPhoneNumber: String(chatId),
