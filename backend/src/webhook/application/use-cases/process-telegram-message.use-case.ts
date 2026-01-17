@@ -189,9 +189,9 @@ export class ProcessTelegramMessageUseCase {
 
 
   private async resolveAnalysis(content: string, chatId: number, userId: number): Promise<LLMAnalysisResult> {
-      let analysis = await this.analyzeText(content, String(userId));
-      
       const pending = this.conversationState.getPendingAction(String(chatId));
+      let analysis = await this.analyzeText(content, String(userId), pending);
+      
       if (!pending) return analysis;
 
       this.logger.log(`Merging pending context for ${chatId}: ${JSON.stringify(pending)}`);
@@ -224,7 +224,7 @@ export class ProcessTelegramMessageUseCase {
       return analysis;
   }
 
-  private applyHeuristics(content: string, pending: { missing_fields?: string[], data: Record<string, unknown> }, llmData: Record<string, unknown>): Record<string, unknown> {
+  private applyHeuristics(content: string, pending: { intent: string, missing_fields?: string[], data: Record<string, unknown> }, llmData: Record<string, unknown>): Record<string, unknown> {
       const mergedData = { ...pending.data, ...llmData };
       const missingFields = pending.missing_fields || [];
       const lowerContent = content.toLowerCase();
@@ -241,6 +241,14 @@ export class ProcessTelegramMessageUseCase {
           const extracted = this.extractMetricFromText(lowerContent);
           if (extracted) mergedData['metric'] = extracted;
       }
+      
+      // Name heuristic: If creating organization and name is missing, use raw message if it looks like a name
+      if (!mergedData['name'] && missingFields.includes('name') && pending.intent === LLMIntent.CREATE_ORGANIZATION) {
+          if (content.length > 2 && content.length < 50 && !content.includes('/')) {
+              mergedData['name'] = content;
+          }
+      }
+
       return mergedData;
   }
 
@@ -306,12 +314,18 @@ export class ProcessTelegramMessageUseCase {
     return { type: 'unknown' };
   }
 
-  private async analyzeText(text: string, userPhone: string): Promise<LLMAnalysisResult> {
+  private async analyzeText(text: string, userPhone: string, pendingAction?: any): Promise<LLMAnalysisResult> {
     const promptKey = 'analyze_message';
     const template = await this.promptRepository.getTemplate(promptKey);
     
     return this.llmProvider.analyzeText(text, {
-      context: { userPhone },
+      context: { 
+          userPhone,
+          pendingAction: pendingAction ? {
+              intent: pendingAction.intent,
+              missing_fields: pendingAction.missing_fields
+          } : null
+      },
       systemPrompt: template?.content,
     });
   }
