@@ -46,19 +46,52 @@ export class ReportProcessor extends WorkerHost {
           // Select the correct messaging service based on platform
           const messagingService = this.getMessagingService(platform || MessagingPlatforms.WHATSAPP);
 
-          // 1. Fetch Data
-          this.logger.debug(`[Job:${job.id}] Fetching transactions/incidents...`);
-          const transactions = await this.orm.em.find(Transaction, {}, { limit: 10, orderBy: { transactionDate: 'DESC' } });
-          const incidents = await this.orm.em.find(Incident, {}, { limit: 5, orderBy: { occurredAt: 'DESC' } });
+          // 1. Fetch Data (STRICT ISOLATION)
+          const orgId = job.data.organizationId;
+          if (!orgId) {
+            throw new Error(`[Job:${job.id}] Missing organizationId in job data. Cannot generate report.`);
+          }
+
+          this.logger.debug(`[Job:${job.id}] Fetching transactions/incidents for Org:${orgId}...`);
+          const transactions = await this.orm.em.find(Transaction, { organizationId: orgId }, { limit: 10, orderBy: { transactionDate: 'DESC' } });
+          const incidents = await this.orm.em.find(Incident, { organizationId: orgId }, { limit: 5, orderBy: { occurredAt: 'DESC' } });
+
+          // 1b. Calculate Totals & Translate
+          const totalIncome = transactions
+            .filter(t => t.type === 'INCOME')
+            .reduce((sum, t) => sum + Number(t.amount), 0);
+          
+          const totalExpense = transactions
+            .filter(t => t.type === 'EXPENSE')
+            .reduce((sum, t) => sum + Number(t.amount), 0);
+
+          const formattedItems = [
+              ...transactions.map(t => ({
+                  type: t.type === 'INCOME' ? 'REVENU' : 'DÉPENSE',
+                  amount: t.amount,
+                  currency: t.currency,
+                  description: t.description,
+                  date: t.transactionDate
+              })),
+              ...incidents.map(i => ({
+                  type: 'INCIDENT',
+                  severity: i.severity,
+                  description: i.description,
+                  date: i.occurredAt
+              }))
+          ];
 
           // 2. Generate PDF
           this.logger.debug(`[Job:${job.id}] Generating PDF...`);
           const pdfBuffer = await this.pdfGenerator.generateReportPdf({
-              title: `Flash Report - ${new Date().toLocaleDateString()}`,
-              items: [
-                  ...transactions.map(t => `[${t.type}] ${t.amount} ${t.currency} - ${t.description}`),
-                  ...incidents.map(i => `[INCIDENT] ${i.severity} - ${i.description}`)
-              ]
+              title: `Flash Report - ${new Date().toLocaleDateString('fr-FR')}`,
+              summary: {
+                  totalIncome,
+                  totalExpense,
+                  netChange: totalIncome - totalExpense,
+                  currency: transactions[0]?.currency || 'XOF'
+              },
+              items: formattedItems
           });
 
           // 3. Send via platform-agnostic messaging
