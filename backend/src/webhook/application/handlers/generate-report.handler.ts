@@ -28,6 +28,12 @@ export class GenerateReportHandler implements IActionHandler {
             type: data?.type || 'FLASH'
         });
 
+        // Send confirmation message
+        await context.messagingService.sendMessage(
+            context.senderPhoneNumber,
+            `📊 *Rapport en cours de génération...*\n\nVous recevrez le PDF dans quelques instants.`
+        );
+
         // Emit Event (fetch user first)
         const user = await this.userRepository.findByPhoneNumber(context.senderPhoneNumber);
         if (user) {
