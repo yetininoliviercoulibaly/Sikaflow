@@ -1,4 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { IActionHandler, ACTION_HANDLER_TOKEN, ActionContext } from '../handlers/action-handler.interface';
 import { CheckSubscriptionUseCase } from '../../../subscription/application/use-cases/check-subscription.use-case';
 import { IMessagingService } from '../../../common/messaging/messaging.service.interface';
@@ -39,6 +40,7 @@ export class ActionExecutionService {
     @Inject(ACTION_HANDLER_TOKEN)
     private readonly actionHandlers: IActionHandler[],
     private readonly checkSubscriptionUseCase: CheckSubscriptionUseCase,
+    private readonly configService: ConfigService,
   ) {}
 
   async execute(params: ActionExecutionParams): Promise<void> {
@@ -48,7 +50,8 @@ export class ActionExecutionService {
     for (const action of actions) {
       try {
         // 1. Check Subscription (unless bypassed)
-        if (!this.BYPASS_INTENTS.includes(action.intent) && organizationId) {
+        const bypassSubscriptionConfig = this.configService.get('BYPASS_SUBSCRIPTION_CHECK') === 'true';
+        if (!bypassSubscriptionConfig && !this.BYPASS_INTENTS.includes(action.intent) && organizationId) {
             const access = await this.checkSubscriptionUseCase.execute({ organizationId });
             if (!access.hasAccess) {
                 await messagingService.sendMessage(
