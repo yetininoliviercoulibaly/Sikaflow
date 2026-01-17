@@ -27,6 +27,7 @@ import { SubscriptionModule } from '../subscription/subscription.module';
 import { TicketingModule } from '../ticketing/ticketing.module'; 
 import { PaymentModule } from '../payment/payment.module';
 import { OnboardingModule } from '../onboarding/onboarding.module';
+import { IncidentModule } from '../incident/incident.module';
 
 import { CreateEventHandler } from './application/handlers/create-event.handler';
 import { ScanTicketHandler } from './application/handlers/scan-ticket.handler';
@@ -58,6 +59,7 @@ import { HelpHandler } from './application/handlers/help.handler';
 import { OnboardingHandler } from './application/handlers/onboarding.handler';
 import { FeatureGuard } from '../common/guards/feature.guard';
 import { UnknownIntentHandler } from './application/handlers/unknown-intent.handler';
+import { ReportIncidentHandler } from './application/handlers/report-incident.handler';
 
 @Module({
   imports: [
@@ -81,6 +83,7 @@ import { UnknownIntentHandler } from './application/handlers/unknown-intent.hand
     PaymentModule,
     FeedbackModule,
     OnboardingModule,
+    IncidentModule,
   ],
   controllers: [WhatsAppController, TelegramController],
   providers: [
@@ -127,6 +130,7 @@ import { UnknownIntentHandler } from './application/handlers/unknown-intent.hand
     ClaimTicketHandler,
     OnboardingHandler,
     UnknownIntentHandler,
+    ReportIncidentHandler,
     FeatureGuard,
     {
         provide: ACTION_HANDLER_TOKEN,
@@ -149,7 +153,8 @@ import { UnknownIntentHandler } from './application/handlers/unknown-intent.hand
             checkStock,
             feedbackHandler,
             onboardingHandler,
-            unknownIntentHandler
+            unknownIntentHandler,
+            reportIncidentHandler
         ) => [
             createTransaction, 
             askData, 
@@ -169,7 +174,8 @@ import { UnknownIntentHandler } from './application/handlers/unknown-intent.hand
             checkStock,
             feedbackHandler,
             onboardingHandler,
-            unknownIntentHandler
+            unknownIntentHandler,
+            reportIncidentHandler
         ],
         inject: [
             CreateTransactionHandler, 
@@ -190,7 +196,8 @@ import { UnknownIntentHandler } from './application/handlers/unknown-intent.hand
             CheckStockHandler,
             FeedbackHandler,
             OnboardingHandler,
-            UnknownIntentHandler
+            UnknownIntentHandler,
+            ReportIncidentHandler
         ]
     }
   ],
