@@ -4,6 +4,7 @@ import { IMessageStrategy, MESSAGE_STRATEGY_TOKEN } from '../strategies/message-
 import { IUserRepository, I_USER_REPOSITORY } from '../../../user/domain/ports/user.repository.interface';
 import { WhatsAppMessagingAdapter } from '../../../common/messaging/whatsapp-messaging.adapter';
 import { ActionExecutionService } from '../services/action-execution.service';
+import { ConversationStateService } from '../services/conversation-state.service';
 import { LLMIntent } from '../../../common/llm/llm-types';
 import { MessagingPlatforms } from '../../../common/messaging/domain/constants/messaging-platforms.enum';
 
@@ -17,6 +18,7 @@ export class ProcessMessageUseCase {
     private readonly whatsAppMessagingAdapter: WhatsAppMessagingAdapter,
     @Inject(I_USER_REPOSITORY) private readonly userRepository: IUserRepository,
     private readonly actionExecutionService: ActionExecutionService,
+    private readonly conversationState: ConversationStateService,
   ) {}
 
   async execute(payload: WhatsAppPayloadDto): Promise<void> {
@@ -59,6 +61,45 @@ export class ProcessMessageUseCase {
         } else {
              // 2. Process via Strategy (LLM)
              analysis = await strategy.process(message, from);
+             
+             // CONTEXT MERGE: Check for pending action and merge context (Same logic as Telegram)
+             const pending = this.conversationState.getPendingAction(from);
+             if (pending) {
+               this.logger.log(`Merging pending context for ${from}: ${JSON.stringify(pending)}`);
+                
+               if (pending.intent === LLMIntent.CREATE_TRANSACTION) {
+                 const llmData = analysis.data || {};
+                 const mergedData = { ...pending.data, ...llmData };
+                 
+                 const remainingMissing = (pending.missing_fields || []).filter(field => {
+                    if (field === 'amount' && mergedData.amount) return false;
+                    if (field === 'category' && mergedData.category) return false;
+                    if (field === 'type' && mergedData.type) return false;
+                    return true;
+                 });
+                 
+                 analysis = {
+                    intent: pending.intent,
+                    data: mergedData,
+                    actions: [{
+                        intent: pending.intent,
+                        data: mergedData,
+                        missing_fields: remainingMissing
+                    }]
+                 };
+                 
+                 if (remainingMissing.length > 0) {
+                     this.conversationState.setPendingAction(from, {
+                         intent: pending.intent,
+                         data: mergedData,
+                         missing_fields: remainingMissing,
+                         createdAt: new Date()
+                     });
+                 } else {
+                     this.conversationState.clearPendingAction(from);
+                 }
+               }
+             }
         }
         
         if (!analysis) {
