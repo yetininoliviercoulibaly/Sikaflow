@@ -4,6 +4,7 @@ import { IActionHandler, ACTION_HANDLER_TOKEN, ActionContext } from '../handlers
 import { CheckSubscriptionUseCase } from '../../../subscription/application/use-cases/check-subscription.use-case';
 import { IMessagingService } from '../../../common/messaging/messaging.service.interface';
 import { User } from '../../../user/domain/user.entity';
+import { ConversationalGuidanceService } from './conversational-guidance.service';
 import { LLMIntent } from '../../../common/llm/llm-types';
 import { MessagingPlatforms } from '../../../common/messaging/domain/constants/messaging-platforms.enum';
 
@@ -41,6 +42,7 @@ export class ActionExecutionService {
     private readonly actionHandlers: IActionHandler[],
     private readonly checkSubscriptionUseCase: CheckSubscriptionUseCase,
     private readonly configService: ConfigService,
+    private readonly guidanceService: ConversationalGuidanceService,
   ) {}
 
   async execute(params: ActionExecutionParams): Promise<void> {
@@ -64,7 +66,18 @@ export class ActionExecutionService {
 
         // 2. Check Missing Fields
         if (action.missing_fields && action.missing_fields.length > 0) {
-             await messagingService.sendMessage(senderPhoneNumber, `Il manque des informations : ${action.missing_fields.join(', ')}. Pouvez-vous préciser ?`);
+             const firstField = action.missing_fields[0];
+             const guidance = this.guidanceService.getGuidance(action.intent, firstField, platform, action.data);
+             
+             if (guidance.buttons && guidance.buttons.length > 0) {
+                 await messagingService.sendInteractiveButtons(
+                     senderPhoneNumber,
+                     guidance.message,
+                     guidance.buttons
+                 );
+             } else {
+                 await messagingService.sendMessage(senderPhoneNumber, guidance.message);
+             }
              continue; 
         }
 
