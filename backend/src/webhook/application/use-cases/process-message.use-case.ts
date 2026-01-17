@@ -67,15 +67,23 @@ export class ProcessMessageUseCase {
              if (pending) {
                this.logger.log(`Merging pending context for ${from}: ${JSON.stringify(pending)}`);
                 
-               if (pending.intent === LLMIntent.CREATE_TRANSACTION) {
+               // Context Merging Logic
+               // 1. If we have a pending intent, we generally trust it over the new analysis
+               // unless the new analysis is a "CANCEL" or "STOP" command.
+               const content = message.type === 'text' ? message.text?.body : '';
+               const isStopCommand = content && ['STOP', 'ANNULER', 'CANCEL', 'EXIT'].includes(content.toUpperCase());
+               
+               if (!isStopCommand) {
                  const llmData = analysis.data || {};
+                 
+                 // Merge pending data with new LLM data (LLM data takes precedence for new fields)
                  const mergedData = { ...pending.data, ...llmData };
                  
+                 // Determine remaining missing fields by checking if they now exist in mergedData
+                 // We check if the value is not null/undefined/empty string
                  const remainingMissing = (pending.missing_fields || []).filter(field => {
-                    if (field === 'amount' && mergedData.amount) return false;
-                    if (field === 'category' && mergedData.category) return false;
-                    if (field === 'type' && mergedData.type) return false;
-                    return true;
+                    const val = mergedData[field];
+                    return val === undefined || val === null || val === '';
                  });
                  
                  analysis = {
@@ -98,6 +106,8 @@ export class ProcessMessageUseCase {
                  } else {
                      this.conversationState.clearPendingAction(from);
                  }
+               } else {
+                  this.conversationState.clearPendingAction(from);
                }
              }
         }

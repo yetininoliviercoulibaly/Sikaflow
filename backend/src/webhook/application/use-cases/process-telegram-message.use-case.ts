@@ -54,12 +54,35 @@ export class ProcessTelegramMessageUseCase {
 
     // Map callback data to action
     const mapped = this.commandIntentMapper.map(data);
-    const actions = mapped ? [mapped] : [];
     
-    if (actions.length === 0) {
+    if (!mapped) {
         this.logger.warn(`No mapping found for callback data: ${data}`);
         return;
     }
+
+    // CONTEXT MERGE for Callbacks (Maintain state across button clicks)
+    const pending = this.conversationState.getPendingAction(String(chatId));
+    if (pending && mapped.intent === pending.intent) {
+         this.logger.log(`Merging pending context for callback ${chatId}: ${JSON.stringify(pending)}`);
+         mapped.data = { ...pending.data, ...mapped.data };
+         
+         // If generic merge, we should also try to clear pending if we think we are done?
+         // Or just let ActionExecutionService handle it.
+         // Better to clear pending if we are submitting the action?
+         // We don't know if we are done yet. The Handler decides.
+         // But usually button clicks are "continuing" the flow.
+         // We should update the pending state or clear it?
+         
+         // If `mapped` completes the flow (e.g. we have duration + provider), 
+         // ActionExecutionService will find valid handler and execute.
+         // If it fails validation, it might ask again?
+         // Actually, ActionExecutionService doesn't update specific pending state unless missing_fields are present.
+         
+         // Let's just update the pending action with the new data so usage is consistent
+         this.conversationState.updatePendingAction(String(chatId), mapped.data);
+    }
+
+    const actions = [mapped];
     
     // Find user by Telegram ID
     const user = await this.userRepository.findByPhoneNumber(String(chatId));
@@ -110,19 +133,22 @@ export class ProcessTelegramMessageUseCase {
         if (pending) {
           this.logger.log(`Merging pending context for ${chatId}: ${JSON.stringify(pending)}`);
           
-          // If LLM extracted an amount and we have pending transaction context, merge them
-          if (pending.intent === LLMIntent.CREATE_TRANSACTION) {
+          // Context Merging Logic
+          // 1. If we have a pending intent, we generally trust it over the new analysis
+          // unless the new analysis is a "CANCEL" or "STOP" command.
+          const isStopCommand = ['STOP', 'ANNULER', 'CANCEL', 'EXIT'].includes(content.toUpperCase());
+          
+          if (!isStopCommand) {
             const llmData = analysis.data || {};
             
             // Merge pending data with new LLM data (LLM data takes precedence for new fields)
             const mergedData = { ...pending.data, ...llmData };
             
-            // Determine remaining missing fields
+            // Determine remaining missing fields by checking if they now exist in mergedData
+            // We check if the value is not null/undefined/empty string
             const remainingMissing = (pending.missing_fields || []).filter(field => {
-              if (field === 'amount' && mergedData.amount) return false;
-              if (field === 'category' && mergedData.category) return false;
-              if (field === 'type' && mergedData.type) return false;
-              return true;
+               const val = mergedData[field];
+               return val === undefined || val === null || val === '';
             });
             
             // Update analysis to use merged intent and data
@@ -148,6 +174,8 @@ export class ProcessTelegramMessageUseCase {
               // All fields collected, clear pending
               this.conversationState.clearPendingAction(String(chatId));
             }
+          } else {
+             this.conversationState.clearPendingAction(String(chatId));
           }
         }
       } else {

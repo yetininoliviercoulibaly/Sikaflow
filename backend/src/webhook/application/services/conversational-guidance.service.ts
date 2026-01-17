@@ -56,6 +56,28 @@ export class ConversationalGuidanceService {
         };
     }
 
+    // 3. Subscription Flow
+    if (intent === LLMIntent.SUBSCRIBE) {
+      if (missingField === 'provider') {
+        return {
+          message: `💳 **Quel moyen de paiement préférez-vous ?**`,
+          buttons: [
+             { id: 'SELECT_PROVIDER|STRIPE', title: 'Stripe (CB)' },
+             { id: 'SELECT_PROVIDER|WAVE', title: 'Wave' }
+          ]
+        };
+      }
+      if (missingField === 'duration') {
+        return {
+          message: `⏱️ **Quelle durée d'abonnement souhaitez-vous ?**`,
+          buttons: [
+            { id: 'SELECT_DURATION|1', title: '1 Mois' },
+            { id: 'SELECT_DURATION|12', title: '1 An (-20%)' }
+          ]
+        };
+      }
+    }
+
     // 3. Fallback (Robotic but slightly better)
     return {
       message: `Il manque une information (${missingField}) pour terminer cette action. Pouvez-vous préciser ?`,
