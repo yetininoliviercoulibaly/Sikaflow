@@ -23,7 +23,7 @@ export class Migration20240101000000 extends Migration {
     this.addSql(`
       INSERT INTO "prompt_template" ("id", "code", "template", "created_at", "updated_at")
       VALUES
-      ('00000000-0000-0000-0000-000000000001', 'GEMINI_SYSTEM', 'You are Event-Pilot...', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ('00000000-0000-0000-0000-000000000001', 'GEMINI_SYSTEM', 'You are SikaFlow...', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       ON CONFLICT ("code") DO NOTHING;
     `);
   }

@@ -74,7 +74,7 @@ export class GreetingHandler implements IActionHandler {
         } else {
             await messagingService.sendInteractiveButtons(
                 senderPhoneNumber,
-                `👋 Bonjour et bienvenue sur Event-Pilot !\n\nJe suis votre assistant pour gérer votre établissement.\n\nJe ne trouve pas encore d'organisation liée à votre numéro.`,
+                `👋 Bonjour et bienvenue sur SikaFlow !\n\nJe suis votre assistant pour gérer votre établissement.\n\nJe ne trouve pas encore d'organisation liée à votre numéro.`,
                 [
                     { id: 'CREATE_ORG_CMD', title: '🏢 Créer un Club' },
                     { id: 'HELP_CMD', title: '❓ Aide' }

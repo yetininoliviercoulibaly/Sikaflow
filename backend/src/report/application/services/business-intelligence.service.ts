@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { EntityManager } from '@mikro-orm/core';
 import { Transaction, TransactionType } from '../../../transaction/domain/transaction.entity';
 import { UserRole } from '../../../organization/domain/organization-member.entity';
+import { Organization } from '../../../organization/domain/organization.entity';
 
 // Metrics that require OWNER or MANAGER role
 const RESTRICTED_METRICS = ['MARGIN', 'PROFIT', 'NET_INCOME'];
@@ -9,6 +10,16 @@ const RESTRICTED_METRICS = ['MARGIN', 'PROFIT', 'NET_INCOME'];
 @Injectable()
 export class BusinessIntelligenceService {
   constructor(private readonly em: EntityManager) {}
+
+  private async getOrganizationCurrency(organizationId: string | undefined): Promise<string> {
+    if (!organizationId) return process.env.DEFAULT_CURRENCY || 'EUR';
+    const result = await this.em.getConnection().execute(
+      `SELECT settings FROM "organization" WHERE id = ?`,
+      [organizationId]
+    );
+    const settings = result[0]?.settings;
+    return settings?.currency || process.env.DEFAULT_CURRENCY || 'EUR';
+  }
 
   async getMetric(organizationId: string | undefined, metric: string, period?: string, date?: string, userRole?: UserRole): Promise<string> {
     
@@ -26,6 +37,8 @@ export class BusinessIntelligenceService {
     // Helper to set start/end of day
     const startOfDay = (d: Date) => { d.setHours(0,0,0,0); return d; };
     const endOfDay = (d: Date) => { d.setHours(23,59,59,999); return d; };
+
+    const currency = await this.getOrganizationCurrency(organizationId);
 
     if (date) {
         // Specific Date logic
@@ -130,7 +143,7 @@ export class BusinessIntelligenceService {
         const revenue = await runQuery('INCOME');
         const expenses = await runQuery('EXPENSE');
         const profit = revenue - expenses;
-        const formatted = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF' }).format(profit);
+        const formatted = new Intl.NumberFormat('fr-FR', { style: 'currency', currency }).format(profit);
         return `Le Bénéfice Net (${periodLabel}) est de ${formatted}`;
     }
 
@@ -176,8 +189,8 @@ export class BusinessIntelligenceService {
     // res can be array or object depending on driver. Postgres usually returns array.
     result = res[0]?.sum || 0;
 
-    // Format Number (FCFA roughly)
-    const formatted = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF' }).format(Number(result));
+    // Format Number
+    const formatted = new Intl.NumberFormat('fr-FR', { style: 'currency', currency }).format(Number(result));
 
     return `Le montant pour ${label} (${periodLabel}) est de ${formatted}`;
   }

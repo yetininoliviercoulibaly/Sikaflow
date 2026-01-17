@@ -10,6 +10,7 @@ export interface CreateOrganizationCommand {
   ownerId?: string;
   name: string;
   userPhoneNumber?: string;
+  currency?: string; // ISO 4217 currency code, defaults to 'XOF'
 }
 
 @Injectable()
@@ -21,7 +22,7 @@ export class CreateOrganizationUseCase {
     private readonly userRepository: IUserRepository,
   ) {}
 
-  async execute(command: { ownerId?: string; name: string; userPhoneNumber?: string }): Promise<Organization> {
+  async execute(command: CreateOrganizationCommand): Promise<Organization> {
     const { ownerId, name, userPhoneNumber } = command;
     let userId = ownerId;
     let user = userId ? await this.userRepository.findById(userId) : null;
@@ -55,7 +56,7 @@ export class CreateOrganizationUseCase {
       organizationId,
       name,
       userId,
-      {},
+      { currency: command.currency || process.env.DEFAULT_CURRENCY || 'EUR' },
       new Date(),
     );
 

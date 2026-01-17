@@ -22,10 +22,10 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     id: OnboardingStepId.WELCOME,
     title: 'Bienvenue',
-    description: 'Découvrez Event-Pilot',
+    description: 'Découvrez SikaFlow',
     requiredRoles: ['OWNER', 'MANAGER', 'STAFF'],
     order: 1,
-    tipMessage: `🎉 *Bienvenue sur Event-Pilot !*\n\nJe suis votre assistant intelligent pour gérer votre établissement.\n\n📝 *Étape 1/5* : Commençons par enregistrer une première dépense.\n\n👉 Essayez d'envoyer : "Achat de 10 sacs de glace pour 5000"`,
+    tipMessage: `🎉 *Bienvenue sur SikaFlow !*\n\nJe suis votre assistant intelligent pour gérer votre établissement.\n\n📝 *Étape 1/5* : Commençons par enregistrer une première dépense.\n\n👉 Essayez d'envoyer : "Achat de 10 sacs de glace pour 5000"`,
     completionMessage: `✅ Parfait ! Vous avez compris le principe !`,
   },
   {
@@ -62,7 +62,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     requiredRoles: ['OWNER'],
     order: 5,
     tipMessage: `💎 *Étape 5/5* : Abonnement\n\nPour profiter de toutes les fonctionnalités premium :\n\n👉 Envoyez : "Abonnement"\n\nVous recevrez un lien de paiement sécurisé.`,
-    completionMessage: `🎊 *Félicitations !* Vous avez terminé le tutoriel !\n\nVous êtes maintenant prêt à utiliser Event-Pilot comme un pro.\n\nEnvoyez "Aide" à tout moment pour voir les commandes disponibles.`,
+    completionMessage: `🎊 *Félicitations !* Vous avez terminé le tutoriel !\n\nVous êtes maintenant prêt à utiliser SikaFlow comme un pro.\n\nEnvoyez "Aide" à tout moment pour voir les commandes disponibles.`,
   },
 ];
 

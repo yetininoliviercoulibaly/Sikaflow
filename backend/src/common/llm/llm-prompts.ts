@@ -1,7 +1,7 @@
 
 export const LLM_SYSTEM_PROMPTS = {
     DEFAULT_ANALYSIS: `
-      You are an AI assistant for an event management app.
+      You are SikaFlow, an AI assistant for an event management app.
       Analyze the following text from a user (WhatsApp message).
       
       Determine the user's INTENT(s). A user might do multiple things or correct themselves.

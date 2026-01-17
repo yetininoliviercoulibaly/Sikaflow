@@ -93,7 +93,7 @@ describe('HelpHandler', () => {
 
         expect(mockMessagingService.sendInteractiveList).toHaveBeenCalledWith(
             '123456789',
-            expect.stringContaining('Event-Pilot Aide'),
+            expect.stringContaining('SikaFlow Aide'),
             expect.any(String),
             expect.any(String),
             expect.arrayContaining([

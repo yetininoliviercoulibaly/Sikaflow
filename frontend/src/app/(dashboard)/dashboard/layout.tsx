@@ -45,7 +45,7 @@ export default function DashboardLayout({
       {/* Sidebar */}
       <aside className="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col p-6 shadow-sm z-20 hidden md:flex">
         <div className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent mb-10 pl-2">
-          Event Pilot
+          SikaFlow
         </div>
         
         <nav className="flex flex-col gap-2 flex-1">
@@ -102,7 +102,7 @@ export default function DashboardLayout({
             <ThemeToggle />
             <div className="flex items-center gap-3 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
                 <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-semibold text-sm">
-                    EP
+                    SF
                 </div>
                 <span className="text-sm font-medium text-slate-700 dark:text-slate-300 hidden sm:block">Admin</span>
             </div>
