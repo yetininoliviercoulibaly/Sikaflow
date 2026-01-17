@@ -820,6 +820,7 @@
           "primary": false,
           "nullable": false,
           "enumItems": [
+            "ADMIN",
             "OWNER",
             "MANAGER",
             "STAFF"
