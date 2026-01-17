@@ -165,4 +165,40 @@ describe('ProcessTelegramMessageUseCase', () => {
        // Expect Clear Pending to be called (since all fields collected)
        expect(conversationService.clearPendingAction).toHaveBeenCalledWith('444');
   });
+
+  it('should resolve pending AMOUNT using regex for input with units (e.g. 50 euros)', async () => {
+       const chatId = 555;
+       const update = {
+         update_id: 5,
+         message: {
+           message_id: 127,
+           chat: { id: chatId, type: 'private' },
+           from: { id: 555, first_name: 'UnitUser', is_bot: false },
+           text: '50 euros'
+         } as TelegramMessageDto
+       } as TelegramUpdateDto;
+
+       const mockPending = {
+           intent: 'CREATE_TRANSACTION',
+           data: { type: 'EXPENSE' },
+           missing_fields: ['amount']
+       };
+
+       mockLLM.analyzeText.mockResolvedValue({ intent: null, data: {} });
+       mockUserRepo.findByPhoneNumber.mockResolvedValue({});
+       
+       const conversationService = (useCase as any).conversationState;
+       conversationService.getPendingAction.mockReturnValue(mockPending);
+
+       await useCase.execute(update);
+
+       const actionService = (useCase as any).actionExecutionService;
+       expect(actionService.execute).toHaveBeenCalledWith(expect.objectContaining({
+           actions: [expect.objectContaining({
+               intent: 'CREATE_TRANSACTION',
+               data: expect.objectContaining({ amount: 50 }),
+               missing_fields: [] 
+           })]
+       }));
+  });
 });
