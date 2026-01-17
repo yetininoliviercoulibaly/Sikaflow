@@ -7,6 +7,7 @@ import { ProcessTelegramMessageUseCase } from './application/use-cases/process-t
 import { ActionExecutionService } from './application/services/action-execution.service';
 import { CommandIntentMapper } from './application/services/command-intent.mapper';
 import { ConversationalGuidanceService } from './application/services/conversational-guidance.service';
+import { ConversationStateService } from './application/services/conversation-state.service';
 import { TextMessageStrategy } from './application/strategies/text-message.strategy';
 import { OrganizationModule } from '../organization/organization.module';
 import { UserModule } from '../user/user.module';
@@ -88,6 +89,7 @@ import { UnknownIntentHandler } from './application/handlers/unknown-intent.hand
     ActionExecutionService,
     CommandIntentMapper,
     ConversationalGuidanceService,
+    ConversationStateService,
     MessageProcessor,
     TelegramMessageProcessor,
     TextMessageStrategy,

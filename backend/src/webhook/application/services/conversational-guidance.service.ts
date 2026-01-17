@@ -27,16 +27,21 @@ export class ConversationalGuidanceService {
       }
 
       if (missingField === 'category') {
+        const type = currentData.type || 'EXPENSE';
+        const amount = currentData.amount || 0;
+        const currency = currentData.currency || 'EUR';
+        
+        // Encode full context in button IDs for stateless handling
+        // Format: SELECT_CAT|Type|Amount|Currency|Category
         const categories = [
-          { id: 'FOOD', title: '🍔 Alimentation' },
-          { id: 'TRANSPORT', title: '🚕 Transport' },
-          { id: 'SUPPLIES', title: '📦 Fournitures' },
-          { id: 'MARKETING', title: '📢 Marketing' },
-          { id: 'OTHER', title: '🔄 Autre' },
+          { id: `SELECT_CAT|${type}|${amount}|${currency}|FOOD`, title: '🍔 Alimentation' },
+          { id: `SELECT_CAT|${type}|${amount}|${currency}|TRANSPORT`, title: '🚕 Transport' },
+          { id: `SELECT_CAT|${type}|${amount}|${currency}|SUPPLIES`, title: '📦 Fournitures' },
+          { id: `SELECT_CAT|${type}|${amount}|${currency}|MARKETING`, title: '📢 Marketing' },
+          { id: `SELECT_CAT|${type}|${amount}|${currency}|OTHER`, title: '🔄 Autre' },
         ];
         
-        // Telegram supports more buttons easily, WhatsApp limited to 3 usually in quick buttons, 
-        // but we can use list or just the first few.
+        // Telegram supports more buttons easily, WhatsApp limited to 3 usually in quick buttons
         return {
           message: `C'est noté. 📂 **Dans quelle catégorie souhaitez-vous classer cela ?**`,
           buttons: platform === MessagingPlatforms.TELEGRAM ? categories : categories.slice(0, 3)
