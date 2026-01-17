@@ -86,7 +86,7 @@ services:
       TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET}
       TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME}
       # Feature Flags
-      BYPASS_SUBSCRIPTION_CHECK: "false"
+      BYPASS_SUBSCRIPTION_CHECK: ${BYPASS_SUBSCRIPTION_CHECK:-false}
     depends_on:
       db:
         condition: service_healthy
