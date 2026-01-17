@@ -32,7 +32,7 @@ export class HelpHandler implements IActionHandler {
         
         // 1. Initial Greetings (Text)
         const headerText = "🤖 *Event-Pilot Aide*";
-        let bodyText = "Voici les commandes disponibles :";
+        let bodyText = "🎤 *Astuce :* Vous pouvez envoyer des notes vocales ou écrire naturellement (ex: '50€ pour le taxi') !\n\nSinon, voici les boutons actions :";
 
         if (!user || !user.lastActiveOrganizationId) {
             // New User Context
@@ -139,7 +139,7 @@ export class HelpHandler implements IActionHandler {
             await messagingService.sendInteractiveList(
                 senderPhoneNumber,
                 headerText,
-                "Sélectionnez une action ci-dessous :",
+                bodyText, // Use the promo text
                 "Afficher le Menu",
                 sections
             );
@@ -148,7 +148,7 @@ export class HelpHandler implements IActionHandler {
             await messagingService.sendInteractiveList(
                 senderPhoneNumber,
                 headerText,
-                "Appuyez sur un bouton pour lancer une action :",
+                bodyText, // Use the promo text
                 "Menu", // Not used in TG but required by interface
                 sections
             );
