@@ -8,6 +8,9 @@ import { UserRole } from '../../../organization/domain/organization-member.entit
 import { LLMIntent } from '../../../common/llm/llm-types';
 import { MessagingPlatforms } from '../../../common/messaging/domain/constants/messaging-platforms.enum';
 import { IMessageSection } from '../../../common/messaging/messaging.service.interface';
+import { CheckFeatureUseCase } from '../../../subscription/application/use-cases/check-feature.use-case';
+import { FeatureFlag } from '../../../subscription/domain/feature-flag.enum';
+
 
 @Injectable()
 export class HelpHandler implements IActionHandler {
@@ -15,6 +18,7 @@ export class HelpHandler implements IActionHandler {
         @Inject(I_USER_REPOSITORY) private readonly userRepository: IUserRepository,
         @Inject(I_ORGANIZATION_REPOSITORY) private readonly organizationRepository: IOrganizationRepository,
         private readonly configService: ConfigService,
+        private readonly checkFeatureUseCase: CheckFeatureUseCase,
     ) {}
 
     canHandle(intent: string): boolean {
@@ -71,30 +75,63 @@ export class HelpHandler implements IActionHandler {
             rows: [
                 { id: 'CMD_TX_EXPENSE', title: 'Nouvelle Dépense', description: 'Enregistrer un achat' },
                 { id: 'CMD_TX_INCOME', title: 'Nouvelle Recette', description: 'Enregistrer une entrée' },
-                { id: 'CMD_INCIDENT', title: 'Signaler Incident', description: 'Sécurité / Problème' }
+
             ]
         });
+
+        // 1.1 Check Incident Feature
+        const { hasAccess: hasIncident } = await this.checkFeatureUseCase.execute({ 
+            organizationId: organizationId!, feature: FeatureFlag.INCIDENT_COMPLIANCE 
+        });
+        if (hasIncident) {
+            sections[0].rows.push({ id: 'CMD_INCIDENT', title: 'Signaler Incident', description: 'Sécurité / Problème' });
+        }
+
+        // 1.2 Add Subscribe Button directly to Operations (or separate?) - Putting it in 'Gestion' or 'Opérations'
+        // User requested "Abonnement" to be visible. Let's add it to "Opérations" if not Premium? Or always?
+        // Let's add it to a "Compte" section or append to Operations for visibility in MVP.
+        // Actually, let's look at where it best fits. Often "Compte" or "Abonnement".
+        // Let's put it in "Opérations" for MVP visibility or a new "Mon Compte" Section.
+        // Given constraints, I'll add it to "Gestion & Rapports" or start a new section if Manager.
+        const subscriptionRow = { id: 'CMD_SUBSCRIBE', title: 'Abonnement', description: 'Gérer mon plan' };
 
         // Section 2: Management (Conditional)
         if (isManagerOrOwner) {
+            const managementRows = [
+                { id: 'CMD_REPORT_FLASH', title: 'Rapport Flash', description: 'Bilan immédiat' },
+            ];
+
+            // Check Advanced Reports
+            const { hasAccess: hasAdvanced } = await this.checkFeatureUseCase.execute({ 
+                organizationId: organizationId!, feature: FeatureFlag.ADVANCED_ANALYTICS 
+            });
+            if (hasAdvanced) {
+                managementRows.push({ id: 'CMD_REPORT_WEEK', title: 'Bilan Hebdo', description: 'Semaine écoulée' });
+            }
+
+            managementRows.push({ id: 'CMD_ADD_MEMBER', title: 'Ajouter Membre', description: 'Inviter du staff' });
+            managementRows.push(subscriptionRow); // Add Subscribe here
+
             sections.push({
                 title: "Gestion & Rapports",
-                rows: [
-                    { id: 'CMD_REPORT_FLASH', title: 'Rapport Flash', description: 'Bilan immédiat' },
-                    { id: 'CMD_REPORT_WEEK', title: 'Bilan Hebdo', description: 'Semaine écoulée' },
-                    { id: 'CMD_ADD_MEMBER', title: 'Ajouter Membre', description: 'Inviter du staff' }
-                ]
+                rows: managementRows
             });
         }
 
-        // Section 3: Ticketing
-        sections.push({
-            title: "Billetterie",
-            rows: [
-                { id: 'CMD_SCAN', title: 'Scanner Billet', description: 'Valider une entrée' },
-                { id: 'CMD_STOCK', title: 'Voir Stock', description: 'Places restantes' }
-            ]
+        // Section 3: Ticketing (Stock)
+        const { hasAccess: hasStock } = await this.checkFeatureUseCase.execute({ 
+            organizationId: organizationId!, feature: FeatureFlag.STOCK_MANAGEMENT 
         });
+
+        if (hasStock) {
+            sections.push({
+                title: "Billetterie",
+                rows: [
+                    { id: 'CMD_SCAN', title: 'Scanner Billet', description: 'Valider une entrée' },
+                    { id: 'CMD_STOCK', title: 'Voir Stock', description: 'Places restantes' }
+                ]
+            });
+        }
 
 
         // Send Platform Specific Format

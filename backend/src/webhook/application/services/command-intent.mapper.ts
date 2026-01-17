@@ -26,6 +26,8 @@ export class CommandIntentMapper {
       'CMD_STOCK': { intent: LLMIntent.CHECK_STOCK, data: {} },
       'HELP_CMD': { intent: LLMIntent.HELP, data: {} },
       'HELP': { intent: LLMIntent.HELP, data: {} },
+      'CMD_SUBSCRIBE': { intent: LLMIntent.SUBSCRIBE, data: {} },
+
       'CREATE_ORG_CMD': { intent: LLMIntent.CREATE_ORGANIZATION, data: {}, missing_fields: ['name'] },
       'ONBOARDING_NEXT': { intent: LLMIntent.ONBOARDING_NEXT, data: {} },
       'REJECT_TX': { intent: LLMIntent.CANCEL_LAST_ACTION, data: {} },
