@@ -109,11 +109,36 @@ export class ProcessTelegramMessageUseCase {
 
     try {
       // Determine message type and extract content
-      const { type, content, fileId } = this.extractMessageContent(message);
+      let { type, content, fileId } = this.extractMessageContent(message);
       
       if (!content && !fileId) {
         this.logger.debug(`No processable content in message ${messageId}`);
         return;
+      }
+
+      // VOICE/AUDIO PROCESSING
+      if (fileId && (type === 'voice' || type === 'audio')) {
+          try {
+             await this.telegramMessagingAdapter.sendMessage(String(chatId), "🎤 Traitement de l'audio en cours...");
+             const { buffer } = await this.telegramMessagingAdapter.downloadMedia(fileId);
+             
+             const base64Audio = buffer.toString('base64');
+             const mimeType = type === 'voice' ? 'audio/ogg' : 'audio/mpeg'; 
+             
+             const transcription = await this.llmProvider.transcribeAudio(base64Audio, mimeType);
+             
+             if (!transcription || transcription.toLowerCase().includes('audio unclear')) {
+                 await this.telegramMessagingAdapter.sendMessage(String(chatId), "⚠️ Audio incompréhensible. Merci de répéter.");
+                 return;
+             }
+             content = transcription;
+             type = 'text'; // Treat as text henceforth
+             this.logger.log(`Transcription result for ${userId}: "${content}"`);
+          } catch (e) {
+               this.logger.error(`Failed to process audio for ${userId}`, e);
+               await this.telegramMessagingAdapter.sendMessage(String(chatId), "❌ Erreur lors du traitement de l'audio.");
+               return;
+          }
       }
 
       // Special handling for CLAIM tokens
@@ -125,64 +150,12 @@ export class ProcessTelegramMessageUseCase {
           actions: [{ intent: LLMIntent.CLAIM_TICKET, data: { raw_message: content } }],
         };
       } else if (type === 'text' && content) {
-        // Analyze via LLM
-        analysis = await this.analyzeText(content, String(userId));
-        
-        // CONTEXT MERGE: Check for pending action and merge context
-        const pending = this.conversationState.getPendingAction(String(chatId));
-        if (pending) {
-          this.logger.log(`Merging pending context for ${chatId}: ${JSON.stringify(pending)}`);
-          
-          // Context Merging Logic
-          // 1. If we have a pending intent, we generally trust it over the new analysis
-          // unless the new analysis is a "CANCEL" or "STOP" command.
-          const isStopCommand = ['STOP', 'ANNULER', 'CANCEL', 'EXIT'].includes(content.toUpperCase());
-          
-          if (!isStopCommand) {
-            const llmData = analysis.data || {};
-            
-            // Merge pending data with new LLM data (LLM data takes precedence for new fields)
-            const mergedData = { ...pending.data, ...llmData };
-            
-            // Determine remaining missing fields by checking if they now exist in mergedData
-            // We check if the value is not null/undefined/empty string
-            const remainingMissing = (pending.missing_fields || []).filter(field => {
-               const val = mergedData[field];
-               return val === undefined || val === null || val === '';
-            });
-            
-            // Update analysis to use merged intent and data
-            analysis = {
-              intent: pending.intent,
-              data: mergedData,
-              actions: [{
-                intent: pending.intent,
-                data: mergedData,
-                missing_fields: remainingMissing
-              }]
-            };
-            
-            // Update pending state with new data
-            if (remainingMissing.length > 0) {
-              this.conversationState.setPendingAction(String(chatId), {
-                intent: pending.intent,
-                data: mergedData,
-                missing_fields: remainingMissing,
-                createdAt: new Date()
-              });
-            } else {
-              // All fields collected, clear pending
-              this.conversationState.clearPendingAction(String(chatId));
-            }
-          } else {
-             this.conversationState.clearPendingAction(String(chatId));
-          }
-        }
+        // Resolve Analysis (Shared Logic via Helper)
+        analysis = await this.resolveAnalysis(content, chatId, userId);
       } else {
-        // For non-text messages, we might want specific handling
         await this.telegramMessagingAdapter.sendMessage(
           String(chatId),
-          "📝 Pour l'instant, je ne peux traiter que les messages texte. Merci de m'envoyer du texte.",
+          "📝 Pour l'instant, je ne peux traiter que les messages texte ou audio.",
         );
         return;
       }
@@ -213,6 +186,61 @@ export class ProcessTelegramMessageUseCase {
         "❌ Une erreur s'est produite lors du traitement de votre message. Veuillez réessayer.",
       );
     }
+  }
+
+
+  private async resolveAnalysis(content: string, chatId: number, userId: number): Promise<LLMAnalysisResult> {
+      // Analyze via LLM
+      let analysis = await this.analyzeText(content, String(userId));
+      
+      // CONTEXT MERGE: Check for pending action and merge context
+      const pending = this.conversationState.getPendingAction(String(chatId));
+      if (pending) {
+        this.logger.log(`Merging pending context for ${chatId}: ${JSON.stringify(pending)}`);
+        
+        // Context Merging Logic
+        const isStopCommand = ['STOP', 'ANNULER', 'CANCEL', 'EXIT'].includes(content.toUpperCase());
+        
+        if (!isStopCommand) {
+          const llmData = analysis.data || {};
+          
+          // Merge pending data with new LLM data (LLM data takes precedence for new fields)
+          const mergedData = { ...pending.data, ...llmData };
+          
+          // Determine remaining missing fields
+          const remainingMissing = (pending.missing_fields || []).filter(field => {
+             const val = mergedData[field];
+             return val === undefined || val === null || val === '';
+          });
+          
+          // Update analysis to use merged intent and data
+          analysis = {
+            intent: pending.intent,
+            data: mergedData,
+            actions: [{
+              intent: pending.intent,
+              data: mergedData,
+              missing_fields: remainingMissing
+            }]
+          };
+          
+          // Update pending state with new data
+          if (remainingMissing.length > 0) {
+            this.conversationState.setPendingAction(String(chatId), {
+              intent: pending.intent,
+              data: mergedData,
+              missing_fields: remainingMissing,
+              createdAt: new Date()
+            });
+          } else {
+            // All fields collected, clear pending
+            this.conversationState.clearPendingAction(String(chatId));
+          }
+        } else {
+           this.conversationState.clearPendingAction(String(chatId));
+        }
+      }
+      return analysis;
   }
 
   private extractMessageContent(message: TelegramMessageDto): {
