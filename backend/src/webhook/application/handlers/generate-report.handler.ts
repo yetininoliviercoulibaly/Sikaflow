@@ -24,8 +24,9 @@ export class GenerateReportHandler implements IActionHandler {
         // Enqueue Job for Async Generation
         await this.reportsQueue.add('generate-report', {
             phoneNumber: context.senderPhoneNumber,
-            organizationId: null, // TODO: Resolve Context
-            type: data?.type || 'FLASH'
+            organizationId: context.organizationId || null,
+            type: data?.type || 'FLASH',
+            platform: context.platform  // Pass platform for correct adapter selection
         });
 
         // Send confirmation message

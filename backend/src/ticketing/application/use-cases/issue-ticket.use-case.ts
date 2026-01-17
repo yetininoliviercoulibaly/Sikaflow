@@ -4,7 +4,7 @@ import { EntityManager } from '@mikro-orm/core';
 import { IEventRepository, I_EVENT_REPOSITORY } from '../../domain/ports/event.repository.interface';
 import { ITicketRepository, I_TICKET_REPOSITORY } from '../../domain/ports/ticket.repository.interface';
 import { IQRCodeService, I_QRCODE_SERVICE } from '../../domain/ports/qrcode.service.interface';
-import { IWhatsAppService, I_WHATSAPP_SERVICE } from '../../../common/whatsapp/whatsapp.service.interface';
+import { IMessagingService } from '../../../common/messaging/messaging.service.interface';
 import { Ticket, TicketStatus } from '../../domain/ticket.entity';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -16,11 +16,16 @@ export class IssueTicketUseCase {
     @Inject(I_EVENT_REPOSITORY) private readonly eventRepository: IEventRepository,
     @Inject(I_TICKET_REPOSITORY) private readonly ticketRepository: ITicketRepository,
     @Inject(I_QRCODE_SERVICE) private readonly qrCodeService: IQRCodeService,
-    @Inject(I_WHATSAPP_SERVICE) private readonly whatsAppService: IWhatsAppService,
     private readonly em: EntityManager,
   ) {}
 
-  async execute(attendeePhone: string, eventId: string, amountPaid: number, quantity: number = 1): Promise<void> {
+  async execute(
+    attendeePhone: string, 
+    eventId: string, 
+    amountPaid: number, 
+    quantity: number = 1,
+    messagingService: IMessagingService
+  ): Promise<void> {
     await this.em.transactional(async (em) => {
       // 1. Fetch Event
       const event = await this.eventRepository.findById(eventId);
@@ -34,7 +39,7 @@ export class IssueTicketUseCase {
         event.incrementSold(quantity);
       } catch (e) {
         this.logger.warn(`Sold Out for event ${eventId}`);
-        await this.whatsAppService.sendMessage(attendeePhone, `❌ Désolé, l'événement '${event.name}' est complet (ou pas assez de places). Votre paiement sera remboursé.`);
+        await messagingService.sendMessage(attendeePhone, `❌ Désolé, l'événement '${event.name}' est complet (ou pas assez de places). Votre paiement sera remboursé.`);
         // TODO: Trigger Refund Logic
         return;
       }
@@ -65,11 +70,11 @@ export class IssueTicketUseCase {
       // 4. Persistence
       await this.eventRepository.save(event);
 
-      // 5. Send to WhatsApp
-      await this.whatsAppService.sendMessage(attendeePhone, `✅ Paiement reçu (${amountPaid} FCFA) !\nVoici vos ${quantity} billet(s) pour *${event.name}*.`);
+      // 5. Send via platform-agnostic messaging
+      await messagingService.sendMessage(attendeePhone, `✅ Paiement reçu (${amountPaid} FCFA) !\nVoici vos ${quantity} billet(s) pour *${event.name}*.`);
 
       for (let i = 0; i < qrBuffers.length; i++) {
-           await this.whatsAppService.sendDocument(
+           await messagingService.sendDocument(
             attendeePhone,
             qrBuffers[i],
             `ticket-${event.name}-${i+1}.png`,
