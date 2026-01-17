@@ -66,20 +66,19 @@ export class ProcessTelegramMessageUseCase {
          this.logger.log(`Merging pending context for callback ${chatId}: ${JSON.stringify(pending)}`);
          mapped.data = { ...pending.data, ...mapped.data };
          
-         // If generic merge, we should also try to clear pending if we think we are done?
-         // Or just let ActionExecutionService handle it.
-         // Better to clear pending if we are submitting the action?
-         // We don't know if we are done yet. The Handler decides.
-         // But usually button clicks are "continuing" the flow.
-         // We should update the pending state or clear it?
-         
-         // If `mapped` completes the flow (e.g. we have duration + provider), 
-         // ActionExecutionService will find valid handler and execute.
-         // If it fails validation, it might ask again?
-         // Actually, ActionExecutionService doesn't update specific pending state unless missing_fields are present.
-         
-         // Let's just update the pending action with the new data so usage is consistent
-         this.conversationState.updatePendingAction(String(chatId), mapped.data);
+         // Update missing fields
+         const stillMissing = (pending.missing_fields || []).filter(field => {
+             const val = mapped.data[field];
+             return val === undefined || val === null || val === '';
+         });
+
+         if (stillMissing.length === 0) {
+             this.conversationState.clearPendingAction(String(chatId));
+             mapped.missing_fields = [];
+         } else {
+             this.conversationState.updatePendingAction(String(chatId), mapped.data);
+             mapped.missing_fields = stillMissing;
+         }
     }
 
     const actions = [mapped];

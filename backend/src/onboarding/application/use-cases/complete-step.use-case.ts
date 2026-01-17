@@ -69,17 +69,18 @@ export class CompleteStepUseCase {
     const completedStep = getStepById(stepId);
     progress.completedSteps.push(stepId);
 
-    // Find next step
+    // Find next step: The first uncompleted step in order
     const steps = getStepsForRole(progress.role);
-    const currentIndex = steps.findIndex(s => s.id === stepId);
-    const nextStep = steps[currentIndex + 1] || null;
+    const nextStep = steps.find(s => !progress.completedSteps.includes(s.id)) || null;
 
     if (nextStep) {
       progress.currentStep = nextStep.id;
     } else {
       // All steps completed
       progress.currentStep = null;
-      progress.completedAt = new Date();
+      if (!progress.completedAt) {
+        progress.completedAt = new Date();
+      }
     }
 
     await this.onboardingRepository.update(progress);
