@@ -68,7 +68,8 @@ export class AddMemberHandler implements IActionHandler {
             this.eventEmitter.emit('member.added', {
                 userId: requestor!.id,
                 organizationId,
-                senderPhoneNumber
+                senderPhoneNumber,
+                platform: context.platform
             });
 
             await messagingService.sendMessage(

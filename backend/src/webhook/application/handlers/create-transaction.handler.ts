@@ -59,7 +59,8 @@ export class CreateTransactionHandler implements IActionHandler {
              this.eventEmitter.emit('transaction.created', {
                 userId: result.reportedByUserId,
                 organizationId: organizationId,
-                senderPhoneNumber: senderPhoneNumber
+                senderPhoneNumber: senderPhoneNumber,
+                platform: context.platform
             });
         }
     }

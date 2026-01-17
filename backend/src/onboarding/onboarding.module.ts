@@ -12,13 +12,13 @@ import { CompleteStepUseCase } from './application/use-cases/complete-step.use-c
 import { GetAdoptionReportUseCase } from './application/use-cases/get-adoption-report.use-case';
 import { OnboardingEventListener } from './application/listeners/onboarding-event.listener';
 import { UserModule } from '../user/user.module';
-import { WhatsAppModule } from '../common/whatsapp/whatsapp.module';
+import { MessagingModule } from '../common/messaging/messaging.module';
 
 @Module({
   imports: [
     MikroOrmModule.forFeature([OnboardingProgressSchema, OnboardingStepConfigSchema]),
     UserModule,
-    WhatsAppModule,
+    MessagingModule,
   ],
   providers: [
     {

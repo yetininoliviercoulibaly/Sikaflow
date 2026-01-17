@@ -34,7 +34,8 @@ export class GenerateReportHandler implements IActionHandler {
              this.eventEmitter.emit('report.generated', {
                 userId: user.id,
                 organizationId: user.lastActiveOrganizationId || 'unknown',
-                senderPhoneNumber: context.senderPhoneNumber
+                senderPhoneNumber: context.senderPhoneNumber,
+                platform: context.platform
             });
         }
     }
