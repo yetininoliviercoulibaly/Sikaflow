@@ -54,6 +54,15 @@ export class CreateTransactionHandler implements IActionHandler {
             originMessageId: messageId
         });
 
+        // Send confirmation message
+        const typeLabel = data.type === 'INCOME' ? 'Revenu' : 'Dépense';
+        const currency = data.currency || 'EUR';
+        const category = data.category || 'Non catégorisé';
+        await messagingService.sendMessage(
+            senderPhoneNumber,
+            `✅ *${typeLabel} enregistré !*\n\n💰 Montant : *${data.amount} ${currency}*\n📁 Catégorie : ${category}`
+        );
+
         // Emit Event for Onboarding
         if (result && result.reportedByUserId) {
              this.eventEmitter.emit('transaction.created', {
