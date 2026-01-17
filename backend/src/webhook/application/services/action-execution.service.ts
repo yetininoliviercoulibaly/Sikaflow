@@ -113,6 +113,10 @@ export class ActionExecutionService {
         const handler = this.actionHandlers.find(h => h.canHandle(action.intent));
         if (handler) {
             await handler.handle(action.data || {}, actionContext);
+            // Proactively clear pending action if handled successfully
+            if (!action.missing_fields || action.missing_fields.length === 0) {
+                this.conversationState.clearPendingAction(senderPhoneNumber);
+            }
         } else {
             this.logger.warn(`No handler found for intent: ${action.intent}`);
         }
