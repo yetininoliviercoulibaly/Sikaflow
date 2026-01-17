@@ -24,10 +24,21 @@ export class CheckSubscriptionUseCase {
     private readonly eventPassRepository: IEventPassRepository,
     @Inject(I_SUBSCRIPTION_REPOSITORY)
     private readonly subscriptionRepository: ISubscriptionRepository,
+    private readonly configService: ConfigService,
   ) {}
 
   async execute(command: CheckSubscriptionCommand): Promise<CheckSubscriptionResult> {
     const { organizationId } = command;
+
+    // Check for bypass flag (Staging/Dev)
+    if (this.configService.get('BYPASS_SUBSCRIPTION_CHECK') === 'true') {
+        const result: CheckSubscriptionResult = {
+            hasAccess: true,
+            reason: 'Bypass (Staging)',
+            expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) // 1 year
+        };
+        return result;
+    }
 
     // Check cache first
     const cached = this.accessCache.get(organizationId);
