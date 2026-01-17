@@ -1,10 +1,10 @@
-'use client';
-
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Spinner from '@/components/ui/Spinner';
 import Link from 'next/link';
-import styles from './DashboardLayout.module.css';
+import { LayoutDashboard, Calendar, Building2, FileText, LogOut, User, Menu } from 'lucide-react';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { cn } from '@/lib/utils';
 
 export default function DashboardLayout({
   children,
@@ -26,55 +26,89 @@ export default function DashboardLayout({
 
   if (!isAuthorized) {
     return (
-      <div className={styles.loading}>
+      <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-950">
         <Spinner size={48} />
       </div>
     );
   }
 
   const navItems = [
-    { name: 'Tableau de bord', href: '/dashboard', active: pathname === '/dashboard' },
-    { name: 'Événements', href: '/dashboard/events', active: pathname === '/dashboard/events' },
-    { name: 'Organisations', href: '/dashboard/organizations', active: pathname === '/dashboard/organizations' },
-    { name: 'Rapports', href: '/dashboard/reports', active: pathname === '/dashboard/reports' },
+    { name: 'Tableau de bord', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Événements', href: '/dashboard/events', icon: Calendar },
+    { name: 'Organisations', href: '/dashboard/organizations', icon: Building2 },
+    { name: 'Rapports', href: '/dashboard/reports', icon: FileText },
   ];
 
   return (
-    <div className={styles.container}>
-      <aside className={styles.sidebar}>
-        <div className={styles.logo}>Event Pilot</div>
-        <nav className={styles.nav}>
-          {navItems.map((item) => (
-            <Link 
-              key={item.href} 
-              href={item.href}
-              className={item.active ? styles.navItemActive : styles.navItem}
-            >
-              {item.name}
-            </Link>
-          ))}
+    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+      {/* Sidebar */}
+      <aside className="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col p-6 shadow-sm z-20 hidden md:flex">
+        <div className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent mb-10 pl-2">
+          Event Pilot
+        </div>
+        
+        <nav className="flex flex-col gap-2 flex-1">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href;
+            return (
+              <Link 
+                key={item.href} 
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group relative overflow-hidden",
+                  isActive 
+                    ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20" 
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
+                )}
+              >
+                {isActive && (
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-600 dark:bg-indigo-500 rounded-r-full" />
+                )}
+                <Icon size={20} className={cn("transition-colors", isActive ? "text-indigo-600 dark:text-indigo-400" : "text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300")} />
+                {item.name}
+              </Link>
+            );
+          })}
         </nav>
+
         <button 
-          className={styles.logout}
+          className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-rose-600 dark:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 rounded-xl transition-colors mt-auto"
           onClick={() => {
             localStorage.removeItem('auth_token');
             router.push('/login');
           }}
         >
+          <LogOut size={20} />
           Déconnexion
         </button>
       </aside>
-      <main className={styles.main}>
-        <header className={styles.header}>
-          <h1>
-            {pathname === '/dashboard' ? 'Overview' : 
-             pathname.startsWith('/dashboard/events') ? 'Événements' :
-             pathname.startsWith('/dashboard/organizations') ? 'Organisations' :
-             'Rapports'}
-          </h1>
-          <div className={styles.userProfile}>Admin</div>
+
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col min-w-0">
+        <header className="h-20 px-8 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-10">
+          <div className="flex items-center gap-4">
+            <button className="md:hidden p-2 text-slate-600 dark:text-slate-300">
+                <Menu size={24} />
+            </button>
+            <h1 className="text-xl font-semibold text-slate-800 dark:text-slate-200 hidden sm:block">
+                {pathname === '/dashboard' ? 'Vue d\'ensemble' : 
+                navItems.find(n => n.href === pathname)?.name || 'Dashboard'}
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <div className="flex items-center gap-3 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-semibold text-sm">
+                    EP
+                </div>
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-300 hidden sm:block">Admin</span>
+            </div>
+          </div>
         </header>
-        <section className={styles.content}>
+
+        <section className="flex-1 overflow-y-auto bg-slate-50/50 dark:bg-slate-950/50">
           {children}
         </section>
       </main>
