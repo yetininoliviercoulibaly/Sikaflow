@@ -190,93 +190,97 @@ export class ProcessTelegramMessageUseCase {
 
 
   private async resolveAnalysis(content: string, chatId: number, userId: number): Promise<LLMAnalysisResult> {
-      // Analyze via LLM
       let analysis = await this.analyzeText(content, String(userId));
       
-      // CONTEXT MERGE: Check for pending action and merge context
       const pending = this.conversationState.getPendingAction(String(chatId));
-      if (pending) {
-        this.logger.log(`Merging pending context for ${chatId}: ${JSON.stringify(pending)}`);
-        
-        // Context Merging Logic
-        const isStopCommand = ['STOP', 'ANNULER', 'CANCEL', 'EXIT'].includes(content.toUpperCase());
-        
-        if (!isStopCommand) {
-          const llmData = analysis.data || {};
-          
-          // Merge pending data with new LLM data (LLM data takes precedence for new fields)
-          const mergedData = { ...pending.data, ...llmData };
-          
-          // HEURISTIC: If 'amount' is missing but user sent a number (potentially with text/currency), extract it.
-          if (!mergedData['amount'] && (pending.missing_fields || []).includes('amount')) {
-               // Match first number in string (supports 50, 50.5, 50,5)
-               const numberMatch = content.match(/(\d+([.,]\d+)?)/);
-                if (numberMatch) {
-                    const rawAmount = numberMatch[0].replace(',', '.');
-                    mergedData['amount'] = parseFloat(rawAmount);
-                }
-           }
+      if (!pending) return analysis;
 
-           // HEURISTIC: If 'period' is missing, check for common French keywords
-           if (!mergedData['period'] && (pending.missing_fields || []).includes('period')) {
-               const lowerContent = content.toLowerCase();
-               if (lowerContent.includes("aujourd'hui") || lowerContent.includes("ce jour")) {
-                   mergedData['period'] = 'today';
-               } else if (lowerContent.includes("hier")) {
-                   mergedData['period'] = 'yesterday';
-               } else if (lowerContent.includes("cette semaine")) {
-                   mergedData['period'] = 'this_week';
-               } else if (lowerContent.includes("mois dernier")) {
-                   mergedData['period'] = 'last_month';
-               } else if (lowerContent.includes("ce mois")) {
-                   mergedData['period'] = 'this_month';
-               } else if (lowerContent.includes("cette année")) {
-                   mergedData['period'] = 'this_year';
-               } else if (lowerContent.includes("ce semestre")) {
-                   mergedData['period'] = 'this_semester';
-               } else if (lowerContent.includes("semestre dernier")) {
-                   mergedData['period'] = 'last_semester';
-               } else if (lowerContent.includes("ce trimestre")) {
-                   mergedData['period'] = 'this_quarter';
-               } else if (lowerContent.includes("trimestre dernier")) {
-                   mergedData['period'] = 'last_quarter';
-               }
-           }
+      this.logger.log(`Merging pending context for ${chatId}: ${JSON.stringify(pending)}`);
+      
+      const isStopCommand = ['STOP', 'ANNULER', 'CANCEL', 'EXIT'].includes(content.toUpperCase());
+      if (isStopCommand) {
+        this.conversationState.clearPendingAction(String(chatId));
+        return analysis;
+      }
 
-          // Determine remaining missing fields
-          const remainingMissing = (pending.missing_fields || []).filter(field => {
-             const val = mergedData[field];
-             return val === undefined || val === null || val === '';
-          });
-          
-          // Update analysis to use merged intent and data
-          analysis = {
-            intent: pending.intent,
-            data: mergedData,
-            actions: [{
-              intent: pending.intent,
-              data: mergedData,
-              missing_fields: remainingMissing
-            }]
-          };
-          
-          // Update pending state with new data
-          if (remainingMissing.length > 0) {
-            this.conversationState.setPendingAction(String(chatId), {
-              intent: pending.intent,
-              data: mergedData,
-              missing_fields: remainingMissing,
-              createdAt: new Date()
-            });
-          } else {
-            // All fields collected, clear pending
-            this.conversationState.clearPendingAction(String(chatId));
-          }
-        } else {
-           this.conversationState.clearPendingAction(String(chatId));
-        }
+      const mergedData = this.applyHeuristics(content, pending, analysis.data || {});
+      const remainingMissing = (pending.missing_fields || []).filter(field => {
+        const val = mergedData[field];
+        return val === undefined || val === null || val === '';
+      });
+      
+      analysis = {
+        intent: pending.intent,
+        data: mergedData,
+        actions: [{ intent: pending.intent, data: mergedData, missing_fields: remainingMissing }]
+      };
+      
+      if (remainingMissing.length > 0) {
+        this.conversationState.setPendingAction(String(chatId), {
+          intent: pending.intent, data: mergedData, missing_fields: remainingMissing, createdAt: new Date()
+        });
+      } else {
+        this.conversationState.clearPendingAction(String(chatId));
       }
       return analysis;
+  }
+
+  private applyHeuristics(content: string, pending: { missing_fields?: string[], data: Record<string, unknown> }, llmData: Record<string, unknown>): Record<string, unknown> {
+      const mergedData = { ...pending.data, ...llmData };
+      const missingFields = pending.missing_fields || [];
+      const lowerContent = content.toLowerCase();
+
+      if (!mergedData['amount'] && missingFields.includes('amount')) {
+          const extracted = this.extractAmountFromText(content);
+          if (extracted !== null) mergedData['amount'] = extracted;
+      }
+      if (!mergedData['period'] && missingFields.includes('period')) {
+          const extracted = this.extractPeriodFromText(lowerContent);
+          if (extracted) mergedData['period'] = extracted;
+      }
+      if (!mergedData['metric'] && missingFields.includes('metric')) {
+          const extracted = this.extractMetricFromText(lowerContent);
+          if (extracted) mergedData['metric'] = extracted;
+      }
+      return mergedData;
+  }
+
+  private extractAmountFromText(text: string): number | null {
+      const match = text.match(/(\d+([.,]\d+)?)/);
+      return match ? parseFloat(match[0].replace(',', '.')) : null;
+  }
+
+  private extractPeriodFromText(text: string): string | null {
+      const periodMap: [string[], string][] = [
+          [["aujourd'hui", "ce jour"], 'today'],
+          [["hier"], 'yesterday'],
+          [["cette semaine"], 'this_week'],
+          [["mois dernier"], 'last_month'],
+          [["ce mois"], 'this_month'],
+          [["cette année"], 'this_year'],
+          [["ce semestre"], 'this_semester'],
+          [["semestre dernier"], 'last_semester'],
+          [["ce trimestre"], 'this_quarter'],
+          [["trimestre dernier"], 'last_quarter'],
+      ];
+      for (const [keywords, value] of periodMap) {
+          if (keywords.some(k => text.includes(k))) return value;
+      }
+      return null;
+  }
+
+  private extractMetricFromText(text: string): string | null {
+      const metricMap: [string[], string][] = [
+          [["bénéfice", "profit", "bénéfices"], 'NET_PROFIT'],
+          [["chiffre d'affaire", "revenus", "recettes", "ventes"], 'REVENUE'],
+          [["dépenses", "charges", "frais", "coûts"], 'EXPENSES'],
+          [["pourboire", "tips"], 'TIPS'],
+          [["trésorerie", "cash flow", "flux de trésorerie"], 'CASH_FLOW'],
+      ];
+      for (const [keywords, value] of metricMap) {
+          if (keywords.some(k => text.includes(k))) return value;
+      }
+      return null;
   }
 
   private extractMessageContent(message: TelegramMessageDto): {
