@@ -6,7 +6,7 @@ import styles from './Button.module.css';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'icon';
   isLoading?: boolean;
   fullWidth?: boolean;
   startIcon?: React.ReactNode;
@@ -41,4 +41,5 @@ const Button = ({
     </button>
   );
 };
+export { Button };
 export default Button;

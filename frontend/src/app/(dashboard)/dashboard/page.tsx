@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { AnimatedCard } from '@/components/ui/AnimatedCard';
 import { Wallet, Users, QrCode, AlertCircle, TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
 
 // Mock Data
