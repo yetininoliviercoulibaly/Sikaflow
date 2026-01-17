@@ -6,12 +6,17 @@ import { IMessagingService } from '../../../common/messaging/messaging.service.i
 import { User } from '../../../user/domain/user.entity';
 import { MessagingPlatforms } from '../../../common/messaging/domain/constants/messaging-platforms.enum';
 import { LLMIntent } from '../../../common/llm/llm-types';
+import { ConfigService } from '@nestjs/config';
+import { ConversationalGuidanceService } from '../../application/services/conversational-guidance.service';
+import { ConversationStateService } from '../../application/services/conversation-state.service';
 
 describe('ActionExecutionService', () => {
   let service: ActionExecutionService;
   let mockMessagingService: jest.Mocked<IMessagingService>;
   let mockCheckSubscriptionUseCase: jest.Mocked<CheckSubscriptionUseCase>;
   let mockHandler: jest.Mocked<IActionHandler>;
+  let mockGuidanceService: jest.Mocked<ConversationalGuidanceService>;
+  let mockConversationStateService: jest.Mocked<ConversationStateService>;
 
   beforeEach(async () => {
     mockMessagingService = {
@@ -31,6 +36,17 @@ describe('ActionExecutionService', () => {
         handle: jest.fn(),
     };
 
+    mockGuidanceService = {
+      getGuidance: jest.fn().mockReturnValue({ message: 'Il manque des informations' }),
+    } as any;
+
+    mockConversationStateService = {
+      setPendingAction: jest.fn(),
+      getPendingAction: jest.fn(),
+      clearPendingAction: jest.fn(),
+      updatePendingAction: jest.fn(),
+    } as any;
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ActionExecutionService,
@@ -41,6 +57,18 @@ describe('ActionExecutionService', () => {
         {
             provide: CheckSubscriptionUseCase,
             useValue: mockCheckSubscriptionUseCase,
+        },
+        {
+          provide: ConfigService,
+          useValue: { get: jest.fn().mockReturnValue('false') },
+        },
+        {
+          provide: ConversationalGuidanceService,
+          useValue: mockGuidanceService,
+        },
+        {
+          provide: ConversationStateService,
+          useValue: mockConversationStateService,
         }
       ],
     }).compile();
@@ -122,6 +150,7 @@ describe('ActionExecutionService', () => {
 
     expect(mockMessagingService.sendMessage).toHaveBeenCalledWith(expect.stringContaining('+123'), expect.stringContaining('Il manque des informations'));
     expect(mockHandler.handle).not.toHaveBeenCalled();
+    expect(mockConversationStateService.setPendingAction).toHaveBeenCalled();
   });
 
   it('should find and execute handler for UNKNOWN intent', async () => {

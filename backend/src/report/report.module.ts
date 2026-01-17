@@ -4,7 +4,7 @@ import { Report } from './domain/report.entity';
 import { PdfGeneratorServiceImpl } from './infrastructure/pdf-generator.service';
 import { PDF_GENERATOR_SERVICE } from './domain/ports/pdf-generator-service.interface';
 import { ReportProcessor } from './application/processors/report.processor';
-import { WhatsAppModule } from '../common/whatsapp/whatsapp.module';
+import { MessagingModule } from '../common/messaging/messaging.module';
 import { BullModule } from '@nestjs/bullmq';
 import { BusinessIntelligenceService } from './application/services/business-intelligence.service';
 import { GenerateDailyReportUseCase } from './application/use-cases/generate-daily-report.use-case';
@@ -17,7 +17,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 @Module({
   imports: [
     MikroOrmModule.forFeature([Report]),
-    WhatsAppModule,
+    MessagingModule,
     BullModule.registerQueue({
         name: 'reports',
     }),

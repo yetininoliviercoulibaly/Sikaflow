@@ -2,9 +2,11 @@ import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Inject, Logger } from '@nestjs/common';
 import { IPdfGeneratorService, PDF_GENERATOR_SERVICE } from '../../domain/ports/pdf-generator-service.interface';
-import { WhatsAppService } from '../../../common/whatsapp/whatsapp.service';
-import { EntityManager } from '@mikro-orm/core'; // Direct EM usage or specific repositories
-// Ideally inject Repositories. For speed, I might use EntityManager to fetch checks.
+import { WhatsAppMessagingAdapter } from '../../../common/messaging/whatsapp-messaging.adapter';
+import { TelegramMessagingAdapter } from '../../../common/messaging/telegram-messaging.adapter';
+import { IMessagingService } from '../../../common/messaging/messaging.service.interface';
+import { MessagingPlatforms } from '../../../common/messaging/domain/constants/messaging-platforms.enum';
+import { MikroORM, RequestContext } from '@mikro-orm/core';
 import { Transaction } from '../../../transaction/domain/transaction.entity';
 import { Incident } from '../../../incident/domain/incident.entity';
 
@@ -14,64 +16,94 @@ export class ReportProcessor extends WorkerHost {
 
   constructor(
     @Inject(PDF_GENERATOR_SERVICE) private readonly pdfGenerator: IPdfGeneratorService,
-    private readonly whatsAppService: WhatsAppService,
-    private readonly em: EntityManager,
+    private readonly whatsAppAdapter: WhatsAppMessagingAdapter,
+    private readonly telegramAdapter: TelegramMessagingAdapter,
+    private readonly orm: MikroORM,
   ) {
     super();
   }
 
+  /**
+   * Selects the appropriate messaging adapter based on platform
+   */
+  private getMessagingService(platform: MessagingPlatforms): IMessagingService {
+    return platform === MessagingPlatforms.TELEGRAM
+      ? this.telegramAdapter
+      : this.whatsAppAdapter;
+  }
+
   async process(job: Job<any, any, string>): Promise<any> {
-    // If we use one Processor class for the whole queue, we must check job.name
-    // BUT MessageProcessor is also @Processor('whatsapp'). 
-    // BullMQ allows multiple workers on same queue? Yes if different concurrency or same. 
-    // NestJS allows splitting via @Process('name') inside ONE class, OR effectively splitting logic. 
-    // However, if MessageProcessor extends WorkerHost, it consumes ALL jobs by default process() unless we use named processors.
-    
-    // Better Approach: MessageProcessor handles 'incoming-message'. ReportProcessor handles 'generate-report'.
-    // NOTE: NestJS BullMQ WorkerHost implementation `process(job)` catches ALL. 
-    // To route by name, we can check `job.name` inside.
-    
     if (job.name === 'generate-report') {
-        return this.handleGenerateReport(job);
+        return RequestContext.create(this.orm.em, () => this.handleGenerateReport(job));
     } 
-    // If it's not for us, we shouldn't fail, but maybe we shouldn't have picked it up if we have multiple workers competing?
-    // Actually, distinct Processors for SAME queue in NestJS might compete. 
-    // Best practice: ONE Processor for the Queue, routing inside. OR Named Processors if using named queues.
-    // Here we have one queue 'whatsapp'. 
-    
-    // DECISION: Move this logic to `MessageProcessor` OR handle concurrency? 
-    // Or make ReportProcessor listen to a DIFFERENT queue 'reports'. 
-    // Let's use a different queue for reports: 'reports'. Cleaner.
-    // Task said "ProcessMessageUseCase ... adds job 'generate-report' in the queue".
-    // If I add to 'whatsapp' queue, then MessageProcessor (which listens to 'whatsapp') receives it.
-    // MessageProcessor currently has `process(job)`. It will crash or error on 'generate-report' payload if unexpected.
-    
-    // PLAN REDIRECTION: Use a separate queue "reports".
-    // 1. Register queue 'reports' in ReportModule.
-    // 2. Inject queue 'reports' in WebhookModule (or generic service).
-    // 3. ReportProcessor listens to 'reports'.
   }
 
   async handleGenerateReport(job: Job): Promise<void> {
-      this.logger.log(`Generating report for ${job.data.phoneNumber}`);
-      const { phoneNumber, organizationId } = job.data;
+      this.logger.log(`[Job:${job.id}] Generating report for ${job.data.phoneNumber}`);
+      const { phoneNumber, organizationId, platform } = job.data;
+      
+      try {
+          // Select the correct messaging service based on platform
+          const messagingService = this.getMessagingService(platform || MessagingPlatforms.WHATSAPP);
 
-      // 1. Fetch Data (Mock Last 10 transactions)
-      // Real: Repo.find({ organizationId, date > ... })
-      // Using generic EM for simplicity of import
-      const transactions = await this.em.find(Transaction, {}, { limit: 10, orderBy: { transactionDate: 'DESC' } });
-      const incidents = await this.em.find(Incident, {}, { limit: 5, orderBy: { occurredAt: 'DESC' } });
+          // 1. Fetch Data (STRICT ISOLATION)
+          const orgId = job.data.organizationId;
+          if (!orgId) {
+            throw new Error(`[Job:${job.id}] Missing organizationId in job data. Cannot generate report.`);
+          }
 
-      // 2. Generate PDF
-      const pdfBuffer = await this.pdfGenerator.generateReportPdf({
-          title: `Flash Report - ${new Date().toLocaleDateString()}`,
-          items: [
-              ...transactions.map(t => `[${t.type}] ${t.amount} ${t.currency} - ${t.description}`),
-              ...incidents.map(i => `[INCIDENT] ${i.severity} - ${i.description}`)
-          ]
-      });
+          this.logger.debug(`[Job:${job.id}] Fetching transactions/incidents for Org:${orgId}...`);
+          const transactions = await this.orm.em.find(Transaction, { organizationId: orgId }, { limit: 10, orderBy: { transactionDate: 'DESC' } });
+          const incidents = await this.orm.em.find(Incident, { organizationId: orgId }, { limit: 5, orderBy: { occurredAt: 'DESC' } });
 
-      // 3. Send via WhatsApp
-      await this.whatsAppService.sendDocument(phoneNumber, pdfBuffer, 'report.pdf', 'Here is your Flash Report');
+          // 1b. Calculate Totals & Translate
+          const totalIncome = transactions
+            .filter(t => t.type === 'INCOME')
+            .reduce((sum, t) => sum + Number(t.amount), 0);
+          
+          const totalExpense = transactions
+            .filter(t => t.type === 'EXPENSE')
+            .reduce((sum, t) => sum + Number(t.amount), 0);
+
+          const formattedItems = [
+              ...transactions.map(t => ({
+                  type: t.type === 'INCOME' ? 'REVENU' : 'DÉPENSE',
+                  amount: t.amount,
+                  currency: t.currency,
+                  description: t.description,
+                  date: t.transactionDate
+              })),
+              ...incidents.map(i => ({
+                  type: 'INCIDENT',
+                  severity: i.severity,
+                  description: i.description,
+                  date: i.occurredAt
+              }))
+          ];
+
+          // 2. Generate PDF
+          this.logger.debug(`[Job:${job.id}] Generating PDF...`);
+          const pdfBuffer = await this.pdfGenerator.generateReportPdf({
+              title: `Flash Report - ${new Date().toLocaleDateString('fr-FR')}`,
+              summary: {
+                  totalIncome,
+                  totalExpense,
+                  netChange: totalIncome - totalExpense,
+                  currency: transactions[0]?.currency || 'XOF'
+              },
+              items: formattedItems
+          });
+
+          // 3. Send via platform-agnostic messaging
+          const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 16);
+          const filename = `report_${timestamp}.pdf`;
+          this.logger.debug(`[Job:${job.id}] Sending document ${filename} (${pdfBuffer.length} bytes)...`);
+          await messagingService.sendDocument(phoneNumber, pdfBuffer, filename, 'Voici votre Flash Report');
+          
+          this.logger.log(`[Job:${job.id}] Report sent to ${phoneNumber} via ${platform || 'WHATSAPP'}`);
+      } catch (error) {
+          this.logger.error(`[Job:${job.id}] Failed to generate report`, error.stack);
+          throw error;
+      }
   }
 }

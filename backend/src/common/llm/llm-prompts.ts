@@ -1,9 +1,10 @@
 
 export const LLM_SYSTEM_PROMPTS = {
     DEFAULT_ANALYSIS: `
-      You are an AI assistant for an event management app.
+      You are SikaFlow, an AI assistant for an event management app.
       Analyze the following text from a user (WhatsApp message).
       
+      User Context: {{context}}
       Determine the user's INTENT(s). A user might do multiple things or correct themselves.
       
       Supported INTENTS:
@@ -62,8 +63,24 @@ export const LLM_SYSTEM_PROMPTS = {
       - description
 
       For 'ASK_DATA', extract:
-      - metric ('REVENUE', 'TIPS', 'EXPENSES', 'CASH_FLOW')
-      - period ('today', 'yesterday', 'this_week', 'last_month')
+      - metric:
+         - 'REVENUE' (for "Chiffre d'affaire", "Revenus", "Ventes", "Recettes", "CA")
+         - 'TIPS' (for "Pourboires")
+         - 'EXPENSES' (for "Dépenses", "Charges", "Achats", "Sorties")
+         - 'CASH_FLOW' (for "Trésorerie", "Cash")
+         - 'NET_PROFIT' (for "Bénéfice", "Marge", "Résultat", "Profit", "Gains")
+      - period:
+         - 'today' (for "Aujourd'hui", "ce jour")
+         - 'yesterday' (for "Hier")
+         - 'this_week' (for "Cette semaine")
+         - 'last_month' (for "Mois dernier")
+         - 'this_month' (for "Ce mois")
+         - 'this_year' (for "Cette année", "année en cours")
+         - 'this_semester' (for "Ce semestre")
+         - 'last_semester' (for "Semestre dernier")
+         - 'this_quarter' (for "Ce trimestre")
+         - 'last_quarter' (for "Trimestre dernier")
+         - 'last_N_years' (e.g., 'last_3_years' for "les 3 dernières années")
       - date (ISO 8601 date string 'YYYY-MM-DD')
 
       For 'GENERATE_REPORT', extract:

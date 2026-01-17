@@ -34,7 +34,7 @@ export class ClaimTicketHandler implements IActionHandler {
     const token = match[1];
 
     try {
-        await this.claimTicketUseCase.execute(token, senderPhoneNumber);
+        await this.claimTicketUseCase.execute(token, senderPhoneNumber, messagingService);
         // Success message sent by UseCase
     } catch (e) {
         await messagingService.sendMessage(senderPhoneNumber, `❌ Erreur : ${e.message}`);

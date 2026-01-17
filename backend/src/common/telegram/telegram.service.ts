@@ -66,6 +66,7 @@ export class TelegramService implements ITelegramService {
     filename: string,
     caption?: string,
   ): Promise<void> {
+    this.logger.debug(`Sending document "${filename}" to chat ${chatId} (${document.length} bytes)...`);
     try {
       const formData = new FormData();
       // Convert Buffer to Uint8Array for Blob compatibility
@@ -80,12 +81,15 @@ export class TelegramService implements ITelegramService {
         this.httpService.post(`${this.baseUrl}/sendDocument`, formData),
       );
 
-      this.logger.log(`Document "${filename}" sent to chat ${chatId}`);
+      this.logger.log(`Document "${filename}" sent to chat ${chatId}. Telegram Response: ${JSON.stringify(response.data)}`);
     } catch (error) {
       this.logger.error(
         `Failed to send document to chat ${chatId}`,
         error.response?.data || error.message,
       );
+      if (error.stack) {
+          this.logger.debug(error.stack);
+      }
       throw error;
     }
   }

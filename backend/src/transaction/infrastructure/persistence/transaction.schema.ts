@@ -8,7 +8,7 @@ export const TransactionSchema = new EntitySchema<Transaction>({
     id: { type: 'uuid', primary: true },
     organizationId: { type: 'uuid' },
     reportedByUserId: { type: 'uuid', nullable: true },
-    originMessageId: { type: 'uuid', nullable: true },
+    originMessageId: { type: 'varchar', length: 255, nullable: true },
     type: { type: 'enum', enum: true, items: () => TransactionType },
     amount: { type: 'decimal', precision: 15, scale: 2 },
     currency: { type: 'varchar', length: 3 },

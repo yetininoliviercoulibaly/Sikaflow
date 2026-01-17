@@ -3,6 +3,7 @@ import { WhatsAppModule } from '../whatsapp/whatsapp.module';
 import { TelegramModule } from '../telegram/telegram.module';
 import { WhatsAppMessagingAdapter } from './whatsapp-messaging.adapter';
 import { TelegramMessagingAdapter } from './telegram-messaging.adapter';
+import { I_MESSAGING_SERVICE } from './messaging.service.interface';
 
 /**
  * Module providing platform-agnostic messaging adapters
@@ -10,7 +11,14 @@ import { TelegramMessagingAdapter } from './telegram-messaging.adapter';
  */
 @Module({
   imports: [WhatsAppModule, TelegramModule],
-  providers: [WhatsAppMessagingAdapter, TelegramMessagingAdapter],
-  exports: [WhatsAppMessagingAdapter, TelegramMessagingAdapter],
+  providers: [
+    WhatsAppMessagingAdapter, 
+    TelegramMessagingAdapter,
+    {
+      provide: I_MESSAGING_SERVICE,
+      useExisting: WhatsAppMessagingAdapter,
+    }
+  ],
+  exports: [WhatsAppMessagingAdapter, TelegramMessagingAdapter, I_MESSAGING_SERVICE],
 })
 export class MessagingModule {}

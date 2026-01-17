@@ -29,7 +29,7 @@ Event-Pilot vous guide à travers **5 étapes clés** pour maîtriser l'outil :
 | 4️⃣    | Générer un Rapport   | "Rapport" ou "Flash"                |
 | 5️⃣    | Activer l'Abonnement | "Abonnement"                        |
 
-> 💡 L'assistant vous félicite à chaque étape et vous guide vers la suivante !
+> 💡 L'assistant utilise des **boutons interactifs** et des **listes** pour vous guider sans que vous ayez à taper de commandes !
 
 ### Ajouter votre Équipe
 

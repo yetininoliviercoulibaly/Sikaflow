@@ -6,8 +6,8 @@ import { IEventRepository, I_EVENT_REPOSITORY } from '../../domain/ports/event.r
 import { ITicketClaimRepository, I_TICKET_CLAIM_REPOSITORY } from '../../domain/ports/ticket-claim.repository.interface';
 import { ITicketRepository, I_TICKET_REPOSITORY } from '../../domain/ports/ticket.repository.interface';
 import { IQRCodeService, I_QRCODE_SERVICE } from '../../domain/ports/qrcode.service.interface';
-import { IWhatsAppService, I_WHATSAPP_SERVICE } from '../../../common/whatsapp/whatsapp.service.interface';
-import { TicketClaim, TicketClaimStatus } from '../../domain/ticket-claim.entity';
+import { IMessagingService } from '../../../common/messaging/messaging.service.interface';
+import { TicketClaimStatus } from '../../domain/ticket-claim.entity';
 import { Ticket, TicketStatus } from '../../domain/ticket.entity';
 
 @Injectable()
@@ -19,11 +19,10 @@ export class ClaimTicketUseCase {
     @Inject(I_TICKET_CLAIM_REPOSITORY) private readonly claimRepository: ITicketClaimRepository,
     @Inject(I_TICKET_REPOSITORY) private readonly ticketRepository: ITicketRepository,
     @Inject(I_QRCODE_SERVICE) private readonly qrCodeService: IQRCodeService,
-    @Inject(I_WHATSAPP_SERVICE) private readonly whatsAppService: IWhatsAppService,
     private readonly em: EntityManager,
   ) {}
 
-  async execute(token: string, userPhone: string): Promise<void> {
+  async execute(token: string, userPhone: string, messagingService: IMessagingService): Promise<void> {
     await this.em.transactional(async (em) => {
         // 1. Find Claim
         const claim = await this.claimRepository.findByToken(token);
@@ -49,9 +48,6 @@ export class ClaimTicketUseCase {
         }
 
         // 4. Generate Ticket
-        // Note: Sold count was ALREADY incremented during GenerateClaimLink.
-        // So we don't increment it here.
-        
         const ticketId = uuidv4();
         const signedPayload = this.qrCodeService.generateSignedPayload(ticketId);
         
@@ -68,9 +64,9 @@ export class ClaimTicketUseCase {
         // 5. Generate QR Image
         const qrBuffer = await this.qrCodeService.generateQRCode(signedPayload);
 
-        // 6. Send to User
-        await this.whatsAppService.sendMessage(userPhone, `✅ Billet récupéré pour *${event.name}* !`);
-        await this.whatsAppService.sendDocument(
+        // 6. Send to User via platform-agnostic messaging
+        await messagingService.sendMessage(userPhone, `✅ Billet récupéré pour *${event.name}* !`);
+        await messagingService.sendDocument(
             userPhone,
             qrBuffer,
             `ticket-${event.name}.png`,

@@ -1,3 +1,4 @@
+import { CategoryTranslator } from '../../../common/utils/category-translator';
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { IActionHandler, ActionContext } from './action-handler.interface';
@@ -33,9 +34,12 @@ export class CreateTransactionHandler implements IActionHandler {
              // Format: CONFIRM_TX|Amount|Currency|Type|Category
              const payload = `CONFIRM_TX|${amount}|${currency}|${type}|${category}`;
              
+             // Localize for display
+             const localizedCategory = CategoryTranslator.translate(category);
+
              await messagingService.sendInteractiveButtons(
                  senderPhoneNumber,
-                 `⚠️ J'ai un doute sur la lecture (Confiance: ${(confidence * 100).toFixed(0)}%).\n\nJ'ai lu : *${amount} ${currency}* (${category}).\nEst-ce correct ?`,
+                 `⚠️ J'ai un doute sur la lecture (Confiance: ${(confidence * 100).toFixed(0)}%).\n\nJ'ai lu : *${amount} ${currency}* (${localizedCategory}).\nEst-ce correct ?`,
                  [
                      { id: payload, title: "✅ Oui, confirmer" },
                      { id: "REJECT_TX", title: "❌ Non, corriger" }
@@ -54,12 +58,23 @@ export class CreateTransactionHandler implements IActionHandler {
             originMessageId: messageId
         });
 
+        // Send confirmation message
+        const typeLabel = CategoryTranslator.translate(data.type);
+        const currency = data.currency || 'EUR';
+        const categoryLabel = CategoryTranslator.translate(data.category);
+
+        await messagingService.sendMessage(
+            senderPhoneNumber,
+            `✅ *${typeLabel} enregistré !*\n\n💰 Montant : *${data.amount} ${currency}*\n📁 Catégorie : ${categoryLabel}`
+        );
+
         // Emit Event for Onboarding
         if (result && result.reportedByUserId) {
              this.eventEmitter.emit('transaction.created', {
                 userId: result.reportedByUserId,
                 organizationId: organizationId,
-                senderPhoneNumber: senderPhoneNumber
+                senderPhoneNumber: senderPhoneNumber,
+                platform: context.platform
             });
         }
     }

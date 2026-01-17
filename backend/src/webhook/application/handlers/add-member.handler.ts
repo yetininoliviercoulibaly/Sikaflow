@@ -8,6 +8,7 @@ import { IUserRepository, I_USER_REPOSITORY } from '../../../user/domain/ports/u
 import { User } from '../../../user/domain/user.entity';
 import { v4 as uuidv4 } from 'uuid';
 import { LLMIntent } from '../../../common/llm/llm-types';
+import { normalizePhoneNumber } from '../../../common/utils/phone-number.util';
 
 @Injectable()
 export class AddMemberHandler implements IActionHandler {
@@ -36,6 +37,13 @@ export class AddMemberHandler implements IActionHandler {
              return;
         }
 
+        // Normalize phone number to E.164 format
+        const normalizedPhone = normalizePhoneNumber(targetPhone);
+        if (!normalizedPhone) {
+             await messagingService.sendMessage(senderPhoneNumber, "❌ Format de numéro invalide. Utilisez le format +33612345678 ou 0612345678.");
+             return;
+        }
+
         // Check Permissions (Only Owner/Manager can add)
         const requestor = await this.userRepository.findByPhoneNumber(senderPhoneNumber);
         const requestorMember = await this.organizationRepository.findMember(organizationId, requestor!.id);
@@ -46,10 +54,10 @@ export class AddMemberHandler implements IActionHandler {
         }
 
         try {
-            // Find or Create User
-            let userToAdd = await this.userRepository.findByPhoneNumber(targetPhone);
+            // Find or Create User (using normalized phone)
+            let userToAdd = await this.userRepository.findByPhoneNumber(normalizedPhone);
             if (!userToAdd) {
-                userToAdd = new User(uuidv4(), targetPhone, null, null, new Date());
+                userToAdd = new User(uuidv4(), normalizedPhone, null, null, new Date());
                 await this.userRepository.create(userToAdd);
             }
 
@@ -68,12 +76,13 @@ export class AddMemberHandler implements IActionHandler {
             this.eventEmitter.emit('member.added', {
                 userId: requestor!.id,
                 organizationId,
-                senderPhoneNumber
+                senderPhoneNumber,
+                platform: context.platform
             });
 
             await messagingService.sendMessage(
                 senderPhoneNumber, 
-                `✅ ${targetPhone} ajouté comme *${targetRole}* avec succès !`
+                `✅ ${normalizedPhone} ajouté comme *${targetRole}* avec succès !`
             );
 
         } catch (error) {

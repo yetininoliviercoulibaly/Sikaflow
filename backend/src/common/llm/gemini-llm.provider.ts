@@ -26,12 +26,16 @@ export class GeminiLLMProvider implements ILLMProvider {
     
     // Use provided system prompt or fall back to default from constants
     const systemInstruction = options?.systemPrompt || LLM_SYSTEM_PROMPTS.DEFAULT_ANALYSIS;
-    const finalSystemInstruction = systemInstruction.replace('${JSON.stringify(options?.context || {})}', JSON.stringify(options?.context || {}));
+    const contextStr = JSON.stringify(options?.context || {});
+    
+    let finalSystemInstruction = systemInstruction;
+    if (finalSystemInstruction.includes('{{context}}')) {
+      finalSystemInstruction = finalSystemInstruction.replace('{{context}}', contextStr);
+    } else {
+      finalSystemInstruction = `Context: ${contextStr}\n\n${finalSystemInstruction}`;
+    }
 
-
-    const prompt = `${finalSystemInstruction}
-
-      Input Text: "${text}"`;
+    const prompt = `${finalSystemInstruction}\n\nInput Text: "${text}"`;
 
     try {
       const result = await this.model.generateContent(prompt);
@@ -58,7 +62,14 @@ export class GeminiLLMProvider implements ILLMProvider {
 
     try {
         const basePrompt = options?.prompt || LLM_SYSTEM_PROMPTS.MEDIA_ANALYSIS;
-        const prompt = basePrompt.replace('${JSON.stringify(options?.context || {})}', JSON.stringify(options?.context || {}));
+        const contextStr = JSON.stringify(options?.context || {});
+        
+        let prompt = basePrompt;
+        if (prompt.includes('{{context}}')) {
+          prompt = prompt.replace('{{context}}', contextStr);
+        } else {
+          prompt = `Context: ${contextStr}\n\n${prompt}`;
+        }
 
         const result = await this.model.generateContent([
             prompt,

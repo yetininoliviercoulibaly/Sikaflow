@@ -54,22 +54,31 @@ export class GreetingHandler implements IActionHandler {
 
                 if (nextStep.step && !nextStep.isCompleted) {
                     const tipMessage = 'tipMessage' in nextStep.step ? nextStep.step.tipMessage : '';
-                    await messagingService.sendMessage(
+                    await messagingService.sendInteractiveButtons(
                         senderPhoneNumber,
-                        `👋 Re-bonjour !\n\n📝 *Étape ${nextStep.currentStepNumber}/${nextStep.totalSteps}*\n\n${tipMessage}`,
+                         `👋 Re-bonjour !\n\n📝 *Étape ${nextStep.currentStepNumber}/${nextStep.totalSteps}*\n\n${tipMessage}`,
+                         [{ id: 'ONBOARDING_NEXT', title: '➡️ Étape Suivante' }]
                     );
                     return;
                 }
             }
 
-            await messagingService.sendMessage(
+            await messagingService.sendInteractiveButtons(
                 senderPhoneNumber,
-                `👋 Re-bonjour ! \n\nVous êtes connecté à votre organisation active.\n\nEnvoyez "Aide" pour voir les commandes disponibles.`,
+                `👋 Re-bonjour ! \n\nVous êtes connecté à votre organisation active.\n\nQue souhaitez-vous faire ?`,
+                [
+                    { id: 'HELP_CMD', title: '🆘 Aide / Menu' },
+                    { id: 'REPORT_FLASH_CMD', title: '📊 Bilan Flash' }
+                ]
             );
         } else {
-            await messagingService.sendMessage(
+            await messagingService.sendInteractiveButtons(
                 senderPhoneNumber,
-                `👋 Bonjour et bienvenue sur Event-Pilot !\n\nJe suis votre assistant pour gérer votre établissement.\n\nJe ne trouve pas encore d'organisation liée à votre numéro.\n👉 Pour commencer, envoyez : "Créer le club [Nom]" (ex: Créer le club Miami 225)`,
+                `👋 Bonjour et bienvenue sur SikaFlow !\n\nJe suis votre assistant pour gérer votre établissement.\n\nJe ne trouve pas encore d'organisation liée à votre numéro.`,
+                [
+                    { id: 'CREATE_ORG_CMD', title: '🏢 Créer un Club' },
+                    { id: 'HELP_CMD', title: '❓ Aide' }
+                ]
             );
         }
     }

@@ -34,7 +34,7 @@ export class CreateOrganizationHandler implements IActionHandler {
             const countryCode = this.configService.get<string>('DEFAULT_COUNTRY_CODE') || '+225';
             await messagingService.sendMessage(
                 senderPhoneNumber,
-                `✅ Félicitiations ! Votre organisation *${orgName}* a été créée.\n\nVous êtes maintenant l'Administrateur (Owner).\n\n🚀 Prochaines étapes :\n1. Ajoutez votre équipe : "Ajoute ${countryCode}... comme Manager"\n2. Activez votre accès : "Abonnement"`
+                `✅ Félicitiations ! Votre organisation *${orgName}* a été créée.\n\nVous êtes maintenant l'Administrateur (Owner).\n\n🚀 *Commençons le tutoriel !*\n\n📝 *Étape 1/5* : Enregistrez votre première dépense.\n👉 Essayez d'envoyer : "Achat de 10 sacs de glace pour 5000"`
             );
         } catch (error) {
             await messagingService.sendMessage(senderPhoneNumber, "❌ Une erreur est survenue lors de la création de l'organisation.");

@@ -43,7 +43,7 @@ graph TD
     subgraph "Event Pilot Backend - NestJS"
 
         %% Entry Points
-        WebhookController[Messaging Webhook<br/>(WhatsApp & Telegram)]
+        WebhookController["Messaging Webhook<br/>(WhatsApp & Telegram)"]
 
         %% Queues
         subgraph "Async Layer - BullMQ + Redis"
@@ -89,68 +89,69 @@ graph TD
         subgraph "Infrastructure"
             Postgres[(PostgreSQL)]
             PromptRepo[Prompt Repository]
-            WAService[WhatsApp Service]
-        end
+        Postgres[(PostgreSQL)]
+        PromptRepo[Prompt Repository]
+        MessagingService[Messaging Service]
     end
+end
 
-    %% Flows
-    Staff -->|Send Message/Photo/Audio| WA_API
-    WA_API -->|Webhook POST| WebhookController
-    Staff -->|Send Message| WA_API
-    Staff -->|Send Message| TG_API
-    WA_API -->|Webhook POST| WebhookController
-    TG_API -->|Webhook POST| WebhookController
-    WebhookController -->|Add Job| JobQueue
+%% Flows
+Staff -->|Send Message/Photo/Audio| WA_API
+WA_API -->|Webhook POST| WebhookController
+Staff -->|Send Message| TG_API
+TG_API -->|Webhook POST| WebhookController
+WebhookController -->|Add Job| JobQueue
 
-    JobQueue -->|Process Job| MsgProcessor
+JobQueue -->|Process Job| MsgProcessor
 
-    %% Strategy Routing
-    MsgProcessor -->|Route by Type| TextStrat
-    MsgProcessor -->|Route by Type| AudioStrat
-    MsgProcessor -->|Route by Type| ImgStrat
-    MsgProcessor -->|Route by Type| DocStrat
-    MsgProcessor -->|Route by Type| InterStrat
+%% Strategy Routing
+MsgProcessor -->|Route by Type| TextStrat
+MsgProcessor -->|Route by Type| AudioStrat
+MsgProcessor -->|Route by Type| ImgStrat
+MsgProcessor -->|Route by Type| DocStrat
+MsgProcessor -->|Route by Type| InterStrat
 
-    %% AI Analysis
-    TextStrat -->|Get Prompt| PromptRepo
-    TextStrat -->|Analyze Text| Gemini
-    AudioStrat -->|Transcribe + Analyze| Gemini
-    ImgStrat -->|Download Media| WAService
-    ImgStrat -->|Analyze Media| Gemini
-    DocStrat -->|Download Media| WAService
-    DocStrat -->|Analyze Media| Gemini
-    InterStrat -->|Parse Button Response| OnboardingHandler
+%% AI Analysis
+TextStrat -->|Get Prompt| PromptRepo
+TextStrat -->|Analyze Text| Gemini
+AudioStrat -->|Transcribe + Analyze| Gemini
+ImgStrat -->|Download Media| MessagingService
+ImgStrat -->|Analyze Media| Gemini
+DocStrat -->|Download Media| MessagingService
+DocStrat -->|Analyze Media| Gemini
+InterStrat -->|Parse Button Response| OnboardingHandler
 
-    %% Handler Dispatch
-    TextStrat -->|Result Actions| OrgHandlers
-    TextStrat -->|Result Actions| TxHandler
-    TextStrat -->|Result Actions| EventHandlers
-    TextStrat -->|Result Actions| SubHandlers
-    TextStrat -->|Result Actions| ReportHandler
+%% Handler Dispatch
+TextStrat -->|Result Actions| OrgHandlers
+TextStrat -->|Result Actions| TxHandler
+TextStrat -->|Result Actions| EventHandlers
+TextStrat -->|Result Actions| SubHandlers
+TextStrat -->|Result Actions| ReportHandler
 
-    %% Domain Execution
-    TxHandler -->|Execute| TxUseCase
-    EventHandlers -->|Execute| TicketUseCase
-    SubHandlers -->|Execute| SubUseCase
-    ReportHandler -->|Add Job| ReportQueue
+%% Domain Execution
+TxHandler -->|Execute| TxUseCase
+EventHandlers -->|Execute| TicketUseCase
+SubHandlers -->|Execute| SubUseCase
+ReportHandler -->|Add Job| ReportQueue
 
-    %% Persistence
-    TxUseCase -->|Persist| Postgres
-    TicketUseCase -->|Persist| Postgres
-    SubUseCase -->|Persist| Postgres
-    ReportQueue -->|Generate PDF| ReportService
-    ReportService -->|Fetch Data| Postgres
+%% Persistence
+TxUseCase -->|Persist| Postgres
+TicketUseCase -->|Persist| Postgres
+SubUseCase -->|Persist| Postgres
+ReportQueue -->|Generate PDF| ReportService
+ReportService -->|Fetch Data| Postgres
 
-    %% Notifications
-    TxUseCase -->|Notify User| WAService
-    TicketUseCase -->|Send QR Link| WAService
-    ReportService -->|Send PDF| WAService
+%% Notifications
+TxUseCase -->|Notify User| MessagingService
+TicketUseCase -->|Send QR Link| MessagingService
+ReportService -->|Send PDF| MessagingService
 
-    %% Payment
-    SubHandlers -->|Stripe Checkout| StripeAPI
-    SubHandlers -->|Wave Payment| WaveAPI
+%% Payment
+SubHandlers -->|Stripe Checkout| StripeAPI
+SubHandlers -->|Wave Payment| WaveAPI
 
-    WAService -->|Reply| WA_API
+MessagingService -->|Reply| WA_API
+MessagingService -->|Reply| TG_API
 ```
 
 ## Composants Clés

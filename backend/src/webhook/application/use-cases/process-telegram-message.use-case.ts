@@ -8,6 +8,8 @@ import { ILLMProvider, LLM_PROVIDER_TOKEN } from '../../../common/llm/llm-provid
 import { IPromptRepository, I_PROMPT_REPOSITORY } from '../../../common/prompt/domain/ports/prompt.repository.interface';
 import { TelegramMessagingAdapter } from '../../../common/messaging/telegram-messaging.adapter';
 import { ActionExecutionService } from '../services/action-execution.service';
+import { CommandIntentMapper } from '../services/command-intent.mapper';
+import { ConversationStateService } from '../services/conversation-state.service';
 
 /**
  * Use case for processing incoming Telegram messages
@@ -23,6 +25,8 @@ export class ProcessTelegramMessageUseCase {
     @Inject(LLM_PROVIDER_TOKEN) private readonly llmProvider: ILLMProvider,
     @Inject(I_PROMPT_REPOSITORY) private readonly promptRepository: IPromptRepository,
     private readonly actionExecutionService: ActionExecutionService,
+    private readonly commandIntentMapper: CommandIntentMapper,
+    private readonly conversationState: ConversationStateService,
   ) {}
 
   async execute(update: TelegramUpdateDto): Promise<void> {
@@ -48,15 +52,42 @@ export class ProcessTelegramMessageUseCase {
 
     if (!chatId || !data) return;
 
-    // Process callback data as an action
-    // Format expected: INTENT:param1:param2
-    const [intent, ...params] = data.split(':');
+    // Map callback data to action
+    const mapped = this.commandIntentMapper.map(data);
+    
+    if (!mapped) {
+        this.logger.warn(`No mapping found for callback data: ${data}`);
+        return;
+    }
+
+    // CONTEXT MERGE for Callbacks (Maintain state across button clicks)
+    const pending = this.conversationState.getPendingAction(String(chatId));
+    if (pending && mapped.intent === pending.intent) {
+         this.logger.log(`Merging pending context for callback ${chatId}: ${JSON.stringify(pending)}`);
+         mapped.data = { ...pending.data, ...mapped.data };
+         
+         // Update missing fields
+         const stillMissing = (pending.missing_fields || []).filter(field => {
+             const val = mapped.data[field];
+             return val === undefined || val === null || val === '';
+         });
+
+         if (stillMissing.length === 0) {
+             this.conversationState.clearPendingAction(String(chatId));
+             mapped.missing_fields = [];
+         } else {
+             this.conversationState.updatePendingAction(String(chatId), mapped.data);
+             mapped.missing_fields = stillMissing;
+         }
+    }
+
+    const actions = [mapped];
     
     // Find user by Telegram ID
     const user = await this.userRepository.findByPhoneNumber(String(chatId));
 
     await this.actionExecutionService.execute({
-        actions: [{ intent, data: { params } }],
+        actions,
         messagingService: this.telegramMessagingAdapter,
         user,
         senderPhoneNumber: String(chatId),
@@ -77,11 +108,36 @@ export class ProcessTelegramMessageUseCase {
 
     try {
       // Determine message type and extract content
-      const { type, content, fileId } = this.extractMessageContent(message);
+      let { type, content, fileId } = this.extractMessageContent(message);
       
       if (!content && !fileId) {
         this.logger.debug(`No processable content in message ${messageId}`);
         return;
+      }
+
+      // VOICE/AUDIO PROCESSING
+      if (fileId && (type === 'voice' || type === 'audio')) {
+          try {
+             await this.telegramMessagingAdapter.sendMessage(String(chatId), "🎤 Traitement de l'audio en cours...");
+             const { buffer } = await this.telegramMessagingAdapter.downloadMedia(fileId);
+             
+             const base64Audio = buffer.toString('base64');
+             const mimeType = type === 'voice' ? 'audio/ogg' : 'audio/mpeg'; 
+             
+             const transcription = await this.llmProvider.transcribeAudio(base64Audio, mimeType);
+             
+             if (!transcription || transcription.toLowerCase().includes('audio unclear')) {
+                 await this.telegramMessagingAdapter.sendMessage(String(chatId), "⚠️ Audio incompréhensible. Merci de répéter.");
+                 return;
+             }
+             content = transcription;
+             type = 'text'; // Treat as text henceforth
+             this.logger.log(`Transcription result for ${userId}: "${content}"`);
+          } catch (e) {
+               this.logger.error(`Failed to process audio for ${userId}`, e);
+               await this.telegramMessagingAdapter.sendMessage(String(chatId), "❌ Erreur lors du traitement de l'audio.");
+               return;
+          }
       }
 
       // Special handling for CLAIM tokens
@@ -93,13 +149,12 @@ export class ProcessTelegramMessageUseCase {
           actions: [{ intent: LLMIntent.CLAIM_TICKET, data: { raw_message: content } }],
         };
       } else if (type === 'text' && content) {
-        // Analyze via LLM
-        analysis = await this.analyzeText(content, String(userId));
+        // Resolve Analysis (Shared Logic via Helper)
+        analysis = await this.resolveAnalysis(content, chatId, userId);
       } else {
-        // For non-text messages, we might want specific handling
         await this.telegramMessagingAdapter.sendMessage(
           String(chatId),
-          "📝 Pour l'instant, je ne peux traiter que les messages texte. Merci de m'envoyer du texte.",
+          "📝 Pour l'instant, je ne peux traiter que les messages texte ou audio.",
         );
         return;
       }
@@ -132,6 +187,109 @@ export class ProcessTelegramMessageUseCase {
     }
   }
 
+
+  private async resolveAnalysis(content: string, chatId: number, userId: number): Promise<LLMAnalysisResult> {
+      const pending = this.conversationState.getPendingAction(String(chatId));
+      let analysis = await this.analyzeText(content, String(userId), pending);
+      
+      if (!pending) return analysis;
+
+      this.logger.log(`Merging pending context for ${chatId}: ${JSON.stringify(pending)}`);
+      
+      const isStopCommand = ['STOP', 'ANNULER', 'CANCEL', 'EXIT'].includes(content.toUpperCase());
+      if (isStopCommand) {
+        this.conversationState.clearPendingAction(String(chatId));
+        return analysis;
+      }
+
+      const mergedData = this.applyHeuristics(content, pending, analysis.data || {});
+      const remainingMissing = (pending.missing_fields || []).filter(field => {
+        const val = mergedData[field];
+        return val === undefined || val === null || val === '';
+      });
+      
+      analysis = {
+        intent: pending.intent,
+        data: mergedData,
+        actions: [{ intent: pending.intent, data: mergedData, missing_fields: remainingMissing }]
+      };
+      
+      if (remainingMissing.length > 0) {
+        this.conversationState.setPendingAction(String(chatId), {
+          intent: pending.intent, data: mergedData, missing_fields: remainingMissing, createdAt: new Date()
+        });
+      } else {
+        this.conversationState.clearPendingAction(String(chatId));
+      }
+      return analysis;
+  }
+
+  private applyHeuristics(content: string, pending: { intent: string, missing_fields?: string[], data: Record<string, unknown> }, llmData: Record<string, unknown>): Record<string, unknown> {
+      const mergedData = { ...pending.data, ...llmData };
+      const missingFields = pending.missing_fields || [];
+      const lowerContent = content.toLowerCase();
+
+      if (!mergedData['amount'] && missingFields.includes('amount')) {
+          const extracted = this.extractAmountFromText(content);
+          if (extracted !== null) mergedData['amount'] = extracted;
+      }
+      if (!mergedData['period'] && missingFields.includes('period')) {
+          const extracted = this.extractPeriodFromText(lowerContent);
+          if (extracted) mergedData['period'] = extracted;
+      }
+      if (!mergedData['metric'] && missingFields.includes('metric')) {
+          const extracted = this.extractMetricFromText(lowerContent);
+          if (extracted) mergedData['metric'] = extracted;
+      }
+      
+      // Name heuristic: If creating organization and name is missing, use raw message if it looks like a name
+      if (!mergedData['name'] && missingFields.includes('name') && pending.intent === LLMIntent.CREATE_ORGANIZATION) {
+          if (content.length > 2 && content.length < 50 && !content.includes('/')) {
+              mergedData['name'] = content;
+          }
+      }
+
+      return mergedData;
+  }
+
+  private extractAmountFromText(text: string): number | null {
+      const match = text.match(/(\d+([.,]\d+)?)/);
+      return match ? parseFloat(match[0].replace(',', '.')) : null;
+  }
+
+  private extractPeriodFromText(text: string): string | null {
+      const periodMap: [string[], string][] = [
+          [["aujourd'hui", "ce jour"], 'today'],
+          [["hier"], 'yesterday'],
+          [["cette semaine"], 'this_week'],
+          [["mois dernier"], 'last_month'],
+          [["ce mois"], 'this_month'],
+          [["cette année"], 'this_year'],
+          [["ce semestre"], 'this_semester'],
+          [["semestre dernier"], 'last_semester'],
+          [["ce trimestre"], 'this_quarter'],
+          [["trimestre dernier"], 'last_quarter'],
+      ];
+      for (const [keywords, value] of periodMap) {
+          if (keywords.some(k => text.includes(k))) return value;
+      }
+      return null;
+  }
+
+  private extractMetricFromText(text: string): string | null {
+      const metricMap: [string[], string][] = [
+          [["bénéfice", "profit", "bénéfices"], 'NET_PROFIT'],
+          [["chiffre d'affaire", "revenus", "recettes", "ventes"], 'REVENUE'],
+          [["dépenses", "charges", "frais", "coûts"], 'EXPENSES'],
+          [["pourboire", "tips"], 'TIPS'],
+          [["trésorerie", "cash flow", "flux de trésorerie"], 'CASH_FLOW'],
+      ];
+      for (const [keywords, value] of metricMap) {
+          if (keywords.some(k => text.includes(k))) return value;
+      }
+      return null;
+  }
+
   private extractMessageContent(message: TelegramMessageDto): {
     type: 'text' | 'photo' | 'document' | 'voice' | 'audio' | 'unknown';
     content?: string;
@@ -156,12 +314,18 @@ export class ProcessTelegramMessageUseCase {
     return { type: 'unknown' };
   }
 
-  private async analyzeText(text: string, userPhone: string): Promise<LLMAnalysisResult> {
+  private async analyzeText(text: string, userPhone: string, pendingAction?: any): Promise<LLMAnalysisResult> {
     const promptKey = 'analyze_message';
     const template = await this.promptRepository.getTemplate(promptKey);
     
     return this.llmProvider.analyzeText(text, {
-      context: { userPhone },
+      context: { 
+          userPhone,
+          pendingAction: pendingAction ? {
+              intent: pendingAction.intent,
+              missing_fields: pendingAction.missing_fields
+          } : null
+      },
       systemPrompt: template?.content,
     });
   }

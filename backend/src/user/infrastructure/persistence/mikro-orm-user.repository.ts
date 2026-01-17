@@ -2,6 +2,7 @@ import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { User } from '../../domain/user.entity';
 import { IUserRepository } from '../../domain/ports/user.repository.interface';
+import { normalizePhoneNumber } from '../../../common/utils/phone-number.util';
 
 @Injectable()
 export class MikroOrmUserRepository implements IUserRepository {
@@ -12,7 +13,9 @@ export class MikroOrmUserRepository implements IUserRepository {
   }
 
   async findByPhoneNumber(phoneNumber: string): Promise<User | null> {
-    return this.em.findOne(User, { phoneNumber });
+    // Normalize the phone number before querying to handle local formats
+    const normalized = normalizePhoneNumber(phoneNumber) || phoneNumber;
+    return this.em.findOne(User, { phoneNumber: normalized });
   }
 
   async create(user: User): Promise<User> {

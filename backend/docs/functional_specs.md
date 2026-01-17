@@ -48,8 +48,9 @@ graph TD
         end
     end
 
-    PDF -->|File| WA_Cloud
-    ActionHandler -->|Response| WA_Cloud
+    PDF -->|File| Messaging_Service[Messaging Service]
+    ActionHandler -->|Response| Messaging_Service
+    Messaging_Service -->|Reply| Cloud_API
 ```
 
 ### 2.2 Flux de Traitement des Messages (Orchestration)
@@ -115,7 +116,7 @@ Génération de documents professionnels au format PDF.
 - **Flash Report** : Résumé de la soirée (Ventes, Dépenses cash, Incidents) envoyé à la fermeture.
 - **Daily Report** : Bilan quotidien pour abonnés mensuels actifs.
 - **Weekly Report** : Bilan hebdomadaire consolidé (P&L, Marges) pour les propriétaires.
-- **Format** : PDF riche généré via `PDFKit`, partagé directement dans la conversation WhatsApp.
+- **Format** : PDF riche généré via `PDFKit`, partagé directement dans la conversation WhatsApp ou Telegram.
 
 ### 3.4 Sécurité & Incidents (Incident)
 
@@ -188,7 +189,7 @@ Tutoriel guidé en 5 étapes pour les nouveaux utilisateurs.
 Collecte automatique des retours participants.
 
 - **Déclenchement** : Automatique après la date de fin d'événement.
-- **Format** : Boutons interactifs WhatsApp (1-5 étoiles).
+- **Format** : Boutons interactifs (WhatsApp & Telegram).
 - **Données collectées** : `eventId`, `attendeePhone`, `rating`, `comment`.
 - **Usage** : Amélioration continue, statistiques pour organisateurs.
 
