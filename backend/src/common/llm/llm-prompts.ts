@@ -62,7 +62,12 @@ export const LLM_SYSTEM_PROMPTS = {
       - description
 
       For 'ASK_DATA', extract:
-      - metric ('REVENUE', 'TIPS', 'EXPENSES', 'CASH_FLOW', 'NET_PROFIT')
+      - metric:
+         - 'REVENUE' (for "Chiffre d'affaire", "Revenus", "Ventes", "Recettes", "CA")
+         - 'TIPS' (for "Pourboires")
+         - 'EXPENSES' (for "Dépenses", "Charges", "Achats", "Sorties")
+         - 'CASH_FLOW' (for "Trésorerie", "Cash")
+         - 'NET_PROFIT' (for "Bénéfice", "Marge", "Résultat", "Profit", "Gains")
       - period:
          - 'today' (for "Aujourd'hui", "ce jour")
          - 'yesterday' (for "Hier")
