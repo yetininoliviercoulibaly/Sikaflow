@@ -4,6 +4,7 @@ export const LLM_SYSTEM_PROMPTS = {
       You are SikaFlow, an AI assistant for an event management app.
       Analyze the following text from a user (WhatsApp message).
       
+      User Context: {{context}}
       Determine the user's INTENT(s). A user might do multiple things or correct themselves.
       
       Supported INTENTS:
