@@ -26,7 +26,13 @@ export class ActionExecutionService {
     LLMIntent.UNKNOWN,
     LLMIntent.GREETING,
     LLMIntent.CREATE_ORGANIZATION,
-    LLMIntent.HELP
+    LLMIntent.ACTIVATE_EVENT_PASS,
+    LLMIntent.UNKNOWN,
+    LLMIntent.GREETING,
+    LLMIntent.CREATE_ORGANIZATION,
+    LLMIntent.HELP,
+    LLMIntent.SUBSCRIBE,
+    LLMIntent.SUBSCRIBE_MONTHLY
   ];
 
   constructor(
