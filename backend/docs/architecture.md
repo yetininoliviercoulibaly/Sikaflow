@@ -2,7 +2,7 @@
 
 ## Vue d'Ensemble
 
-SikaFlow est une application construite sur **NestJS** suivant une **Architecture Hexagonale (Ports & Adapters)** stricte. Elle utilise une approche événementielle asynchrone pour le traitement des messages WhatsApp.
+SikaFlow est une application construite sur **NestJS** suivant une **Architecture Hexagonale (Ports & Adapters)** stricte. Elle utilise une approche événementielle asynchrone pour le traitement des messages multi-plateformes (WhatsApp & Telegram).
 
 ## Modules Fonctionnels
 
@@ -11,7 +11,7 @@ L'application est découpée en **13 modules** indépendants :
 | Module           | Responsabilité                   | Couches                                         |
 | ---------------- | -------------------------------- | ----------------------------------------------- |
 | **Organization** | Gestion multi-entités et membres | Domain, Application, Infrastructure             |
-| **User**         | Utilisateurs WhatsApp            | Domain, Infrastructure                          |
+| **User**         | Utilisateurs (WhatsApp/Telegram) | Domain, Infrastructure                          |
 | **Transaction**  | Écritures financières            | Domain, Application, Infrastructure             |
 | **Incident**     | Main courante numérique          | Domain, Infrastructure                          |
 | **Subscription** | Abonnements SaaS et Event Pass   | Domain, Application, Infrastructure             |
@@ -20,7 +20,7 @@ L'application est découpée en **13 modules** indépendants :
 | **Report**       | Génération PDF (Flash, Weekly)   | Domain, Application, Infrastructure             |
 | **Feedback**     | Collecte notes post-événement    | Domain, Application, Infrastructure             |
 | **Onboarding**   | Tutoriel interactif 5 étapes     | Domain, Application, Infrastructure             |
-| **Webhook**      | Point d'entrée WhatsApp          | Application (Controllers, Handlers, Strategies) |
+| **Webhook**      | Point d'entrée WhatsApp/Telegram | Application (Controllers, Handlers, Strategies) |
 | **Common**       | LLM, Guards, WhatsApp Service    | Shared services                                 |
 | **Auth**         | Magic Link, JWT, Guards          | Domain, Application, Infrastructure             |
 
@@ -29,11 +29,12 @@ L'application est découpée en **13 modules** indépendants :
 ```mermaid
 graph TD
     %% Actors
-    Staff[Event Staff<br/>WhatsApp]
+    Staff[Event Staff<br/>WhatsApp / Telegram]
     Admin[Admin Web]
 
     %% External Systems
     WA_API[WhatsApp Cloud API]
+    TG_API[Telegram Bot API]
     Gemini[Google Gemini AI]
     StripeAPI[Stripe]
     WaveAPI[Wave]
@@ -42,7 +43,7 @@ graph TD
     subgraph "Event Pilot Backend - NestJS"
 
         %% Entry Points
-        WebhookController[WhatsApp Controller]
+        WebhookController[Messaging Webhook<br/>(WhatsApp & Telegram)]
 
         %% Queues
         subgraph "Async Layer - BullMQ + Redis"
@@ -95,6 +96,10 @@ graph TD
     %% Flows
     Staff -->|Send Message/Photo/Audio| WA_API
     WA_API -->|Webhook POST| WebhookController
+    Staff -->|Send Message| WA_API
+    Staff -->|Send Message| TG_API
+    WA_API -->|Webhook POST| WebhookController
+    TG_API -->|Webhook POST| WebhookController
     WebhookController -->|Add Job| JobQueue
 
     JobQueue -->|Process Job| MsgProcessor
@@ -152,9 +157,9 @@ graph TD
 
 ### 1. Webhook & File d'Attente (Ingress)
 
-- **WhatsAppController** : Reçoit les payloads bruts de Meta. Valide la signature et met le message en file d'attente (`whatsapp`).
-- **RawBodyMiddleware** : Capture le body brut pour la validation de signature.
-- **Objectif** : Répondre instantanément (200 OK) à WhatsApp pour éviter les timeouts, et lisser la charge.
+- **WebhookController** : Reçoit les payloads de Meta (WhatsApp) et Telegram. Valide la signature et met le message en file d'attente (unifiée).
+- **RawBodyMiddleware** : Capture le body brut pour la validation de signature (HMAC).
+- **Objectif** : Répondre instantanément (200 OK) pour éviter les timeouts.
 
 ### 2. Processeur de Messages & Stratégies
 
@@ -256,4 +261,3 @@ Module d'authentification pour le futur Dashboard Web :
 
 - `POST /auth/magic-link` : Demande de lien de connexion
 - `GET /auth/verify?token=...` : Validation et génération JWT
-

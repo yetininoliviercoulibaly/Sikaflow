@@ -1,6 +1,6 @@
 # 🚀 Guide de Démarrage - Event-Pilot
 
-Bienvenue dans le futur de la gestion d'événements ! **Event-Pilot** transforme votre WhatsApp en un véritable assistant de gestion pour votre Club, Festival ou Restaurant.
+Bienvenue dans le futur de la gestion d'événements ! **Event-Pilot** transforme votre application de messagerie (WhatsApp ou Telegram) en un véritable assistant de gestion pour votre Club, Festival ou Restaurant.
 
 **Pas d'application à installer. Pas de mots de passe à retenir. Tout se passe dans votre discussion.**
 
@@ -10,8 +10,8 @@ Bienvenue dans le futur de la gestion d'événements ! **Event-Pilot** transform
 
 ### Première Connexion
 
-1. Enregistrez le numéro d'Event-Pilot dans vos contacts.
-2. Ouvrez WhatsApp et envoyez simplement : **"Salut"** 👋
+1. Enregistrez le numéro d'Event-Pilot (WhatsApp) ou trouvez le bot (Telegram).
+2. Ouvrez la discussion et envoyez simplement : **"Salut"** 👋
 3. L'assistant vous guidera automatiquement :
    - _Assistant_ : "Bienvenue ! Je ne vois pas de compte..."
    - _Vous_ : "Créer le club Midnight Blue"
