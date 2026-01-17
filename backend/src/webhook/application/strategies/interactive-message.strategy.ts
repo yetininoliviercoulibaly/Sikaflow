@@ -1,12 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { IMessageStrategy, LLMAnalysisResult } from './message-strategy.interface';
 import { WhatsAppMessageDto } from '../dtos/whatsapp-payload.dto';
+import { CommandIntentMapper } from '../services/command-intent.mapper';
 
 @Injectable()
 export class InteractiveMessageStrategy implements IMessageStrategy {
   private readonly logger = new Logger(InteractiveMessageStrategy.name);
 
-  constructor() {}
+  constructor(private readonly commandIntentMapper: CommandIntentMapper) {}
 
   canHandle(message: WhatsAppMessageDto): boolean {
     return message.type === 'interactive';
@@ -28,70 +29,16 @@ export class InteractiveMessageStrategy implements IMessageStrategy {
 
     this.logger.log(`Processing Interactive Reply: ${selectedId}`);
 
-    // Handle Organization Switch
-    if (selectedId.startsWith('SWITCH_ORG_ID_')) {
-      const targetOrgId = selectedId.replace('SWITCH_ORG_ID_', '');
-      
-      return {
-        intent: 'SWITCH_ORGANIZATION',
-        data: { targetOrganizationId: targetOrgId },
-        actions: [
-            {
-                intent: 'SWITCH_ORGANIZATION',
-                data: { targetOrganizationId: targetOrgId }
-            }
-        ]
-      };
-    }
-
-    // Handle Transaction Confirmation
-    if (selectedId.startsWith('CONFIRM_TX|')) {
-        const parts = selectedId.split('|');
-        // CONFIRM_TX|Amount|Currency|Type|Category
-        if (parts.length >= 5) {
-             return {
-                 intent: 'CREATE_TRANSACTION',
-                 data: {
-                     amount: parseFloat(parts[1]),
-                     currency: parts[2],
-                     type: parts[3],
-                     category: parts[4],
-                     confidence: 1.0 // Verified by user
-                 },
-                 actions: [{
-                     intent: 'CREATE_TRANSACTION',
-                     data: {
-                         amount: parseFloat(parts[1]),
-                         currency: parts[2],
-                         type: parts[3],
-                         category: parts[4],
-                         confidence: 1.0
-                     }
-                 }]
-             };
-        }
-    }
-
-    // Handle Rejection
-    if (selectedId === 'REJECT_TX') {
+    // Use CommandIntentMapper for all IDs
+    const mapped = this.commandIntentMapper.map(selectedId);
+    if (mapped) {
         return {
-            intent: 'CANCEL_LAST_ACTION',
-            data: {},
-            actions: [{ intent: 'CANCEL_LAST_ACTION', data: {} }]
+            ...mapped,
+            actions: [mapped]
         };
     }
 
-    // Handle Feedback
-    if (selectedId.startsWith('FEEDBACK|')) {
-        const rating = parseInt(selectedId.split('|')[1], 10);
-        if (!isNaN(rating)) {
-            return {
-                intent: 'PROVIDE_FEEDBACK',
-                data: { rating, confidence: 1.0 },
-                actions: [{ intent: 'PROVIDE_FEEDBACK', data: { rating, confidence: 1.0 } }]
-            };
-        }
-    }
+    return null;
 
     return null;
   }

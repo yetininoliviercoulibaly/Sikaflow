@@ -28,41 +28,29 @@ Consultez le [Diagramme d'Architecture détaillé](docs/architecture.md) pour pl
 
 ---
 
-## ✨ Fonctionnalités Clés
-
 ### 🎯 Core Platform
 
-| Fonctionnalité               | Description                                   |
-| :--------------------------- | :-------------------------------------------- |
-| **📱 WhatsApp & Telegram**   | Réception temps réel, validation de signature |
-| **👋 Onboarding Automatisé** | Tutoriel interactif guidé étape par étape     |
-| **🧠 IA Multimodale**        | Analyse texte, audio, images et PDF           |
-| **📊 Reporting Instantané**  | Génération de rapports PDF à la demande       |
+| Fonctionnalité               | Description                                            |
+| :--------------------------- | :----------------------------------------------------- |
+| **📱 WhatsApp & Telegram**   | Orchestration multi-plateforme via `IMessagingService` |
+| **🕹️ Interface Interactive** | Utilisation de Listes et Boutons (UX App-like)         |
+| **👋 Onboarding Guidé**      | Parcours interactif automatisé                         |
+| **🧠 IA Multimodale**        | Analyse texte, audio, images et PDF via Gemini         |
+| **📊 Reporting Instantané**  | Génération de rapports PDF et synthèse par IA          |
 
 ### 🎫 Ticketing & Événements
 
-| Fonctionnalité               | Description                              |
-| :--------------------------- | :--------------------------------------- |
-| **🎪 Création d'Événements** | "Créer un événement Soirée VIP le 15/01" |
-| **🎟️ Génération de Billets** | Claims sécurisés avec QR codes           |
-| **📷 Scan de Billets**       | Validation instantanée via photo         |
-| **📦 Check Stock**           | Inventaire des billets disponibles       |
+| Fonctionnalité              | Description                                 |
+| :-------------------------- | :------------------------------------------ |
+| **🎪 Gestion d'Événements** | Création, suivi de capacité et inventaire   |
+| **🎟️ Billetterie QR**       | Génération de claims sécurisés et codes QR  |
+| **📷 Scan & Validation**    | Validation instantanée par photo via le bot |
 
-### 💬 Engagement Client
+### 🛠️ Stabilité & Tests
 
-| Fonctionnalité             | Description                                     |
-| :------------------------- | :---------------------------------------------- |
-| **⭐ Feedback Interactif** | Notation 1-5 étoiles post-événement             |
-| **🎓 Onboarding Coach**    | Guide les nouveaux utilisateurs automatiquement |
-| **🔔 Notifications**       | Rappels et confirmations automatiques           |
-
-### 💳 Monétisation
-
-| Fonctionnalité            | Description                            |
-| :------------------------ | :------------------------------------- |
-| **📅 Abonnement Mensuel** | SaaS pour établissements fixes         |
-| **🎫 Event Pass**         | Paiement unique 48h/72h pour festivals |
-| **💸 Multi-Paiements**    | Stripe (Visa/MC) + Wave (Mobile Money) |
+- **Tests Unitaires & Intégration** : Couverture des handlers, services et adapters.
+- **Bootstrap Check** : Vérification automatique de la chaîne de dépendances.
+- **Mocks Robustes** : Tests fonctionnels sans dépendance à l'infrastructure réelle.
 
 ---
 

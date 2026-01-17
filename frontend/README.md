@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎨 SikaFlow Dashboard
 
-## Getting Started
+**The Premium Control Center for Event Organizers**
 
-First, run the development server:
+Ce frontend est le tableau de bord moderne de SikaFlow, offrant une vue d'ensemble sur l'activité des événements, les statistiques financières et la gestion d'équipe.
+
+## ✨ Caractéristiques UX
+
+- **Premium Design** : Interface moderne basée sur des principes de Glassmorphism et de néomorphisme subtil.
+- **Animations Fluides** : Utilisation de `framer-motion` pour des entrées en cascade (staggered) et des interactions au survol.
+- **Dark Mode Native** : Support complet du mode sombre avec commutateur dédié.
+- **Responsive** : Design adaptatif optimisé pour tous les écrans.
+
+## 🛠️ Stack Technique
+
+- **Framework** : [Next.js 15+](https://nextjs.org/) (App Router)
+- **Styling** : [Tailwind CSS](https://tailwindcss.com/)
+- **UI Components** : [Shadcn UI](https://ui.shadcn.com/)
+- **Animations** : [Framer Motion](https://www.framer.com/motion/)
+- **Thématisassion** : `next-themes`
+- **Icônes** : [Lucide React](https://lucide.dev/)
+
+## 🚀 Démarrage Rapide
+
+### 1. Installation
+
+```bash
+npm install
+```
+
+### 2. Développement
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Accédez à [http://localhost:3000/dashboard](http://localhost:3000/dashboard)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Build
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+```
 
-## Learn More
+## 📂 Structure du Projet
 
-To learn more about Next.js, take a look at the following resources:
+- `src/app` : Routes et layouts (utilisant Next.js App Router).
+- `src/components/ui` : Composants de base (Button, Card, Input, etc.).
+- `src/lib` : Utilitaires partagés (ex: `cn` pour Tailwind).
+- `src/styles` : Fichiers CSS globaux.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+_Built with ❤️ by the Antigravity Team._
