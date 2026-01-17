@@ -122,4 +122,47 @@ describe('ProcessTelegramMessageUseCase', () => {
     expect(mockMessaging.sendMessage).toHaveBeenCalledWith('333', expect.stringContaining('Audio incompréhensible'));
     expect(mockLLM.analyzeText).not.toHaveBeenCalled();
   });
+
+  it('should resolve pending AMOUNT using numeric heuristic', async () => {
+       const chatId = 444;
+       const update = {
+         update_id: 4,
+         message: {
+           message_id: 126,
+           chat: { id: chatId, type: 'private' },
+           from: { id: 444, first_name: 'NumUser', is_bot: false },
+           text: '5000'
+         } as TelegramMessageDto
+       } as TelegramUpdateDto;
+
+       // Mock Pending State needing amount
+       const mockPending = {
+           intent: 'CREATE_TRANSACTION',
+           data: { type: 'EXPENSE', category: 'Food' },
+           missing_fields: ['amount']
+       };
+
+       // Mock LLM returning NO intent (simulating failure to extract context)
+       mockLLM.analyzeText.mockResolvedValue({ intent: null, data: {} });
+       mockUserRepo.findByPhoneNumber.mockResolvedValue({});
+       
+       // Mock Conversation State
+       const conversationService = (useCase as any).conversationState;
+       conversationService.getPendingAction.mockReturnValue(mockPending);
+
+       await useCase.execute(update);
+
+       // Expect ActionExecution to receive collected amount
+       const actionService = (useCase as any).actionExecutionService;
+       expect(actionService.execute).toHaveBeenCalledWith(expect.objectContaining({
+           actions: [expect.objectContaining({
+               intent: 'CREATE_TRANSACTION',
+               data: expect.objectContaining({ amount: 5000 }),
+               missing_fields: [] // Should be empty now
+           })]
+       }));
+       
+       // Expect Clear Pending to be called (since all fields collected)
+       expect(conversationService.clearPendingAction).toHaveBeenCalledWith('444');
+  });
 });

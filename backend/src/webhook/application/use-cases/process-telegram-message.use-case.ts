@@ -207,6 +207,14 @@ export class ProcessTelegramMessageUseCase {
           // Merge pending data with new LLM data (LLM data takes precedence for new fields)
           const mergedData = { ...pending.data, ...llmData };
           
+          // HEURISTIC: If 'amount' is missing but user sent a number, force it.
+          if (!mergedData['amount'] && (pending.missing_fields || []).includes('amount')) {
+              const cleaned = content.trim().replace(',', '.');
+              if (/^\d+(\.\d+)?$/.test(cleaned)) {
+                  mergedData['amount'] = parseFloat(cleaned);
+              }
+          }
+
           // Determine remaining missing fields
           const remainingMissing = (pending.missing_fields || []).filter(field => {
              const val = mergedData[field];
