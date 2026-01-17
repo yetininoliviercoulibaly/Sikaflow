@@ -15,8 +15,8 @@ export class CommandIntentMapper {
   map(id: string): MappedAction | null {
     // 1. Precise Mappings (Standard Commands)
     const exactMappings: Record<string, MappedAction> = {
-      'CMD_TX_EXPENSE': { intent: LLMIntent.CREATE_TRANSACTION, data: { type: 'EXPENSE' }, missing_fields: ['amount'] },
-      'CMD_TX_INCOME': { intent: LLMIntent.CREATE_TRANSACTION, data: { type: 'INCOME' }, missing_fields: ['amount'] },
+      'CMD_TX_EXPENSE': { intent: LLMIntent.CREATE_TRANSACTION, data: { type: 'EXPENSE' }, missing_fields: ['amount', 'category'] },
+      'CMD_TX_INCOME': { intent: LLMIntent.CREATE_TRANSACTION, data: { type: 'INCOME' }, missing_fields: ['amount', 'category'] },
       'CMD_INCIDENT': { intent: LLMIntent.REPORT_INCIDENT, data: {}, missing_fields: ['description'] },
       'CMD_REPORT_FLASH': { intent: LLMIntent.GENERATE_REPORT, data: { type: 'FLASH' } },
       'REPORT_FLASH_CMD': { intent: LLMIntent.GENERATE_REPORT, data: { type: 'FLASH' } },
