@@ -229,19 +229,47 @@ export class ProcessTelegramMessageUseCase {
       const missingFields = pending.missing_fields || [];
       const lowerContent = content.toLowerCase();
 
-      if (!mergedData['amount'] && missingFields.includes('amount')) {
-          const extracted = this.extractAmountFromText(content);
-          if (extracted !== null) mergedData['amount'] = extracted;
+      
+      // Date heuristic: Check this FIRST to avoid matching date parts as amounts
+      let isDate = false;
+      if (!mergedData['date'] && missingFields.includes('date')) {
+          const datePattern = /(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})|(\d{1,2}\s+(janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre))/i;
+          if (datePattern.test(content) || (content.length > 4 && content.length < 50)) {
+               // Ensure it's not just a pure number which might be price/capacity
+               if (!/^\d+$/.test(content)) {
+                   mergedData['date'] = this.cleanupDate(content);
+                   isDate = true;
+               }
+          }
+      }
+
+      if (!mergedData['amount'] && missingFields.includes('amount') && !isDate) {
+           const extracted = this.extractAmountFromText(content);
+           if (extracted !== null) mergedData['amount'] = extracted;
       }
       if (!mergedData['period'] && missingFields.includes('period')) {
-          const extracted = this.extractPeriodFromText(lowerContent);
-          if (extracted) mergedData['period'] = extracted;
+           const extracted = this.extractPeriodFromText(lowerContent);
+           if (extracted) mergedData['period'] = extracted;
       }
       if (!mergedData['metric'] && missingFields.includes('metric')) {
-          const extracted = this.extractMetricFromText(lowerContent);
-          if (extracted) mergedData['metric'] = extracted;
+           const extracted = this.extractMetricFromText(lowerContent);
+           if (extracted) mergedData['metric'] = extracted;
       }
-      
+
+      let amountExtracted = false;
+      if (!mergedData['capacity'] && missingFields.includes('capacity') && !isDate) {
+          const extracted = this.extractAmountFromText(content);
+          if (extracted !== null) {
+              mergedData['capacity'] = String(extracted);
+              amountExtracted = true;
+          }
+      }
+
+      if (!mergedData['price'] && missingFields.includes('price') && !isDate && !amountExtracted) {
+          const extracted = this.extractAmountFromText(content);
+          if (extracted !== null) mergedData['price'] = String(extracted);
+      }
+
       // Name heuristic: If name/event_name is missing, use raw message if it looks like a name
       const nameField = missingFields.includes('event_name') ? 'event_name' : (missingFields.includes('name') ? 'name' : null);
       if (nameField && !mergedData[nameField]) {
@@ -290,6 +318,22 @@ export class ProcessTelegramMessageUseCase {
       // Also remove trailing period if any
       if (cleaned.endsWith('.')) cleaned = cleaned.slice(0, -1);
       
+      return cleaned.trim();
+  }
+
+  private cleanupDate(text: string): string {
+      let cleaned = text.trim();
+      const lowerCleaned = cleaned.toLowerCase();
+      
+      const prefixes = ["le ", "la date est ", "c'est le ", "pour le "];
+      for (const prefix of prefixes) {
+          if (lowerCleaned.startsWith(prefix)) {
+              cleaned = cleaned.substring(prefix.length).trim();
+              break;
+          }
+      }
+      
+      if (cleaned.endsWith('.')) cleaned = cleaned.slice(0, -1);
       return cleaned.trim();
   }
 

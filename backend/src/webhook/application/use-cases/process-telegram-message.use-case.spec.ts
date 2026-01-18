@@ -357,4 +357,85 @@ describe('ProcessTelegramMessageUseCase', () => {
     // Should clear since all fields were filled (only event_name was missing)
     expect(conversationService.clearPendingAction).toHaveBeenCalledWith('999');
   });
+
+  it('should extract date when CREATE_EVENT is pending and LLM fails', async () => {
+    const chatId = 777;
+    const update = {
+      update_id: 10,
+      message: {
+        message_id: 141,
+        chat: { id: chatId, type: 'private' },
+        from: { id: 777, first_name: 'DateUser', is_bot: false },
+        text: "Le 20 février 2026"
+      } as TelegramMessageDto
+    } as TelegramUpdateDto;
+
+    const mockPending = {
+      intent: 'CREATE_EVENT',
+      data: { event_name: 'Concert' },
+      missing_fields: ['date', 'capacity', 'price'],
+    };
+
+    mockLLM.analyzeText.mockResolvedValue({ intent: null, data: {} });
+    mockUserRepo.findByPhoneNumber.mockResolvedValue({});
+
+    const conversationService = (useCase as any).conversationState;
+    conversationService.getPendingAction.mockReturnValue(mockPending);
+
+    await useCase.execute(update);
+
+    const actionService = (useCase as any).actionExecutionService;
+    expect(actionService.execute).toHaveBeenCalledWith(expect.objectContaining({
+      actions: [expect.objectContaining({
+        data: expect.objectContaining({
+          date: '20 février 2026'
+        }),
+        missing_fields: ['capacity', 'price']
+      })]
+    }));
+    
+    // Should NOT clear since capacity and price are still missing
+    expect(conversationService.clearPendingAction).not.toHaveBeenCalled();
+    // Should update pending with the extracted date
+    expect(conversationService.setPendingAction).toHaveBeenCalledWith('777', expect.objectContaining({
+        data: expect.objectContaining({ date: '20 février 2026' })
+    }));
+  });
+
+  it('should extract capacity when CREATE_EVENT is pending and LLM fails', async () => {
+    const chatId = 666;
+    const update = {
+      update_id: 11,
+      message: {
+        message_id: 151,
+        chat: { id: chatId, type: 'private' },
+        from: { id: 666, first_name: 'CapUser', is_bot: false },
+        text: "100"
+      } as TelegramMessageDto
+    } as TelegramUpdateDto;
+
+    const mockPending = {
+      intent: 'CREATE_EVENT',
+      data: { event_name: 'Concert', date: '2026-02-20' },
+      missing_fields: ['capacity', 'price'],
+    };
+
+    mockLLM.analyzeText.mockResolvedValue({ intent: null, data: {} });
+    mockUserRepo.findByPhoneNumber.mockResolvedValue({});
+
+    const conversationService = (useCase as any).conversationState;
+    conversationService.getPendingAction.mockReturnValue(mockPending);
+
+    await useCase.execute(update);
+
+    const actionService = (useCase as any).actionExecutionService;
+    expect(actionService.execute).toHaveBeenCalledWith(expect.objectContaining({
+      actions: [expect.objectContaining({
+        data: expect.objectContaining({
+          capacity: '100'
+        }),
+        missing_fields: ['price']
+      })]
+    }));
+  });
 });
