@@ -62,6 +62,7 @@ import { UnknownIntentHandler } from './application/handlers/unknown-intent.hand
 import { ReportIncidentHandler } from './application/handlers/report-incident.handler';
 import { CancelLastActionHandler } from './application/handlers/cancel-last-action.handler';
 import { ExecuteDeletionHandler } from './application/handlers/execute-deletion.handler';
+import { GenerateTicketsQRHandler } from './application/handlers/generate-tickets-qr.handler';
 
 @Module({
   imports: [
@@ -136,6 +137,7 @@ import { ExecuteDeletionHandler } from './application/handlers/execute-deletion.
     FeatureGuard,
     CancelLastActionHandler, // NEW
     ExecuteDeletionHandler, // NEW
+    GenerateTicketsQRHandler, // NEW
     {
         provide: ACTION_HANDLER_TOKEN,
         useFactory: (
@@ -160,7 +162,8 @@ import { ExecuteDeletionHandler } from './application/handlers/execute-deletion.
             unknownIntentHandler,
             reportIncidentHandler,
             cancelLast, // NEW
-            executeDel // NEW
+            executeDel, // NEW
+            generateTicketsQR // NEW
         ) => [
             createTransaction, 
             askData, 
@@ -183,7 +186,8 @@ import { ExecuteDeletionHandler } from './application/handlers/execute-deletion.
             unknownIntentHandler,
             reportIncidentHandler,
             cancelLast, 
-            executeDel 
+            executeDel,
+            generateTicketsQR
         ],
         inject: [
             CreateTransactionHandler, 
@@ -207,7 +211,8 @@ import { ExecuteDeletionHandler } from './application/handlers/execute-deletion.
             UnknownIntentHandler,
             ReportIncidentHandler,
             CancelLastActionHandler, // NEW
-            ExecuteDeletionHandler // NEW
+            ExecuteDeletionHandler, // NEW
+            GenerateTicketsQRHandler // NEW
         ]
     }
   ],
