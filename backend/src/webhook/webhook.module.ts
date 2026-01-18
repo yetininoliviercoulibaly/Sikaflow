@@ -60,6 +60,8 @@ import { OnboardingHandler } from './application/handlers/onboarding.handler';
 import { FeatureGuard } from '../common/guards/feature.guard';
 import { UnknownIntentHandler } from './application/handlers/unknown-intent.handler';
 import { ReportIncidentHandler } from './application/handlers/report-incident.handler';
+import { CancelLastActionHandler } from './application/handlers/cancel-last-action.handler';
+import { ExecuteDeletionHandler } from './application/handlers/execute-deletion.handler';
 
 @Module({
   imports: [
@@ -132,6 +134,8 @@ import { ReportIncidentHandler } from './application/handlers/report-incident.ha
     UnknownIntentHandler,
     ReportIncidentHandler,
     FeatureGuard,
+    CancelLastActionHandler, // NEW
+    ExecuteDeletionHandler, // NEW
     {
         provide: ACTION_HANDLER_TOKEN,
         useFactory: (
@@ -154,7 +158,9 @@ import { ReportIncidentHandler } from './application/handlers/report-incident.ha
             feedbackHandler,
             onboardingHandler,
             unknownIntentHandler,
-            reportIncidentHandler
+            reportIncidentHandler,
+            cancelLast, // NEW
+            executeDel // NEW
         ) => [
             createTransaction, 
             askData, 
@@ -176,8 +182,8 @@ import { ReportIncidentHandler } from './application/handlers/report-incident.ha
             onboardingHandler,
             unknownIntentHandler,
             reportIncidentHandler,
-            cancelLast, // NEW
-            executeDel // NEW
+            cancelLast, 
+            executeDel 
         ],
         inject: [
             CreateTransactionHandler, 
