@@ -44,6 +44,7 @@ export class PromptTemplateSeeder extends Seeder {
              existing.description = p.description;
              existing.metadata = p.metadata;
              existing.version = p.version;
+             em.persist(existing);
         }
     }
   }

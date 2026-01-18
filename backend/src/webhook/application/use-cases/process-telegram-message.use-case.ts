@@ -242,14 +242,55 @@ export class ProcessTelegramMessageUseCase {
           if (extracted) mergedData['metric'] = extracted;
       }
       
-      // Name heuristic: If creating organization and name is missing, use raw message if it looks like a name
-      if (!mergedData['name'] && missingFields.includes('name') && pending.intent === LLMIntent.CREATE_ORGANIZATION) {
-          if (content.length > 2 && content.length < 50 && !content.includes('/')) {
-              mergedData['name'] = content;
+      // Name heuristic: If name/event_name is missing, use raw message if it looks like a name
+      const nameField = missingFields.includes('event_name') ? 'event_name' : (missingFields.includes('name') ? 'name' : null);
+      if (nameField && !mergedData[nameField]) {
+          const isNameIntent = [
+              LLMIntent.CREATE_ORGANIZATION, 
+              LLMIntent.CREATE_EVENT, 
+              LLMIntent.GENERATE_CLAIM_LINKS
+          ].includes(pending.intent as any);
+
+          if (isNameIntent && content.length > 2 && content.length < 100 && !content.includes('/') && !/^\d+$/.test(content)) {
+              mergedData[nameField] = this.cleanupName(content);
           }
       }
 
       return mergedData;
+  }
+
+  private cleanupName(text: string): string {
+      const prefixes = [
+          "le nom est ",
+          "le nom de l'organisation est ",
+          "le nom de l'événement est ",
+          "l'événement s'appelle ",
+          "l'organisation s'appelle ",
+          "c'est ",
+          "il s'appelle ",
+          "c'est l'",
+          "le nom c'est "
+      ];
+      let cleaned = text.trim();
+      const lowerCleaned = cleaned.toLowerCase();
+      
+      for (const prefix of prefixes) {
+          if (lowerCleaned.startsWith(prefix)) {
+              cleaned = cleaned.substring(prefix.length).trim();
+              
+              // Remove optional articles at the start of the remaining name
+              if (cleaned.toLowerCase().startsWith('le ')) cleaned = cleaned.substring(3);
+              if (cleaned.toLowerCase().startsWith('la ')) cleaned = cleaned.substring(3);
+              if (cleaned.toLowerCase().startsWith('l\'')) cleaned = cleaned.substring(2);
+              
+              break; 
+          }
+      }
+      
+      // Also remove trailing period if any
+      if (cleaned.endsWith('.')) cleaned = cleaned.slice(0, -1);
+      
+      return cleaned.trim();
   }
 
   private extractAmountFromText(text: string): number | null {
