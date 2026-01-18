@@ -38,7 +38,7 @@ describe('ProcessTelegramMessageUseCase', () => {
         { provide: I_PROMPT_REPOSITORY, useValue: { getTemplate: jest.fn() } },
         { provide: ActionExecutionService, useValue: { execute: jest.fn() } },
         { provide: CommandIntentMapper, useValue: { map: jest.fn() } },
-        { provide: ConversationStateService, useValue: { getPendingAction: jest.fn(), clearPendingAction: jest.fn() } },
+        { provide: ConversationStateService, useValue: { getPendingAction: jest.fn(), clearPendingAction: jest.fn(), setPendingAction: jest.fn() } },
       ],
     }).compile();
 
@@ -240,5 +240,121 @@ describe('ProcessTelegramMessageUseCase', () => {
     }));
 
     expect(conversationService.clearPendingAction).toHaveBeenCalledWith('666');
+  });
+
+  it('should resolve pending event_name using heuristic for CREATE_EVENT', async () => {
+    const chatId = 777;
+    const update = {
+      update_id: 7,
+      message: {
+        message_id: 129,
+        chat: { id: chatId, type: 'private' },
+        from: { id: 777, first_name: 'EventUser', is_bot: false },
+        text: "Soirée Blanche"
+      } as TelegramMessageDto
+    } as TelegramUpdateDto;
+
+    const mockPending = {
+      intent: 'CREATE_EVENT',
+      data: { date: '2026-06-20' },
+      missing_fields: ['event_name', 'capacity', 'price'],
+    };
+
+    mockLLM.analyzeText.mockResolvedValue({ intent: null, data: {} });
+    mockUserRepo.findByPhoneNumber.mockResolvedValue({});
+
+    const conversationService = (useCase as any).conversationState;
+    conversationService.getPendingAction.mockReturnValue(mockPending);
+
+    await useCase.execute(update);
+
+    const actionService = (useCase as any).actionExecutionService;
+    expect(actionService.execute).toHaveBeenCalledWith(expect.objectContaining({
+      actions: [expect.objectContaining({
+        intent: 'CREATE_EVENT',
+        data: expect.objectContaining({
+          event_name: 'Soirée Blanche'
+        }),
+        missing_fields: ['capacity', 'price']
+      })]
+    }));
+  });
+
+  it('should resolve pending event_name using heuristic for GENERATE_CLAIM_LINKS', async () => {
+    const chatId = 888;
+    const update = {
+      update_id: 8,
+      message: {
+        message_id: 130,
+        chat: { id: chatId, type: 'private' },
+        from: { id: 888, first_name: 'TicketUser', is_bot: false },
+        text: "Gala de Charité"
+      } as TelegramMessageDto
+    } as TelegramUpdateDto;
+
+    const mockPending = {
+      intent: 'GENERATE_CLAIM_LINKS',
+      data: { quantity: 5 },
+      missing_fields: ['event_name'],
+    };
+
+    mockLLM.analyzeText.mockResolvedValue({ intent: null, data: {} });
+    mockUserRepo.findByPhoneNumber.mockResolvedValue({});
+
+    const conversationService = (useCase as any).conversationState;
+    conversationService.getPendingAction.mockReturnValue(mockPending);
+
+    await useCase.execute(update);
+
+    const actionService = (useCase as any).actionExecutionService;
+    expect(actionService.execute).toHaveBeenCalledWith(expect.objectContaining({
+      actions: [expect.objectContaining({
+        intent: 'GENERATE_CLAIM_LINKS',
+        data: expect.objectContaining({
+          event_name: 'Gala de Charité'
+        })
+      })]
+    }));
+
+    expect(conversationService.clearPendingAction).toHaveBeenCalledWith('888');
+  });
+
+  it('should cleanup names with common French prefixes', async () => {
+    const chatId = 999;
+    const update = {
+      update_id: 9,
+      message: {
+        message_id: 131,
+        chat: { id: chatId, type: 'private' },
+        from: { id: 999, first_name: 'PrefixUser', is_bot: false },
+        text: "Le nom de l'événement est Événement Olivier"
+      } as TelegramMessageDto
+    } as TelegramUpdateDto;
+
+    const mockPending = {
+      intent: 'CREATE_EVENT',
+      data: {},
+      missing_fields: ['event_name'],
+    };
+
+    mockLLM.analyzeText.mockResolvedValue({ intent: null, data: {} });
+    mockUserRepo.findByPhoneNumber.mockResolvedValue({});
+
+    const conversationService = (useCase as any).conversationState;
+    conversationService.getPendingAction.mockReturnValue(mockPending);
+
+    await useCase.execute(update);
+
+    const actionService = (useCase as any).actionExecutionService;
+    expect(actionService.execute).toHaveBeenCalledWith(expect.objectContaining({
+      actions: [expect.objectContaining({
+        data: expect.objectContaining({
+          event_name: 'Événement Olivier'
+        })
+      })]
+    }));
+    
+    // Should clear since all fields were filled (only event_name was missing)
+    expect(conversationService.clearPendingAction).toHaveBeenCalledWith('999');
   });
 });
