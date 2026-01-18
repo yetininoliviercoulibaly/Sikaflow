@@ -13,5 +13,6 @@ export interface ITransactionRepository {
   findById(id: string): Promise<Transaction | null>;
   create(transaction: Transaction): Promise<Transaction>;
   findByOrganization(organizationId: string, options?: FindByOrganizationOptions): Promise<Transaction[]>;
-  // Add other methods as needed
+  findLatestByUser(userId: string, organizationId: string): Promise<Transaction | null>;
+  delete(id: string): Promise<void>;
 }

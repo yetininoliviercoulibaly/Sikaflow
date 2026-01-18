@@ -109,6 +109,20 @@ export class CommandIntentMapper {
         };
     }
 
+    // CONFIRM_DEL|YES|TransactionId
+    if (id.startsWith('CONFIRM_DEL|YES|')) {
+      const transactionId = id.replace('CONFIRM_DEL|YES|', '');
+      return {
+        intent: LLMIntent.EXECUTE_DELETION,
+        data: { transactionId }
+      };
+    }
+
+    // CONFIRM_DEL|NO
+    if (id === 'CONFIRM_DEL|NO') {
+       return { intent: LLMIntent.GREETING, data: {} }; // Just go back to main menu
+    }
+
     // 3. Fallback: If it's a raw intent name, pass it through
     if (Object.values(LLMIntent).includes(id as any)) {
       return { intent: id, data: {} };
