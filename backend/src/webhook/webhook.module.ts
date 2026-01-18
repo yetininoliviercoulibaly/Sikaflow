@@ -175,7 +175,9 @@ import { ReportIncidentHandler } from './application/handlers/report-incident.ha
             feedbackHandler,
             onboardingHandler,
             unknownIntentHandler,
-            reportIncidentHandler
+            reportIncidentHandler,
+            cancelLast, // NEW
+            executeDel // NEW
         ],
         inject: [
             CreateTransactionHandler, 
@@ -197,7 +199,9 @@ import { ReportIncidentHandler } from './application/handlers/report-incident.ha
             FeedbackHandler,
             OnboardingHandler,
             UnknownIntentHandler,
-            ReportIncidentHandler
+            ReportIncidentHandler,
+            CancelLastActionHandler, // NEW
+            ExecuteDeletionHandler // NEW
         ]
     }
   ],

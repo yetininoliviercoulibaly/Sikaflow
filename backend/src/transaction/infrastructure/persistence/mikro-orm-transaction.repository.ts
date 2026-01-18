@@ -36,4 +36,22 @@ export class MikroOrmTransactionRepository implements ITransactionRepository {
       orderBy: { transactionDate: 'DESC' }
     });
   }
+
+  async findLatestByUser(userId: string, organizationId: string): Promise<Transaction | null> {
+    const transactions = await this.em.find(Transaction, {
+      organizationId,
+      reportedByUserId: userId,
+    }, {
+      limit: 1,
+      orderBy: { createdAt: 'DESC' },
+    });
+    return transactions[0] || null;
+  }
+
+  async delete(id: string): Promise<void> {
+    const transaction = await this.findById(id);
+    if (transaction) {
+      await this.em.removeAndFlush(transaction);
+    }
+  }
 }
