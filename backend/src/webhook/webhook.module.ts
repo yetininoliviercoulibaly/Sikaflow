@@ -63,6 +63,7 @@ import { ReportIncidentHandler } from './application/handlers/report-incident.ha
 import { CancelLastActionHandler } from './application/handlers/cancel-last-action.handler';
 import { ExecuteDeletionHandler } from './application/handlers/execute-deletion.handler';
 import { GenerateTicketsQRHandler } from './application/handlers/generate-tickets-qr.handler';
+import { CancelDeletionHandler } from './application/handlers/cancel-deletion.handler';
 
 @Module({
   imports: [
@@ -138,6 +139,7 @@ import { GenerateTicketsQRHandler } from './application/handlers/generate-ticket
     CancelLastActionHandler, // NEW
     ExecuteDeletionHandler, // NEW
     GenerateTicketsQRHandler, // NEW
+    CancelDeletionHandler, // NEW
     {
         provide: ACTION_HANDLER_TOKEN,
         useFactory: (
@@ -163,7 +165,8 @@ import { GenerateTicketsQRHandler } from './application/handlers/generate-ticket
             reportIncidentHandler,
             cancelLast, // NEW
             executeDel, // NEW
-            generateTicketsQR // NEW
+            generateTicketsQR, // NEW
+            cancelDeletion // NEW
         ) => [
             createTransaction, 
             askData, 
@@ -187,7 +190,8 @@ import { GenerateTicketsQRHandler } from './application/handlers/generate-ticket
             reportIncidentHandler,
             cancelLast, 
             executeDel,
-            generateTicketsQR
+            generateTicketsQR,
+            cancelDeletion
         ],
         inject: [
             CreateTransactionHandler, 
@@ -212,7 +216,8 @@ import { GenerateTicketsQRHandler } from './application/handlers/generate-ticket
             ReportIncidentHandler,
             CancelLastActionHandler, // NEW
             ExecuteDeletionHandler, // NEW
-            GenerateTicketsQRHandler // NEW
+            GenerateTicketsQRHandler, // NEW
+            CancelDeletionHandler // NEW
         ]
     }
   ],

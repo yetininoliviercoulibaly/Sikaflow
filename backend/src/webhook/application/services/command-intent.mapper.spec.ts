@@ -99,5 +99,20 @@ describe('CommandIntentMapper', () => {
       expect(mapper.map('UNKNOWN_STUFF_123')).toBeNull();
       expect(mapper.map('')).toBeNull();
     });
+    it('should map CONFIRM_DEL|NO to CANCEL_DELETION intent', () => {
+      const result = mapper.map('CONFIRM_DEL|NO');
+      expect(result).toEqual({
+        intent: LLMIntent.CANCEL_DELETION,
+        data: {},
+      });
+    });
+
+    it('should map CONFIRM_DEL|YES to EXECUTE_DELETION intent', () => {
+        const result = mapper.map('CONFIRM_DEL|YES|tx-123');
+        expect(result).toEqual({
+            intent: LLMIntent.EXECUTE_DELETION,
+            data: { transactionId: 'tx-123' },
+        });
+    });
   });
 });
