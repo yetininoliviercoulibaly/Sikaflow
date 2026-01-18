@@ -193,15 +193,42 @@ export class ProcessTelegramMessageUseCase {
       let analysis = await this.analyzeText(content, String(userId), pending);
       
       if (!pending) return analysis;
+      
+      const upperContent = content.toUpperCase();
+      
+      
+      // 1. Enhanced Cancellation
+      const stopKeywords = ['STOP', 'ANNULER', 'CANCEL', 'EXIT', 'NON', 'RIEN', 'ABANDONNER', 'QUITTER'];
+      if (stopKeywords.includes(upperContent)) {
+        this.logger.log(`User explicitly cancelled action ${pending.intent}`);
+        this.conversationState.clearPendingAction(String(chatId));
+        return { intent: LLMIntent.UNKNOWN, data: {} }; // Return empty to stop processing
+      }
+
+      // 2. Help/Menu Priority
+      const helpKeywords = ['AIDE', 'HELP', 'MENU', 'ACCUEIL', 'DEMARRER', 'START'];
+      if (helpKeywords.includes(upperContent) || (analysis.intent === LLMIntent.HELP && (analysis.confidence || 0) > 0.8)) {
+         this.logger.log(`User requested HELP/MENU, clearing pending action ${pending.intent}`);
+         this.conversationState.clearPendingAction(String(chatId));
+         return { intent: LLMIntent.HELP, data: {} };
+      }
+
+      // 3. Smart Loop Break (New High Confidence Intent)
+      // If the new analysis found a DIFFERENT intent with HIGH confidence, favor it over the pending one.
+      // Exception: If the pending missing field is 'role' and the user says 'Manager' (which might be misclassified), be careful.
+      // But generally if user says "Nouvelle Dépense" (Intent: CREATE_TRANSACTION), we should switch.
+      const highConfidenceThreshold = 0.85;
+
+      if (analysis.intent && analysis.intent !== LLMIntent.UNKNOWN && analysis.intent !== pending.intent) {
+          if ((analysis.confidence || 0) >= highConfidenceThreshold) {
+              this.logger.log(`Breaking loop: New high confidence intent ${analysis.intent} (${analysis.confidence}) overrides pending ${pending.intent}`);
+              this.conversationState.clearPendingAction(String(chatId));
+              return analysis;
+          }
+      }
 
       this.logger.log(`Merging pending context for ${chatId}: ${JSON.stringify(pending)}`);
       
-      const isStopCommand = ['STOP', 'ANNULER', 'CANCEL', 'EXIT'].includes(content.toUpperCase());
-      if (isStopCommand) {
-        this.conversationState.clearPendingAction(String(chatId));
-        return analysis;
-      }
-
       const mergedData = this.applyHeuristics(content, pending, analysis.data || {});
       const remainingMissing = (pending.missing_fields || []).filter(field => {
         const val = mergedData[field];
