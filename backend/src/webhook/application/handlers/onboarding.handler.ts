@@ -87,37 +87,26 @@ export class OnboardingHandler implements IActionHandler {
     const member = await this.organizationRepository.findMember(organizationId, user.id);
     const role = member?.role || 'STAFF';
 
-    // Start or get existing onboarding
-    const startResult = await this.startOnboardingUseCase.execute({
+    // Simplified Onboarding Flow: Just show the cheat sheet / welcome message again
+    const welcomeMessage = 
+      `🚀 *Tutoriel Rapide*\n\n` +
+      `🎤 *Envoyer une note vocale* (ex: "Vente de 5000 pour 2 tickets")\n` +
+      `💬 *Ou écrire simplement :*\n` +
+      `• "Vente 50 euros pour 2 Plats" (Enregistrez une vente)\n` +
+      `• "Achat 1000 euros de Boissons" (Stock ou dépense)\n` +
+      `• "Ajouter membre 0707070707 comme Staff" (Inviter votre équipe)\n\n` +
+      `ℹ️ Tapez "Menu" ou "Aide" à tout moment.`;
+
+    await messagingService.sendMessage(senderPhoneNumber, welcomeMessage);
+
+    // Optional: Log start of onboarding if needed, but no longer blocking
+    await this.startOnboardingUseCase.execute({
       userId: user.id,
       organizationId,
       role,
     });
-
-    // Get next step
-    const nextStepResult = await this.getNextStepUseCase.execute({
-      userId: user.id,
-      organizationId,
-    });
-
-    if (nextStepResult.isCompleted) {
-      await messagingService.sendMessage(
-        senderPhoneNumber,
-        `🎊 *Tutoriel terminé !*\n\n` +
-        `Vous maîtrisez maintenant SikaFlow.\n\n` +
-        `Envoyez "Aide" pour voir toutes les commandes disponibles.`,
-      );
-      return;
-    }
-
-    if (nextStepResult.step) {
-      const stepInfo = `📝 *Étape ${nextStepResult.currentStepNumber}/${nextStepResult.totalSteps}*\n\n`;
-      await messagingService.sendMessage(
-        senderPhoneNumber,
-        stepInfo + nextStepResult.step.tipMessage,
-      );
-    }
   }
+
 
   private async handleAdoptionReport(
     senderPhoneNumber: string,
