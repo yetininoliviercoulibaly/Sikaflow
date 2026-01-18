@@ -9,11 +9,12 @@ export class Ticket {
   constructor(
     public id: string,
     public eventId: string,
-    public attendeePhone: string,
+    public attendeePhone: string | null,
     public status: TicketStatus,
     public secureHash: string,
     public createdAt: Date = new Date(),
     public usedAt?: Date,
+    public categoryId?: string,
   ) {}
 
   use(): void {
@@ -24,3 +25,4 @@ export class Ticket {
     this.usedAt = new Date();
   }
 }
+

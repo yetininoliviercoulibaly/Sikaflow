@@ -4,6 +4,8 @@ import { ITicketRepository, I_TICKET_REPOSITORY } from '../../domain/ports/ticke
 import { IQRCodeService, I_QRCODE_SERVICE } from '../../domain/ports/qrcode.service.interface';
 import { ILLMProvider, LLM_PROVIDER_TOKEN } from '../../../common/llm/llm-provider.interface';
 import { TicketStatus } from '../../domain/ticket.entity';
+import jsQR from 'jsqr';
+import sharp from 'sharp';
 
 @Injectable()
 export class ScanTicketUseCase {
@@ -16,74 +18,102 @@ export class ScanTicketUseCase {
   ) {}
 
   async execute(mediaBuffer: Buffer, mimeType: string, scannerPhone: string): Promise<string> {
-    // 1. Use Vision LLM to read QR Code
-    // Note: LLMs might struggle with perfect OCR of long keys. Ideally detailed prompt helps.
-    // If this proves unreliable in Prod, swith to 'jsqr'.
-    const base64Data = mediaBuffer.toString('base64');
+    // 1. Try deterministic jsQR first (fast, reliable)
+    let qrContent = await this.tryJsQR(mediaBuffer);
     
-    // We expect the LLM to return the JWT string found in the QR.
-    // We'll use a direct prompt for this specific task, bypassing the standard 'analyzeMedia' structured intent if needed,
-    // or we assume analyzeMedia returns the raw text or a specific "SCANNED_CONTENT" action.
-    // For simplicity, let's call analyzeMedia with a specific prompt.
-    
-    const prompt = `
-      Look at this image. It should contain a QR Code.
-      READ the content of the QR Code EXACTLY character by character.
-      Return ONLY a JSON object: { "qr_content": "THE_STRING_YOU_READ" }.
-      Do not add any other text.
-    `;
-    
-    // We use the general provider but overriding prompt behavior via options if supported 
-    // or we trust the provider to return 'actions' if we stick to the interface.
-    // The current GeminiLLMProvider interface returns LLMAnalysisResult ({ actions }).
-    // We should probably adapt the prompt to fit that structure or parse strictly.
-    
-    // Let's try to fit into the 'actions' schema or just use the extracted string.
-    // Actually our Gemini Provider implementation allows passing a 'prompt' option.
-    // But it expects to return LLMAnalysisResult.
-    // Let's ask it to return action "SCAN_RESULT" with data "content".
-    
-    const scanPrompt = `
-      Analyze this image. Find a QR Code.
-      Extract its content EXACTLY.
-      Return JSON with actions array.
-      Action: { "intent": "SCAN_RESULT", "data": { "content": "THE_EXACT_STRING" } }
-    `;
-
-    const result = await this.llmProvider.analyzeMedia(base64Data, mimeType, { prompt: scanPrompt });
-    const action = result.actions.find(a => a.intent === 'SCAN_RESULT');
-
-    if (!action || !action.data.content) {
-        return "❌ Impossible de lire le QR Code sur cette image. Essayez de vous rapprocher.";
+    // 2. Fallback to LLM Vision if jsQR fails (handles blurry/angled images)
+    if (!qrContent) {
+      this.logger.debug('jsQR failed, falling back to LLM Vision');
+      qrContent = await this.tryLLMVision(mediaBuffer, mimeType);
     }
 
-    const token = action.data.content;
+    if (!qrContent) {
+      return "❌ Impossible de lire le QR Code sur cette image. Essayez de vous rapprocher ou de mieux cadrer.";
+    }
 
-    // 2. Verify Signature
-    const ticketId = this.qrCodeService.verifySignedPayload(token);
+    // 3. Verify Signature
+    const ticketId = this.qrCodeService.verifySignedPayload(qrContent);
     if (!ticketId) {
-        this.logger.warn(`Invalid signature for token: ${token}`);
-        return "❌ QR Code Invalide (Signature falsifiée).";
+      this.logger.warn(`Invalid signature for token: ${qrContent.substring(0, 20)}...`);
+      return "❌ QR Code Invalide (Signature falsifiée ou non reconnu).";
     }
 
-    // 3. Check DB Status
+    // 4. Check DB Status
     const ticket = await this.ticketRepository.findById(ticketId);
     if (!ticket) {
-        return "❌ Billet inconnu au système.";
+      return "❌ Billet inconnu au système.";
     }
 
     if (ticket.status === TicketStatus.USED) {
-        return `❌ REFUSÉ : Billet DÉJÀ UTILISÉ.\n(Scanné précédemment le ${ticket.usedAt?.toLocaleTimeString()})`;
+      return `❌ REFUSÉ : Billet DÉJÀ UTILISÉ.\n(Scanné précédemment le ${ticket.usedAt?.toLocaleTimeString()})`;
     }
 
     if (ticket.status !== TicketStatus.VALID) {
-        return `❌ REFUSÉ : Billet ${ticket.status}.`;
+      return `❌ REFUSÉ : Billet ${ticket.status}.`;
     }
 
-    // 4. Validate Entry (Mark as USED)
+    // 5. Validate Entry (Mark as USED)
     ticket.use();
     await this.ticketRepository.save(ticket);
 
-    return `✅ ENTRÉE VALIDÉE\nBillet: ${ticket.id.substring(0, 8)}...\nClient: ${ticket.attendeePhone}`;
+    const attendeeInfo = ticket.attendeePhone ? `Client: ${ticket.attendeePhone}` : 'Billet anonyme';
+    return `✅ ENTRÉE VALIDÉE\nBillet: ${ticket.id.substring(0, 8)}...\n${attendeeInfo}`;
+  }
+
+  /**
+   * Decode QR using jsQR library with sharp for image processing
+   */
+  private async tryJsQR(mediaBuffer: Buffer): Promise<string | null> {
+    try {
+      // Use sharp to decode image to raw RGBA data
+      const { data, info } = await sharp(mediaBuffer)
+        .ensureAlpha()
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+      
+      // jsQR expects Uint8ClampedArray RGBA data
+      const clampedData = new Uint8ClampedArray(data);
+      const result = jsQR(clampedData, info.width, info.height);
+      
+      if (result && result.data) {
+        this.logger.debug(`jsQR decoded successfully: ${result.data.substring(0, 20)}...`);
+        return result.data;
+      }
+      
+      return null;
+    } catch (error) {
+      this.logger.warn(`jsQR processing error: ${error.message}`);
+      return null;
+    }
+  }
+
+  /**
+   * Fallback: Use LLM Vision to read QR (handles difficult images)
+   */
+  private async tryLLMVision(mediaBuffer: Buffer, mimeType: string): Promise<string | null> {
+    try {
+      const base64Data = mediaBuffer.toString('base64');
+      
+      const scanPrompt = `
+        Analyze this image. Find a QR Code.
+        Extract its content EXACTLY character by character.
+        Return JSON with actions array.
+        Action: { "intent": "SCAN_RESULT", "data": { "content": "THE_EXACT_STRING" } }
+      `;
+
+      const result = await this.llmProvider.analyzeMedia(base64Data, mimeType, { prompt: scanPrompt });
+      const action = result.actions.find(a => a.intent === 'SCAN_RESULT');
+
+      if (action && action.data.content) {
+        this.logger.debug(`LLM Vision decoded: ${action.data.content.substring(0, 20)}...`);
+        return action.data.content;
+      }
+      
+      return null;
+    } catch (error) {
+      this.logger.error(`LLM Vision error: ${error.message}`);
+      return null;
+    }
   }
 }
+
