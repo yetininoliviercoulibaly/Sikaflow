@@ -3,6 +3,7 @@ import { WhatsAppMessageDto } from '../dtos/whatsapp-payload.dto';
 export interface LLMAnalysisResult {
   intent?: string;
   data?: any;
+  confidence?: number;
   actions?: Array<{
     intent: string;
     data: any;
