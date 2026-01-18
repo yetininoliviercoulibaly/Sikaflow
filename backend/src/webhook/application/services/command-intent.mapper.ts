@@ -120,7 +120,7 @@ export class CommandIntentMapper {
 
     // CONFIRM_DEL|NO
     if (id === 'CONFIRM_DEL|NO') {
-       return { intent: LLMIntent.GREETING, data: {} }; // Just go back to main menu
+       return { intent: LLMIntent.CANCEL_DELETION, data: {} };
     }
 
     // 3. Fallback: If it's a raw intent name, pass it through
