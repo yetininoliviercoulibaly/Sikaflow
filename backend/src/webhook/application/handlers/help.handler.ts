@@ -124,12 +124,18 @@ export class HelpHandler implements IActionHandler {
         });
 
         if (hasStock) {
+            const ticketingRows = [
+                { id: 'CMD_SCAN', title: 'Scanner Billet', description: 'Valider une entrée' },
+                { id: 'CMD_STOCK', title: 'Voir Stock', description: 'Places restantes' }
+            ];
+
+            if (isManagerOrOwner) {
+                ticketingRows.push({ id: 'CMD_CREATE_EVENT', title: 'Créer Événement', description: 'Nouvelle billetterie' });
+            }
+
             sections.push({
                 title: "Billetterie",
-                rows: [
-                    { id: 'CMD_SCAN', title: 'Scanner Billet', description: 'Valider une entrée' },
-                    { id: 'CMD_STOCK', title: 'Voir Stock', description: 'Places restantes' }
-                ]
+                rows: ticketingRows
             });
         }
 

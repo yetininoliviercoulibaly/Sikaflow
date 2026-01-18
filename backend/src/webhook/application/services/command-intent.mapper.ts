@@ -24,6 +24,7 @@ export class CommandIntentMapper {
       'CMD_ADD_MEMBER': { intent: LLMIntent.ADD_MEMBER, data: {}, missing_fields: ['phone'] },
       'CMD_SCAN': { intent: LLMIntent.SCAN_TICKET, data: {} },
       'CMD_STOCK': { intent: LLMIntent.CHECK_STOCK, data: {} },
+      'CMD_CREATE_EVENT': { intent: LLMIntent.CREATE_EVENT, data: {}, missing_fields: ['event_name', 'date', 'capacity', 'price'] },
       'HELP_CMD': { intent: LLMIntent.HELP, data: {} },
       'HELP': { intent: LLMIntent.HELP, data: {} },
       'CMD_SUBSCRIBE': { intent: LLMIntent.SUBSCRIBE, data: {} },
