@@ -21,7 +21,7 @@ export class RequestDashboardAccessHandler implements IActionHandler {
 
     try {
       // Generate and send magic link
-      await this.requestMagicLinkUseCase.execute(senderPhoneNumber);
+      await this.requestMagicLinkUseCase.execute(senderPhoneNumber, messagingService);
 
       const message = isEn
         ? `🔐 *Dashboard Access Link Sent!*\n\nA secure login link has been sent to your current chat. Click it to access:\n- 📊 Event Dashboard\n- 📷 Ticket Scanner\n\n_Link expires in 15 minutes._`
