@@ -146,6 +146,7 @@ import { RequestScannerAccessHandler } from './application/handlers/request-scan
     CancelDeletionHandler,
     RequestDashboardAccessHandler,
     RequestScannerAccessHandler,
+    SubscribeMonthlyHandler,
     {
       provide: ACTION_HANDLER_TOKEN,
       useFactory: (
