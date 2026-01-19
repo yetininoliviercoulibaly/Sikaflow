@@ -24,7 +24,9 @@ import { ScanTicketUseCase } from './application/use-cases/scan-ticket.use-case'
 import { ListEventsUseCase } from './application/use-cases/list-events.use-case';
 import { GetEventStatsUseCase } from './application/use-cases/get-event-stats.use-case';
 import { GenerateTicketsQRUseCase } from './application/use-cases/generate-tickets-qr.use-case';
+import { ValidateTicketUseCase } from './application/use-cases/validate-ticket.use-case';
 import { EventController } from './application/controllers/event.controller';
+import { TicketApiController } from './application/controllers/ticket-api.controller';
 import { LlmModule } from '../common/llm/llm.module';
 import { AuthModule } from '../auth/auth.module';
 
@@ -34,7 +36,7 @@ import { AuthModule } from '../auth/auth.module';
     LlmModule,
     AuthModule,
   ],
-  controllers: [EventController],
+  controllers: [EventController, TicketApiController],
   providers: [
     { provide: I_EVENT_REPOSITORY, useClass: MikroOrmEventRepository },
     { provide: I_TICKET_REPOSITORY, useClass: MikroOrmTicketRepository },
@@ -49,6 +51,7 @@ import { AuthModule } from '../auth/auth.module';
     GenerateClaimLinkUseCase,
     ClaimTicketUseCase,
     GenerateTicketsQRUseCase,
+    ValidateTicketUseCase,
   ],
   exports: [
     I_EVENT_REPOSITORY, 
@@ -64,6 +67,7 @@ import { AuthModule } from '../auth/auth.module';
     GenerateClaimLinkUseCase,
     ClaimTicketUseCase,
     GenerateTicketsQRUseCase,
+    ValidateTicketUseCase,
   ],
 })
 export class TicketingModule {}
