@@ -27,7 +27,7 @@ export class TicketApiController {
 
   @Post('validate')
   @HttpCode(HttpStatus.OK)
-  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF)
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF)
   @ApiOperation({ summary: 'Validate a ticket by its QR hash' })
   @ApiBody({ type: ValidateTicketDto })
   @ApiResponse({ status: 200, description: 'Ticket validation result' })

@@ -49,15 +49,30 @@ export function QRScanner({ onScan, isPaused = false }: QRScannerProps) {
       });
   }, []);
 
+  // Safe stop helper - checks state before stopping
+  const safeStopScanner = useCallback(async (scanner: Html5Qrcode | null) => {
+    if (!scanner) return;
+    try {
+      const state = scanner.getState();
+      // Only stop if scanning or paused (2 = SCANNING, 3 = PAUSED)
+      if (state === 2 || state === 3) {
+        await scanner.stop();
+      }
+    } catch (e) {
+      // Ignore stop errors
+      console.warn('Scanner stop warning:', e);
+    }
+  }, []);
+
   useEffect(() => {
     if (!selectedCamera) return;
 
     const scannerId = 'qr-scanner-region';
 
-    if (scannerRef.current) {
-      scannerRef.current.stop().catch(() => {});
+    // Clean up previous scanner
+    safeStopScanner(scannerRef.current).then(() => {
       scannerRef.current = null;
-    }
+    });
 
     const scanner = new Html5Qrcode(scannerId);
     scannerRef.current = scanner;
@@ -76,12 +91,10 @@ export function QRScanner({ onScan, isPaused = false }: QRScannerProps) {
       });
 
     return () => {
-      if (scannerRef.current) {
-        scannerRef.current.stop().catch(() => {});
-        scannerRef.current = null;
-      }
+      safeStopScanner(scannerRef.current);
+      scannerRef.current = null;
     };
-  }, [selectedCamera, handleScan]);
+  }, [selectedCamera, handleScan, safeStopScanner]);
 
   return (
     <div className="scanner-container">
