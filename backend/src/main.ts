@@ -10,6 +10,9 @@ async function bootstrap() {
   // Security Headers
   app.use(helmet());
 
+  // Enable CORS
+  app.enableCors();
+
   // Global Validation Pipe
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
