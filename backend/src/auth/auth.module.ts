@@ -9,6 +9,8 @@ import { I_AUTH_REPOSITORY } from './domain/ports/auth.repository.interface';
 import { I_MESSAGING_PROVIDER } from './domain/ports/messaging-provider.interface';
 import { I_TOKEN_SERVICE } from './domain/ports/token.service.interface';
 import { WhatsAppModule } from '../common/whatsapp/whatsapp.module';
+import { TelegramModule } from '../common/telegram/telegram.module';
+import { CompositeAuthMessagingProvider } from './infrastructure/messaging/composite-auth-messaging.provider';
 import { UserModule } from '../user/user.module';
 import { OrganizationModule } from '../organization/organization.module';
 import { JwtAuthGuard } from './infrastructure/guards/jwt-auth.guard';
@@ -19,6 +21,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 @Module({
   imports: [
     WhatsAppModule, 
+    TelegramModule, // Added TelegramModule
     UserModule,
     forwardRef(() => OrganizationModule)
   ],
@@ -28,6 +31,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
     VerifyMagicLinkUseCase,
     RedisAuthRepository,
     WhatsAppMessagingProvider,
+    CompositeAuthMessagingProvider, // Added provider
     JwtTokenService,
     JwtAuthGuard,
     CompositeAuthGuard,
@@ -39,7 +43,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
     },
     {
       provide: I_MESSAGING_PROVIDER,
-      useClass: WhatsAppMessagingProvider,
+      useClass: CompositeAuthMessagingProvider, // Switched to composite
     },
     {
       provide: I_TOKEN_SERVICE,
