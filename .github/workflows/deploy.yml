@@ -8,6 +8,7 @@ env:
   REGISTRY: ghcr.io
   BACKEND_IMAGE_NAME: ${{ github.repository_owner }}/sikaflow-backend
   FRONTEND_IMAGE_NAME: ${{ github.repository_owner }}/sikaflow-frontend
+  SCANNER_IMAGE_NAME: ${{ github.repository_owner }}/sikaflow-scanner
 
 jobs:
   build-and-push:
@@ -47,6 +48,16 @@ jobs:
             type=sha
             latest
 
+      - name: Extract metadata (tags, labels) for Scanner
+        id: meta-scanner
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.SCANNER_IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha
+            latest
+
       - name: Build and push Backend image
         uses: docker/build-push-action@v5
         with:
@@ -62,3 +73,11 @@ jobs:
           push: true
           tags: ${{ steps.meta-frontend.outputs.tags }}
           labels: ${{ steps.meta-frontend.outputs.labels }}
+
+      - name: Build and push Scanner image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./scanner
+          push: true
+          tags: ${{ steps.meta-scanner.outputs.tags }}
+          labels: ${{ steps.meta-scanner.outputs.labels }}

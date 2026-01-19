@@ -100,7 +100,7 @@ services:
       - sikaflow_net
 
   # ---------------------------------------------------------------------------
-  # 5. FRONTEND (Next.js) - AJOUT MANQUANT
+  # 5. FRONTEND (Next.js) - Dashboard
   # ---------------------------------------------------------------------------
   frontend:
     # HARDCODED IMAGE
@@ -113,7 +113,19 @@ services:
       - sikaflow_net
 
   # ---------------------------------------------------------------------------
-  # 6. CLOUDFLARE TUNNEL (Expose to Internet)
+  # 6. SCANNER (Vite React PWA) - Ticket Validation
+  # ---------------------------------------------------------------------------
+  scanner:
+    # HARDCODED IMAGE
+    image: ghcr.io/softilab/sikaflow-scanner:develop
+    restart: always
+    environment:
+      VITE_API_URL: https://api-staging.sika-flow.com
+    networks:
+      - sikaflow_net
+
+  # ---------------------------------------------------------------------------
+  # 7. CLOUDFLARE TUNNEL (Expose to Internet)
   # ---------------------------------------------------------------------------
   cloudflared:
     image: cloudflare/cloudflared:latest
