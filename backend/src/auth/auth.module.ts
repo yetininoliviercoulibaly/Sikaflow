@@ -51,7 +51,8 @@ import { RolesGuard } from '../common/guards/roles.guard';
     JwtAuthGuard,
     CompositeAuthGuard,
     ApiKeyGuard,
-    RolesGuard
+    RolesGuard,
+    RequestMagicLinkUseCase
   ]
 })
 export class AuthModule {}

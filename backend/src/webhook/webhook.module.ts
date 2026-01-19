@@ -28,6 +28,7 @@ import { TicketingModule } from '../ticketing/ticketing.module';
 import { PaymentModule } from '../payment/payment.module';
 import { OnboardingModule } from '../onboarding/onboarding.module';
 import { IncidentModule } from '../incident/incident.module';
+import { AuthModule } from '../auth/auth.module';
 
 import { CreateEventHandler } from './application/handlers/create-event.handler';
 import { ScanTicketHandler } from './application/handlers/scan-ticket.handler';
@@ -89,6 +90,7 @@ import { RequestDashboardAccessHandler } from './application/handlers/request-da
     FeedbackModule,
     OnboardingModule,
     IncidentModule,
+    AuthModule,
   ],
   controllers: [WhatsAppController, TelegramController],
   providers: [
