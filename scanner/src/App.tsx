@@ -55,6 +55,9 @@ function App() {
 
     setIsPaused(true);
     setIsValidating(true);
+    
+    // DEBUG: Validate detection
+    alert(`QR Détecté: ${qrContent}`);
 
     try {
       const response = await scannerService.validateTicket(qrContent);
