@@ -32,10 +32,20 @@ export class ValidateTicketUseCase {
    * @param markAsUsed If true, marks the ticket as USED (default: true)
    */
   async execute(hash: string, markAsUsed: boolean = true): Promise<ValidateTicketResult> {
+    // 0. Validate input
+    if (!hash || typeof hash !== 'string' || hash.trim() === '') {
+      this.logger.warn('Validation called with empty or invalid hash');
+      return {
+        valid: false,
+        status: 'INVALID_SIGNATURE',
+        message: 'QR Code vide ou invalide',
+      };
+    }
+
     // 1. Verify JWT Signature
     const ticketId = this.qrCodeService.verifySignedPayload(hash);
     if (!ticketId) {
-      this.logger.warn(`Invalid signature for hash: ${hash.substring(0, 20)}...`);
+      this.logger.warn(`Invalid signature for hash: ${hash.substring(0, Math.min(20, hash.length))}...`);
       return {
         valid: false,
         status: 'INVALID_SIGNATURE',
