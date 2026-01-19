@@ -57,10 +57,8 @@ function App() {
     setIsValidating(true);
 
     try {
-      // Validate Format (UUID v4) for SikaFlow Tickets
-      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(qrContent);
-
-      if (!isUUID) {
+      // Validate Format: AVOID Web Links (http/https) but ALLOW Tokens (Uuid/JWT)
+      if (qrContent.toLowerCase().startsWith('http')) {
         throw new Error('Format QR Code invalide (Ce n\'est pas un billet SikaFlow)');
       }
 

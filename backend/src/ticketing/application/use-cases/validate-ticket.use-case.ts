@@ -6,7 +6,7 @@ import { TicketStatus } from '../../domain/ticket.entity';
 
 export interface ValidateTicketResult {
   valid: boolean;
-  status: 'VALID' | 'ALREADY_USED' | 'CANCELLED' | 'INVALID_SIGNATURE' | 'NOT_FOUND';
+  status: 'VALID' | 'ALREADY_USED' | 'CANCELLED' | 'INVALID_SIGNATURE' | 'NOT_FOUND' | 'INVALID_DATE';
   ticketId?: string;
   eventName?: string;
   eventDate?: Date;
@@ -57,6 +57,35 @@ export class ValidateTicketUseCase {
 
     // 3. Get event info
     const event = await this.eventRepository.findById(ticket.eventId);
+
+    // 3b. Check Date Validity (Window: +/- 12h)
+    if (event) {
+      const now = new Date().getTime();
+      const eventTime = new Date(event.date).getTime();
+      const windowMs = 12 * 60 * 60 * 1000; // 12 hours
+
+      if (now < eventTime - windowMs) {
+        return {
+           valid: false,
+           status: 'INVALID_DATE',
+           ticketId: ticket.id,
+           eventName: event.name,
+           eventDate: event.date,
+           message: 'Trop tôt : L\'événement n\'a pas encore commencé',
+        };
+      }
+
+      if (now > eventTime + windowMs) {
+        return {
+           valid: false,
+           status: 'INVALID_DATE',
+           ticketId: ticket.id,
+           eventName: event.name,
+           eventDate: event.date,
+           message: 'Expiré : L\'événement est terminé',
+        };
+      }
+    }
 
     // 4. Check status
     if (ticket.status === TicketStatus.USED) {
