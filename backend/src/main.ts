@@ -11,7 +11,19 @@ async function bootstrap() {
   app.use(helmet());
 
   // Enable CORS
-  app.enableCors();
+  const allowedOrigins = [
+    process.env.FRONTEND_URL,
+    process.env.SCANNER_URL,
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:3002',
+    'http://localhost:5173',
+  ].filter(origin => !!origin);
+
+  app.enableCors({
+    origin: allowedOrigins,
+    credentials: true,
+  });
 
   // Global Validation Pipe
   app.useGlobalPipes(new ValidationPipe({
