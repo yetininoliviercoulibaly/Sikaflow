@@ -71,7 +71,7 @@ export class IssueTicketUseCase {
       await this.eventRepository.save(event);
 
       // 5. Send via platform-agnostic messaging
-      await messagingService.sendMessage(attendeePhone, `✅ Paiement reçu (${amountPaid} FCFA) !\nVoici vos ${quantity} billet(s) pour *${event.name}*.`);
+      await messagingService.sendMessage(attendeePhone, `✅ Paiement reçu (${amountPaid} ${process.env.DEFAULT_CURRENCY || 'EUR'}) !\nVoici vos ${quantity} billet(s) pour *${event.name}*.`);
 
       for (let i = 0; i < qrBuffers.length; i++) {
            await messagingService.sendDocument(
