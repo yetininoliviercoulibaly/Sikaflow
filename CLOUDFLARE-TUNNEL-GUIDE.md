@@ -25,7 +25,6 @@ Cloudflare Tunnel vous permet d'exposer votre application **sans ouvrir de ports
 ### Étape 3 : Créer un Tunnel pour Staging
 
 1. Dans Zero Trust Dashboard :
-
    - **Networks** → **Tunnels** → **Create a tunnel**
 
 2. Choisissez **"Cloudflared"** comme connecteur
@@ -50,21 +49,39 @@ Cloudflare Tunnel vous permet d'exposer votre application **sans ouvrir de ports
 
 ### Étape 4 : Configurer les Routes Publiques
 
-Après avoir créé le tunnel, vous arrivez sur la page de configuration :
+Après avoir créé le tunnel, vous arrivez sur la page de configuration.
+
+#### Table des Routes Staging
+
+| Service     | Public Hostname                 | Type | URL Docker      |
+| ----------- | ------------------------------- | ---- | --------------- |
+| API Backend | `api-staging.sika-flow.com`     | HTTP | `backend:3000`  |
+| Dashboard   | `app-staging.sika-flow.com`     | HTTP | `frontend:3000` |
+| Scanner PWA | `scanner-staging.sika-flow.com` | HTTP | `scanner:80`    |
 
 #### Route 1 : API Backend
 
-- **Public hostname** : `staging.sikaflow.com`
+- **Public hostname** : `api-staging.sika-flow.com`
 - **Service Type** : HTTP
 - **URL** : `backend:3000`
 
 Cliquez sur **"Save hostname"**
 
-#### Route 2 : Frontend (Optionnel si vous exposez aussi le frontend)
+#### Route 2 : Dashboard (Frontend Next.js)
 
-- **Public hostname** : `app.staging.sikaflow.com`
+- **Public hostname** : `app-staging.sika-flow.com`
 - **Service Type** : HTTP
 - **URL** : `frontend:3000`
+
+Cliquez sur **"Save hostname"**
+
+#### Route 3 : Scanner PWA (Ticket Validation)
+
+- **Public hostname** : `scanner-staging.sika-flow.com`
+- **Service Type** : HTTP
+- **URL** : `scanner:80`
+
+Cliquez sur **"Save hostname"**
 
 ---
 
@@ -73,7 +90,9 @@ Cliquez sur **"Save hostname"**
 Cloudflare crée **automatiquement** les enregistrements DNS nécessaires :
 
 ```
-staging.sikaflow.com → CNAME → [tunnel-id].cfargotunnel.com
+api-staging.sika-flow.com     → CNAME → [tunnel-id].cfargotunnel.com
+app-staging.sika-flow.com     → CNAME → [tunnel-id].cfargotunnel.com
+scanner-staging.sika-flow.com → CNAME → [tunnel-id].cfargotunnel.com
 ```
 
 Vous n'avez **rien à faire manuellement** ! ✨
@@ -88,8 +107,12 @@ Créez un **second tunnel** pour la production :
 2. Nom : `sikaflow-production`
 3. Copiez le nouveau token → `CLOUDFLARE_TUNNEL_TOKEN` pour production
 4. Routes :
-   - `api.sikaflow.com` → `backend:3000`
-   - `sikaflow.com` → `frontend:3000`
+
+| Service   | Public Hostname         | URL Docker      |
+| --------- | ----------------------- | --------------- |
+| API       | `api.sika-flow.com`     | `backend:3000`  |
+| Dashboard | `app.sika-flow.com`     | `frontend:3000` |
+| Scanner   | `scanner.sika-flow.com` | `scanner:80`    |
 
 ---
 
