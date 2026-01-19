@@ -15,7 +15,11 @@ export class RequestMagicLinkUseCase {
     private readonly messagingProvider: IMessagingProvider,
   ) {}
 
-  async execute(phoneNumber: string, messagingService?: IMessagingService): Promise<void> {
+  async execute(
+    phoneNumber: string, 
+    messagingService?: IMessagingService,
+    targetApp: 'dashboard' | 'scanner' = 'dashboard'
+  ): Promise<void> {
     // 1. Generate Token
     const token = v4();
     const expiresAt = new Date(Date.now() + this.EXPIRATION_MINUTES * 60 * 1000);
@@ -25,16 +29,31 @@ export class RequestMagicLinkUseCase {
     // 2. Save Token
     await this.authRepository.save(magicLinkToken);
 
-    // 3. Generate Link (Assuming frontend URL is configured in env)
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    const link = `${frontendUrl}/auth/verify?token=${token}`;
+    // 3. Generate Link based on Target App
+    const dashboardUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const scannerUrl = process.env.SCANNER_URL || dashboardUrl; // Fallback to dashboard if not set
+    
+    const baseUrl = targetApp === 'scanner' ? scannerUrl : dashboardUrl;
+    // Note: Scanner might use different route or query param if it's SPA.
+    // Assuming Scanner PWA root handles ?token= (which we implemented)
+    // Dashboard handles /auth/verify?token=
+    
+    let link = '';
+    let appLabel = '';
+    if (targetApp === 'scanner') {
+        // Scanner PWA usually sits at root. We implemented api.ts to read ?token= from root.
+        link = `${baseUrl}/?token=${token}`;
+        appLabel = 'Scanner';
+    } else {
+        link = `${baseUrl}/auth/verify?token=${token}`;
+        appLabel = 'Tableau de bord';
+    }
 
     // 4. Send Message
     if (messagingService && typeof messagingService.sendMessage === 'function') {
         // Use the provided service (context-aware)
-        // Use the provided service (context-aware)
         // We construct the message here because generic service doesn't know about "Magic Link" template
-        const message = `🔐 *Connexion SikaFlow*\n\nCliquez sur ce lien pour accéder à votre tableau de bord :\n\n[Accéder au Dashboard](${link})\n\n_Ce lien expire dans 15 minutes._`;
+        const message = `🔐 *Connexion SikaFlow*\n\nCliquez sur ce lien pour accéder à votre ${appLabel} :\n\n[Accéder au ${appLabel}](${link})\n\n_Ce lien expire dans 15 minutes._`;
         await messagingService.sendMessage(phoneNumber, message);
     } else {
         // Fallback to default provider (legacy/http flow)

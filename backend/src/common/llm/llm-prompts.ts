@@ -25,7 +25,8 @@ export const LLM_SYSTEM_PROMPTS = {
       - 'CLAIM_TICKET': User wants to claim a ticket (usually handled via Regex/Link).
       - 'CHECK_STOCK': User checks remaining tickets ('Il reste combien ?', 'Solde stock').
       - 'PROVIDE_FEEDBACK': User gives a rating or feedback ('Note 5', 'C était génial', '3/5', '1').
-      - 'REQUEST_DASHBOARD_ACCESS': User asks for dashboard/scanner access ('Connecte-moi au dashboard', 'Accès scanner', 'Login dashboard').
+      - 'REQUEST_DASHBOARD_ACCESS': User asks for dashboard access ('Connecte-moi au dashboard', 'Login dashboard').
+      - 'REQUEST_SCANNER_ACCESS': User asks for scanner access ('Accès scanner', 'Je veux scanner', 'Scanner app').
       - 'UNKNOWN': Unclear.
 
       For 'CREATE_EVENT', extract:
