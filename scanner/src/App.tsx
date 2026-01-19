@@ -55,11 +55,15 @@ function App() {
 
     setIsPaused(true);
     setIsValidating(true);
-    
-    // DEBUG: Validate detection
-    alert(`QR Détecté: ${qrContent}`);
 
     try {
+      // Validate Format (UUID v4) for SikaFlow Tickets
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(qrContent);
+
+      if (!isUUID) {
+        throw new Error('Format QR Code invalide (Ce n\'est pas un billet SikaFlow)');
+      }
+
       const response = await scannerService.validateTicket(qrContent);
       const result: ScanResult = {
         success: response.valid,
