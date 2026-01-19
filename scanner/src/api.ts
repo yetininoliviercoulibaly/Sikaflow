@@ -46,6 +46,15 @@ class ScannerService {
 
     return response.data;
   }
+
+  async verifyMagicToken(token: string): Promise<string> {
+    const response = await axios.get(`${API_BASE_URL}/auth/verify?token=${token}`);
+    if (response.data && response.data.accessToken) {
+      this.setToken(response.data.accessToken);
+      return response.data.accessToken;
+    }
+    throw new Error('Token invalide');
+  }
 }
 
 export const scannerService = new ScannerService();

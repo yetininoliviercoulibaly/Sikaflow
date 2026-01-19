@@ -65,6 +65,8 @@ services:
       NODE_ENV: staging
       PORT: 3000
       APP_URL: ${APP_URL}
+      FRONTEND_URL: ${FRONTEND_URL}
+      SCANNER_URL: ${SCANNER_URL}
       DB_HOST: db
       DB_PORT: 5432
       DB_USER: ${DB_USER}

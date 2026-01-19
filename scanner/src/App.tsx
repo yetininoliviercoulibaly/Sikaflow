@@ -21,9 +21,17 @@ function App() {
     const params = new URLSearchParams(window.location.search);
     const token = params.get('token');
     if (token) {
-      scannerService.setToken(token);
-      setIsAuthenticated(true);
-      window.history.replaceState({}, '', '/');
+      // Exchange Magic Token for JWT
+      scannerService.verifyMagicToken(token)
+        .then(() => {
+          setIsAuthenticated(true);
+          window.history.replaceState({}, '', '/');
+        })
+        .catch((err) => {
+          console.error("Auth failed", err);
+          alert("Lien de connexion invalide ou expiré");
+          setIsAuthenticated(false);
+        });
     }
   }, []);
 

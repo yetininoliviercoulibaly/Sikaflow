@@ -4,15 +4,15 @@ import { RequestMagicLinkUseCase } from '../../../auth/application/use-cases/req
 import { LLMIntent } from '../../../common/llm/llm-types';
 
 @Injectable()
-export class RequestDashboardAccessHandler implements IActionHandler {
-  private readonly logger = new Logger(RequestDashboardAccessHandler.name);
+export class RequestScannerAccessHandler implements IActionHandler {
+  private readonly logger = new Logger(RequestScannerAccessHandler.name);
 
   constructor(
     private readonly requestMagicLinkUseCase: RequestMagicLinkUseCase,
   ) {}
 
   canHandle(intent: string): boolean {
-    return intent === LLMIntent.REQUEST_DASHBOARD_ACCESS;
+    return intent === LLMIntent.REQUEST_SCANNER_ACCESS;
   }
 
   async handle(data: any, context: ActionContext): Promise<void> {
@@ -20,18 +20,18 @@ export class RequestDashboardAccessHandler implements IActionHandler {
     const isEn = context.language === 'en';
 
     try {
-      // Generate and send magic link
-      await this.requestMagicLinkUseCase.execute(senderPhoneNumber, messagingService, 'dashboard');
+      // Generate and send magic link for SCANNER
+      await this.requestMagicLinkUseCase.execute(senderPhoneNumber, messagingService, 'scanner');
 
       const message = isEn
-        ? `🔐 *Dashboard Access Link Sent!*\n\nA secure login link has been sent to your current chat. Click it to access your Event Dashboard.\n\n_Link expires in 15 minutes._`
-        : `🔐 *Lien d'accès envoyé !*\n\nUn lien de connexion sécurisé a été envoyé dans cette conversation. Cliquez dessus pour accéder au Tableau de Bord.\n\n_Le lien expire dans 15 minutes._`;
+        ? `🔐 *Scanner Access Link Sent!*\n\nA secure login link has been sent to your current chat. Click it to access the Ticket Scanner.\n\n_Link expires in 15 minutes._`
+        : `🔐 *Lien Scanner envoyé !*\n\nUn lien de connexion sécurisé a été envoyé. Cliquez dessus pour accéder au Scanner de Billets.\n\n_Le lien expire dans 15 minutes._`;
 
       await messagingService.sendMessage(senderPhoneNumber, message);
       
-      this.logger.log(`Magic link sent to ${senderPhoneNumber} for dashboard access`);
+      this.logger.log(`Magic link sent to ${senderPhoneNumber} for scanner access`);
     } catch (error) {
-      this.logger.error(`Error sending magic link: ${error.message}`, error.stack);
+      this.logger.error(`Error sending magic link for scanner: ${error.message}`, error.stack);
       
       const errorMessage = isEn
         ? `❌ Error sending access link. Please try again later.`
