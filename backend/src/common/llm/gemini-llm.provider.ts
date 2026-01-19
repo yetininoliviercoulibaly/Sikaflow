@@ -34,6 +34,10 @@ export class GeminiLLMProvider implements ILLMProvider {
     } else {
       finalSystemInstruction = `Context: ${contextStr}\n\n${finalSystemInstruction}`;
     }
+    
+    // Inject current date for relative date parsing (e.g., "aujourd'hui", "demain")
+    const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    finalSystemInstruction = finalSystemInstruction.replace('{{current_date}}', currentDate);
 
     const prompt = `${finalSystemInstruction}\n\nInput Text: "${text}"`;
 

@@ -31,7 +31,7 @@ export const LLM_SYSTEM_PROMPTS = {
 
       For 'CREATE_EVENT', extract:
       - event_name (string)
-      - date (ISO 8601 or text like 'tomorrow at 8pm')
+      - date (MUST be ISO 8601 format: 'YYYY-MM-DDTHH:mm:ss'. Convert relative dates like "aujourd'hui", "demain", "ce soir" using CURRENT_DATE: {{current_date}}. Example: "demain à 22h" with CURRENT_DATE 2026-01-19 becomes "2026-01-20T22:00:00")
       - capacity (number)
       - price (number)
 
