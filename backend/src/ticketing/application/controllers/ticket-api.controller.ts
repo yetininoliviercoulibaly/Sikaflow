@@ -8,9 +8,15 @@ import { ApiTags, ApiOperation, ApiResponse, ApiSecurity, ApiBody } from '@nestj
 import { IEventRepository, I_EVENT_REPOSITORY } from '../../domain/ports/event.repository.interface';
 import { ITicketRepository, I_TICKET_REPOSITORY } from '../../domain/ports/ticket.repository.interface';
 import { Inject } from '@nestjs/common';
+import { IsString, IsNotEmpty, IsOptional, IsBoolean } from 'class-validator';
 
 export class ValidateTicketDto {
+  @IsString()
+  @IsNotEmpty()
   hash: string;
+
+  @IsOptional()
+  @IsBoolean()
   markAsUsed?: boolean;
 }
 
