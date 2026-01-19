@@ -32,8 +32,9 @@ export class RequestMagicLinkUseCase {
     // 4. Send Message
     if (messagingService && typeof messagingService.sendMessage === 'function') {
         // Use the provided service (context-aware)
+        // Use the provided service (context-aware)
         // We construct the message here because generic service doesn't know about "Magic Link" template
-        const message = `🔐 *Connexion SikaFlow*\n\nCliquez sur ce lien pour accéder à votre tableau de bord :\n\n${link}\n\n_Ce lien expire dans 15 minutes._`;
+        const message = `🔐 *Connexion SikaFlow*\n\nCliquez sur ce lien pour accéder à votre tableau de bord :\n\n[Accéder au Dashboard](${link})\n\n_Ce lien expire dans 15 minutes._`;
         await messagingService.sendMessage(phoneNumber, message);
     } else {
         // Fallback to default provider (legacy/http flow)
