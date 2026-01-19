@@ -62,20 +62,18 @@ export function QRScanner({ onScan, isPaused = false }: QRScannerProps) {
     const scanner = new Html5Qrcode(scannerId);
     scannerRef.current = scanner;
 
-    if (!isPaused) {
-      scanner
-        .start(
-          selectedCamera,
-          { fps: 10, qrbox: { width: 250, height: 250 } },
-          handleScan,
-          () => {}
-        )
-        .then(() => setIsStarted(true))
-        .catch((err) => {
-          console.error('Error starting scanner:', err);
-          setError('Erreur de démarrage du scanner');
-        });
-    }
+    scanner
+      .start(
+        selectedCamera,
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        handleScan,
+        () => {}
+      )
+      .then(() => setIsStarted(true))
+      .catch((err) => {
+        console.error('Error starting scanner:', err);
+        setError('Erreur de démarrage du scanner');
+      });
 
     return () => {
       if (scannerRef.current) {
@@ -83,7 +81,7 @@ export function QRScanner({ onScan, isPaused = false }: QRScannerProps) {
         scannerRef.current = null;
       }
     };
-  }, [selectedCamera, isPaused, handleScan]);
+  }, [selectedCamera, handleScan]);
 
   return (
     <div className="scanner-container">
