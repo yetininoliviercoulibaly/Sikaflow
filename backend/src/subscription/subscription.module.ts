@@ -8,6 +8,7 @@ import { I_SUBSCRIPTION_REPOSITORY } from './domain/ports/subscription.repositor
 import { MikroOrmSubscriptionRepository } from './infrastructure/persistence/mikro-orm-subscription.repository';
 import { ActivateEventPassUseCase } from './application/use-cases/activate-event-pass.use-case';
 import { CheckSubscriptionUseCase } from './application/use-cases/check-subscription.use-case';
+import { SubscribeMonthlyUseCase } from './application/use-cases/subscribe-monthly.use-case';
 import { SubscribeUseCase } from './application/use-cases/subscribe.use-case';
 import { CheckFeatureUseCase } from './application/use-cases/check-feature.use-case';
 import { PaymentModule } from '../payment/payment.module';
@@ -43,6 +44,7 @@ import { MikroOrmSubscriptionPlanRepository } from './infrastructure/persistence
     SubscribeUseCase,
     CheckFeatureUseCase,
     FeatureGuard,
+    SubscribeMonthlyUseCase,
   ],
   exports: [
     I_EVENT_PASS_REPOSITORY,
@@ -53,6 +55,7 @@ import { MikroOrmSubscriptionPlanRepository } from './infrastructure/persistence
     SubscribeUseCase,
     CheckFeatureUseCase,
     FeatureGuard,
+    SubscribeMonthlyUseCase,
   ],
 })
 export class SubscriptionModule {}
