@@ -90,6 +90,16 @@ function App() {
     setIsPaused(false);
   }, []);
 
+  // Auto-dismiss after 5 seconds to prevent stuck screen
+  useEffect(() => {
+    if (lastResult && !isValidating) {
+      const timer = setTimeout(() => {
+        handleDismiss();
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [lastResult, isValidating, handleDismiss]);
+
   const handleLogout = useCallback(() => {
     scannerService.clearToken();
     setIsAuthenticated(false);

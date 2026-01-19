@@ -24,13 +24,13 @@ export class CreateEventHandler implements IActionHandler {
     }
 
     if (!event_name || !date || !capacity || !price) {
-        await messagingService.sendMessage(senderPhoneNumber, '❌ Informations manquantes. Format: "Crée l\'événement [Nom] le [Date] avec [Capacité] places à [Prix] FCFA"');
+        await messagingService.sendMessage(senderPhoneNumber, `❌ Informations manquantes. Format: "Crée l'événement [Nom] le [Date] avec [Capacité] places à [Prix] ${process.env.DEFAULT_CURRENCY || 'EUR'}"`);
         return;
     }
 
     try {
         const event = await this.createEventUseCase.execute(organizationId, event_name, date, parseInt(capacity), parseInt(price));
-        const message = `✅ Événement '${event.name}' créé avec succès !\n📅 Date : ${event.date.toLocaleDateString()}\n🎟️ Places : ${event.totalCapacity}\n💰 Prix : ${event.price} FCFA`;
+        const message = `✅ Événement '${event.name}' créé avec succès !\n📅 Date : ${event.date.toLocaleDateString()}\n🎟️ Places : ${event.totalCapacity}\n💰 Prix : ${event.price} ${process.env.DEFAULT_CURRENCY || 'EUR'}`;
         await messagingService.sendMessage(senderPhoneNumber, message);
     } catch (e) {
         await messagingService.sendMessage(senderPhoneNumber, `❌ Erreur lors de la création: ${e.message}`);
