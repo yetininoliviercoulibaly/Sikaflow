@@ -88,7 +88,13 @@ export class DebtHandler implements IActionHandler {
     context: ActionContext,
   ): Promise<void> {
     const { senderPhoneNumber, messagingService, user, organizationId } = context;
-    const { amount, contactName, contactPhone, contactContext, currency = getCurrency() } = data;
+    const rawData = data as any;
+    // Support both matches (LLM often returns snake_case)
+    const amount = rawData.amount; 
+    const contactName = rawData.contactName || rawData.contact_name;
+    const contactPhone = rawData.contactPhone || rawData.contact_phone;
+    const contactContext = rawData.contactContext || rawData.contact_context;
+    const currency = rawData.currency || getCurrency();
 
     if (!amount || !contactName) {
       await messagingService.sendMessage(
@@ -130,7 +136,13 @@ export class DebtHandler implements IActionHandler {
     context: ActionContext,
   ): Promise<void> {
     const { senderPhoneNumber, messagingService, user, organizationId } = context;
-    const { amount, contactName, contactPhone, contactContext, currency = getCurrency() } = data;
+    const rawData = data as any;
+    // Support both matches (LLM often returns snake_case)
+    const amount = rawData.amount;
+    const contactName = rawData.contactName || rawData.contact_name;
+    const contactPhone = rawData.contactPhone || rawData.contact_phone;
+    const contactContext = rawData.contactContext || rawData.contact_context;
+    const currency = rawData.currency || getCurrency();
 
     if (!amount || !contactName) {
       await messagingService.sendMessage(
@@ -239,7 +251,10 @@ export class DebtHandler implements IActionHandler {
     context: ActionContext,
   ): Promise<void> {
     const { senderPhoneNumber, messagingService, user, organizationId } = context;
-    const { contactName, contactShortId, amount } = data;
+    const rawData = data as any;
+    const contactName = rawData.contactName || rawData.contact_name;
+    const contactShortId = rawData.contactShortId || rawData.contact_short_id;
+    const amount = rawData.amount;
 
     const numericAmount = amount ? parseFloat(amount) : undefined;
     if (numericAmount !== undefined && (isNaN(numericAmount) || numericAmount <= 0)) {
