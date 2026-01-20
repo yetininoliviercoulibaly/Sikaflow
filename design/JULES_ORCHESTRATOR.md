@@ -5,47 +5,51 @@
 L'objectif est de passer d'un simple script CI "stateless" (comme l'actuel `gemini-ci.yml`) à une orchestration de sessions persistantes et contextuelles via Google Antigravity.
 
 ### Le Rôle du Protocole MCP (Model Context Protocol)
-Le MCP est le pivot de cette architecture. Plutôt que de cloner le repo dans l'environnement du LLM (risqué et lent) ou de copier-coller des diffs (perte de contexte global), nous utiliserons une architecture **MCP Tunneling**.
+Le MCP est le pivot de cette architecture. Plutôt que de cloner le repo dans l'environnement du LLM (risqué et lent) ou de copier-coller des diffs (perte de contexte global), nous utiliserons une architecture flexible : **Local First** pour le développement, et **MCP Tunneling** pour la CI.
 
-1.  **CI Runner (Github Actions/Gitlab CI)** :
-    *   Clone le code frais.
-    *   Lance un **MCP Server** local (ex: `git-mcp-server` ou `filesystem-mcp-server`).
-    *   Ce serveur expose le système de fichiers et l'historique Git en "Read-Only".
+#### Mode Local (MVP & Dev)
+Pour démarrer, nous adoptons une approche "Local First". Le développeur lance l'orchestrateur directement sur sa machine.
 
-2.  **Jules Remote (Antigravity)** :
-    *   L'instance Jules tourne dans le cloud Google Antigravity.
-    *   Elle se connecte au MCP Server du CI via un tunnel sécurisé (chiffré).
-    *   Cela donne à Jules un accès "live" au code tel qu'il est dans la CI, sans avoir besoin de crédentials SSH permanents.
+1.  **Environment Local** :
+    *   Le développeur a configuré un **serveur MCP local** (ex: `filesystem-mcp-server`) qui expose son dossier de travail actuel.
+    *   Il exécute `jules orchestrate --local`.
 
-### La Commande `jules remote new` (Stateless Wrapper)
+2.  **Jules Agent (Client)** :
+    *   Le CLI Orchestrator se connecte directement au serveur MCP local (via stdio ou localhost).
+    *   Il transmet les requêtes contextuelles ("Lis le fichier X", "Donne moi le diff") au serveur MCP local.
+    *   Il communique avec l'API Google Antigravity pour le raisonnement (le "cerveau"), en lui fournissant le contexte récupéré localement.
 
-Le CLI Orchestrator servira de pont. Voici la structure proposée pour la commande :
+#### Mode CI (Cible)
+Dans un second temps, pour l'intégration continue :
+
+1.  **CI Runner** : Clone le code et lance le serveur MCP.
+2.  **Tunnel** : Un tunnel sécurisé (Ngrok/Cloudflare) expose ce serveur MCP.
+3.  **Jules Remote** : L'instance cloud se connecte au tunnel pour accéder au contexte.
+
+### La Commande `jules orchestrate`
+
+Le CLI unifie les deux mondes.
 
 ```bash
-# Dans le pipeline CI
+# Mode Local (MVP)
+jules orchestrate --local --personas="qa,tech-lead"
+
+# Mode CI (Cible)
 jules orchestrate \
   --trigger="git-push" \
-  --context-tunnel="wss://ci-tunnel.internal/session-123" \
-  --personas="qa-engineer,tech-lead" \
-  --report-format="pr-comment"
+  --context-tunnel="wss://ci-tunnel.internal/session-123"
 ```
 
-**Architecture du Flux de Données :**
+**Architecture du Flux de Données (Local/MVP) :**
 
 ```mermaid
 graph TD
-    A[Développeur Push] --> B[CI Runner]
-    B --> C{Orchestrator CLI}
-    C -->|Start Tunnel| D[MCP Server Local]
-    C -->|API Request| E[Google Antigravity API]
-    E -->|Spawn| F[Jules Instance A (QA)]
-    E -->|Spawn| G[Jules Instance B (Lead)]
-    F <-->|MCP Protocol| D
-    G <-->|MCP Protocol| D
-    F -->|Report| H[Antigravity Dashboard]
-    G -->|Report| H
-    H -->|Consolidated JSON| C
-    C -->|Post Comment| I[Git Provider API (ou GitHub MCP)]
+    A[Développeur] -->|Lance| C{Orchestrator CLI}
+    C <-->|MCP Protocol (Stdio)| D[MCP Server Local]
+    D -->|Read Context| Files[Fichiers Locaux]
+    C -->|API Request + Context| E[Google Antigravity API]
+    E -->|Reasoning| C
+    C -->|Report| A[Console / Log]
 ```
 
 ## 2. Scénarios Avancés (Brainstorming)
@@ -94,26 +98,26 @@ Si Jules est confiant à >95% (ex: un import manquant ou une syntaxe invalide d�
 
 ### Stack Technique
 *   **CLI Orchestrator** : Node.js (TypeScript). Facile à intégrer dans l'écosystème actuel.
-*   **Tunneling** : Ngrok (MVP) ou Cloudflare Tunnel (Prod) pour exposer le MCP local.
-*   **Authentification** : Service Account Google Cloud (JSON key) injecté en secret CI.
+*   **MCP Local** : `@modelcontextprotocol/server-filesystem` (Standard).
+*   **Authentification** : Clé API Google Antigravity (Env Var locale).
 
 ### Roadmap
 
-**Phase 1 : Le "Connector" (Semaine 1)**
-*   Créer le CLI `jules-orchestrator`.
-*   Implémenter la logique `git diff` -> `context bundle`.
-*   Connecter l'API Antigravity (mockée si besoin au début).
-*   Output : Simple log dans la console CI.
+**Phase 1 : Le "Local Pilot" (Semaine 1)**
+*   Objectif : Faire tourner Jules sur le poste du développeur.
+*   Créer le CLI `jules-orchestrator` avec support du flag `--local`.
+*   Connecter le CLI au serveur MCP local (via configuration JSON ou autodetect).
+*   Tester le flux : Le CLI lit un fichier via MCP -> Envoie à Antigravity -> Reçoit la réponse.
 
-**Phase 2 : L'Intégration MCP (Semaine 2)**
-*   Configurer un serveur MCP "Filesystem" simple dans le CLI (Read-Only).
-*   Configurer un serveur MCP "GitHub" (Write) pour permettre à Jules de commenter directement.
-*   Tester la lecture du code par Jules via le tunnel.
+**Phase 2 : L'Intégration Git & Github (Semaine 2)**
+*   Ajouter le support d'un serveur MCP Git (pour lire l'historique/diff local).
+*   Connecter un serveur MCP "GitHub" (Write) pour permettre à Jules de commenter (même depuis le local).
+*   Valider le scénario "Code Review" complet en local.
 
-**Phase 3 : Le Reporter GitHub (Semaine 3)**
-*   Validation des permissions du token GitHub.
-*   Logique de consolidation (Fusionner le rapport QA et le rapport Tech Lead).
-*   Implémentation du "Post Comment" via l'outil MCP ou API fallback.
+**Phase 3 : Le Tunneling CI (Semaine 3)**
+*   Transition vers l'architecture distante.
+*   Mise en place du tunnel (Ngrok/Cloudflare) dans le script CI.
+*   Adaptation du CLI pour accepter `--context-tunnel`.
 
 **Phase 4 : Les "Special Ops" (Semaine 4+)**
 *   Ajout du module "Auto-Fix".
