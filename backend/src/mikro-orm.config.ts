@@ -14,11 +14,11 @@ import { PaymentMethodSchema } from './payment/infrastructure/persistence/paymen
 import { SubscriptionPlanSchema } from './subscription/infrastructure/persistence/subscription-plan.schema';
 import { EventSchema } from './ticketing/infrastructure/persistence/event.schema';
 import { TicketSchema } from './ticketing/infrastructure/persistence/ticket.schema';
-import { Report } from './report/domain/report.entity';
 import { TicketClaimSchema } from './ticketing/infrastructure/persistence/ticket-claim.schema';
 import { EventFeedbackSchema } from './feedback/infrastructure/persistence/event-feedback.schema';
 import { OnboardingProgressSchema } from './onboarding/infrastructure/persistence/onboarding-progress.schema';
 import { OnboardingStepConfigSchema } from './onboarding/infrastructure/persistence/onboarding-step-config.schema';
+import { ReportSchema } from './report/infrastructure/persistence/report.schema';
 
 import { TicketCategorySchema } from './ticketing/infrastructure/persistence/ticket-category.schema';
 import { ContactSchema } from './contact/infrastructure/persistence/contact.schema';
@@ -30,7 +30,7 @@ const config: Options = {
   password: process.env.DB_PASSWORD || 'postgres',
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '5432', 10),
-  entities: [OrganizationSchema, UserSchema, TransactionSchema, OrganizationMemberSchema, IncidentSchema, PromptTemplateSchema, EventPassSchema, SubscriptionSchema, PaymentMethodSchema, SubscriptionPlanSchema, EventSchema, TicketSchema, TicketCategorySchema, Report, TicketClaimSchema, EventFeedbackSchema, OnboardingProgressSchema, OnboardingStepConfigSchema, ContactSchema],
+  entities: [OrganizationSchema, UserSchema, TransactionSchema, OrganizationMemberSchema, IncidentSchema, PromptTemplateSchema, EventPassSchema, SubscriptionSchema, PaymentMethodSchema, SubscriptionPlanSchema, EventSchema, TicketSchema, TicketCategorySchema, ReportSchema, TicketClaimSchema, EventFeedbackSchema, OnboardingProgressSchema, OnboardingStepConfigSchema, ContactSchema],
   debug: process.env.NODE_ENV !== 'production',
   allowGlobalContext: false, // For simple app usage, usually false in prod
   migrations: {
