@@ -1,19 +1,12 @@
-
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { IEventRepository, I_EVENT_REPOSITORY } from '../../domain/ports/event.repository.interface';
-
-export interface EventStats {
-  totalCapacity: number;
-  soldCount: number;
-  remainingCapacity: number;
-  revenue: number;
-}
+import { Event } from '../../domain/event.entity';
 
 import { UserRole } from '../../../organization/domain/organization-member.entity';
 import { I_PERMISSION_SERVICE, IPermissionService } from '../../domain/services/permission.service';
 
 @Injectable()
-export class GetEventStatsUseCase {
+export class GetEventUseCase {
   constructor(
     @Inject(I_EVENT_REPOSITORY)
     private readonly eventRepository: IEventRepository,
@@ -21,7 +14,7 @@ export class GetEventStatsUseCase {
     private readonly permissionService: IPermissionService,
   ) {}
 
-  async execute(eventId: string, organizationId: string, userRole?: UserRole): Promise<EventStats> {
+  async execute(eventId: string, organizationId: string, userRole?: UserRole): Promise<Event> {
     const event = await this.eventRepository.findById(eventId);
     if (!event) {
       throw new NotFoundException('Event not found');
@@ -30,14 +23,9 @@ export class GetEventStatsUseCase {
     try {
       this.permissionService.verifyEventOwnership(event, organizationId, userRole);
     } catch (e) {
-       throw new NotFoundException('Event not found');
+      throw new NotFoundException('Event not found'); // Use 404 to hide existence
     }
 
-    return {
-      totalCapacity: event.totalCapacity,
-      soldCount: event.soldCount,
-      remainingCapacity: event.getRemainingCapacity(),
-      revenue: event.soldCount * event.price,
-    };
+    return event;
   }
 }

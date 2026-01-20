@@ -1,0 +1,83 @@
+name: Gemini CI
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  gemini-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Gemini CLI
+        run: npm install -g @google/gemini-cli
+
+      - name: Extract Context
+        run: |
+          # Get the last commit message
+          git log --format=%B -n 1 ${{ github.event.pull_request.head.sha }} > commit_message.txt
+          
+          # Get the diff between the PR base and head
+          git diff origin/${{ github.base_ref }}...origin/${{ github.head_ref }} > changes.diff
+          
+          echo "Context extracted."
+
+      - name: Run Gemini Code Review
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        continue-on-error: true
+        shell: bash
+        run: |
+          # Combine context into one stream
+          {
+            echo "--- AGENT CONTEXT (GEMINI.md) ---"
+            cat GEMINI.md
+            echo ""
+            echo "--- COMMIT MESSAGE ---"
+            cat commit_message.txt
+            echo ""
+            echo "--- CODE CHANGES ---"
+            cat changes.diff
+          } > full_context.txt
+
+          # Pipe context to Gemini
+          cat full_context.txt | gemini "Act as a Senior Software Engineer. Review the code changes provided below. Focus on: 1. Clean Code 2. Security 3. Potential Bugs 4. Hexagonal Architecture compliance. Keep your response concise and in markdown format." > review_output.txt
+
+      - name: Run Gemini QA Plan
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        continue-on-error: true
+        shell: bash
+        run: |
+          # Reuse full_context.txt
+          cat full_context.txt | gemini "Act as a QA Engineer. Based on the code changes provided below, propose a Functional Testing plan. List scenarios to verify. Keep it concise and in markdown." > qa_output.txt
+
+      - name: Post Feedback Comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let review = '';
+            let qa = '';
+            
+            try { review = fs.readFileSync('review_output.txt', 'utf8'); } catch (e) { review = 'Gemini Review failed or produced no output.'; }
+            try { qa = fs.readFileSync('qa_output.txt', 'utf8'); } catch (e) { qa = 'Gemini QA failed or produced no output.'; }
+
+            const body = `## 🤖 Gemini AI Review\n\n### 🛡️ Code Review\n${review}\n\n---\n\n### 🧪 QA Plan\n${qa}`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
