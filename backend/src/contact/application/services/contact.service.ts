@@ -185,16 +185,18 @@ export class ContactService {
   /**
    * Cryptographically secure short ID
    */
+  /**
+   * Cryptographically secure short ID
+   */
   private generateCryptoShortId(): string {
+    const SHORT_ID_LENGTH = 6;
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let result = '';
-    const randomBytes = crypto.randomBytes(6);
-    for (let i = 0; i < 6; i++) {
+    const randomBytes = crypto.randomBytes(SHORT_ID_LENGTH);
+    for (let i = 0; i < SHORT_ID_LENGTH; i++) {
         const index = randomBytes[i] % chars.length;
         result += chars[index];
     }
-    // Format could be enforced AA1111 or just mixed. 
-    // Mix is better for entropy. If we want "Readable", maybe filter confusing chars.
     return result; 
   }
 
