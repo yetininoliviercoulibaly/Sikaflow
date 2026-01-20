@@ -78,8 +78,9 @@ export class CategoryController {
   @ApiResponse({ status: 200, description: 'List of categories' })
   async list(@Param('eventId') eventId: string, @Req() req: any) {
     const orgId = req.user.orgId;
+    const userRole = req.user.role;
     if (!orgId) throw new UnauthorizedException('Organization ID missing in token');
-    return this.listCategoriesUseCase.execute(eventId, orgId);
+    return this.listCategoriesUseCase.execute(eventId, orgId, userRole);
   }
 
   @Post()
@@ -94,8 +95,9 @@ export class CategoryController {
     @Req() req: any,
   ) {
     const orgId = req.user.orgId;
+    const userRole = req.user.role;
     if (!orgId) throw new UnauthorizedException('Organization ID missing in token');
-    return this.createCategoryUseCase.execute(eventId, dto, orgId);
+    return this.createCategoryUseCase.execute(eventId, dto, orgId, userRole);
   }
 
   @Put(':categoryId')
@@ -138,10 +140,11 @@ export class CategoryController {
     @Req() req: any,
   ) {
     const orgId = req.user.orgId;
+    const userRole = req.user.role;
     if (!orgId) throw new UnauthorizedException('Organization ID missing in token');
     
     // We pass eventId to ensure the category matches the URL param if needed, 
     // but the use-case will verify category ownership via organizationId
-    await this.setDefaultCategoryUseCase.execute(categoryId, orgId);
+    await this.setDefaultCategoryUseCase.execute(categoryId, orgId, userRole);
   }
 }

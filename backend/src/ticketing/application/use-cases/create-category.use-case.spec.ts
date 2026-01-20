@@ -5,6 +5,7 @@ import { I_TICKET_CATEGORY_REPOSITORY } from '../../domain/ports/ticket-category
 import { I_EVENT_REPOSITORY } from '../../domain/ports/event.repository.interface';
 import { TicketCategory } from '../../domain/ticket-category.entity';
 import { NotFoundException } from '@nestjs/common';
+import { UserRole } from '../../../organization/domain/organization-member.entity';
 
 describe('CreateCategoryUseCase', () => {
   let useCase: CreateCategoryUseCase;
@@ -77,5 +78,23 @@ describe('CreateCategoryUseCase', () => {
     const dto: CreateCategoryDto = { name: 'VIP', price: 10, capacity: 10 };
 
     await expect(useCase.execute('evt-1', dto, 'org-1')).rejects.toThrow('Forbidden');
+  });
+
+  it('should allow admin to create category even if org mismatch', async () => {
+    eventRepository.findById.mockResolvedValue({ id: 'evt-1', organizationId: 'other-org' });
+    const dto: CreateCategoryDto = {
+      name: 'VIP',
+      price: 5000,
+      capacity: 100,
+      benefits: ['Lounge'],
+      isDefault: false,
+    };
+
+    // Simulate Admin role (assuming UserRole.ADMIN is mapped to 'ADMIN' string or similar, but strict typing requires enum)
+    // Since we can't import UserRole easily in this test context without relative paths, and we just modified source to use it.
+    // We should import UserRole in the spec file too.
+    const result = await useCase.execute('evt-1', dto, 'org-1', UserRole.ADMIN);
+
+    expect(result).toBeInstanceOf(TicketCategory);
   });
 });

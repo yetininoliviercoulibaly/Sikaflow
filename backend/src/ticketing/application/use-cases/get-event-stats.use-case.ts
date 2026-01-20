@@ -9,6 +9,8 @@ export interface EventStats {
   revenue: number;
 }
 
+import { UserRole } from '../../../organization/domain/organization-member.entity';
+
 @Injectable()
 export class GetEventStatsUseCase {
   constructor(
@@ -16,13 +18,13 @@ export class GetEventStatsUseCase {
     private readonly eventRepository: IEventRepository,
   ) {}
 
-  async execute(eventId: string, organizationId: string): Promise<EventStats> {
+  async execute(eventId: string, organizationId: string, userRole?: UserRole): Promise<EventStats> {
     const event = await this.eventRepository.findById(eventId);
     if (!event) {
       throw new NotFoundException('Event not found');
     }
 
-    if (event.organizationId !== organizationId) {
+    if (userRole !== UserRole.ADMIN && event.organizationId !== organizationId) {
        throw new NotFoundException('Event not found');
     }
 

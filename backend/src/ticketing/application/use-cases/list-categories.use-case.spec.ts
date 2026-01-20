@@ -4,6 +4,7 @@ import { ListCategoriesUseCase } from './list-categories.use-case';
 import { I_TICKET_CATEGORY_REPOSITORY } from '../../domain/ports/ticket-category.repository.interface';
 import { I_EVENT_REPOSITORY } from '../../domain/ports/event.repository.interface';
 import { TicketCategory } from '../../domain/ticket-category.entity';
+import { UserRole } from '../../../organization/domain/organization-member.entity';
 
 describe('ListCategoriesUseCase', () => {
   let useCase: ListCategoriesUseCase;
@@ -51,5 +52,14 @@ describe('ListCategoriesUseCase', () => {
     eventRepository.findById.mockResolvedValue({ id: 'evt-1', organizationId: 'other-org' });
 
     await expect(useCase.execute('evt-1', 'org-1')).rejects.toThrow('Forbidden');
+  });
+
+  it('should list categories for admin even if org mismatch', async () => {
+    const categories = [new TicketCategory('evt-1', 'VIP', 100, 100)];
+    eventRepository.findById.mockResolvedValue({ id: 'evt-1', organizationId: 'other-org' });
+    categoryRepository.findByEventId.mockResolvedValue(categories);
+
+    const result = await useCase.execute('evt-1', 'org-1', UserRole.ADMIN);
+    expect(result).toBe(categories);
   });
 });

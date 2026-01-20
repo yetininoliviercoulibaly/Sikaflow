@@ -2,6 +2,8 @@ import { Injectable, Inject, Logger } from '@nestjs/common';
 import { ITicketCategoryRepository, I_TICKET_CATEGORY_REPOSITORY } from '../../domain/ports/ticket-category.repository.interface';
 import { IEventRepository, I_EVENT_REPOSITORY } from '../../domain/ports/event.repository.interface';
 
+import { UserRole } from '../../../organization/domain/organization-member.entity';
+
 @Injectable()
 export class SetDefaultCategoryUseCase {
   private readonly logger = new Logger(SetDefaultCategoryUseCase.name);
@@ -13,7 +15,7 @@ export class SetDefaultCategoryUseCase {
     private readonly eventRepository: IEventRepository,
   ) {}
 
-  async execute(categoryId: string, organizationId: string): Promise<void> {
+  async execute(categoryId: string, organizationId: string, userRole?: UserRole): Promise<void> {
     const category = await this.categoryRepository.findById(categoryId);
     if (!category) {
       throw new Error('Category not found');
@@ -24,7 +26,7 @@ export class SetDefaultCategoryUseCase {
        throw new Error('Event not found');
     }
 
-    if (event.organizationId !== organizationId) {
+    if (userRole !== UserRole.ADMIN && event.organizationId !== organizationId) {
       throw new Error('Forbidden: You do not own this event');
     }
 

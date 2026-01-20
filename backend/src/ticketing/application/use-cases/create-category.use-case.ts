@@ -3,6 +3,8 @@ import { ITicketCategoryRepository, I_TICKET_CATEGORY_REPOSITORY } from '../../d
 import { IEventRepository, I_EVENT_REPOSITORY } from '../../domain/ports/event.repository.interface';
 import { TicketCategory } from '../../domain/ticket-category.entity';
 
+import { UserRole } from '../../../organization/domain/organization-member.entity';
+
 export interface CreateCategoryDto {
   name: string;
   price: number;
@@ -22,14 +24,14 @@ export class CreateCategoryUseCase {
     private readonly eventRepository: IEventRepository,
   ) {}
 
-  async execute(eventId: string, dto: CreateCategoryDto, organizationId: string): Promise<TicketCategory> {
+  async execute(eventId: string, dto: CreateCategoryDto, organizationId: string, userRole?: UserRole): Promise<TicketCategory> {
     // Verify event exists
     const event = await this.eventRepository.findById(eventId);
     if (!event) {
       throw new Error('Event not found');
     }
 
-    if (event.organizationId !== organizationId) {
+    if (userRole !== UserRole.ADMIN && event.organizationId !== organizationId) {
       throw new Error('Forbidden: You do not own this event');
     }
 

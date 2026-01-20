@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { GetEventStatsUseCase } from './get-event-stats.use-case';
 import { I_EVENT_REPOSITORY } from '../../domain/ports/event.repository.interface';
 import { NotFoundException } from '@nestjs/common';
+import { UserRole } from '../../../organization/domain/organization-member.entity';
 
 describe('GetEventStatsUseCase', () => {
   let useCase: GetEventStatsUseCase;
@@ -55,5 +56,13 @@ describe('GetEventStatsUseCase', () => {
     eventRepository.findById.mockResolvedValue(mockEvent);
 
     await expect(useCase.execute('evt-1', 'other-org')).rejects.toThrow(NotFoundException);
+  });
+
+  it('should return stats for admin even if org mismatch', async () => {
+    eventRepository.findById.mockResolvedValue(mockEvent);
+
+    const result = await useCase.execute('evt-1', 'other-org', UserRole.ADMIN);
+    expect(result).toBeDefined();
+    expect(result.revenue).toBe(1000);
   });
 });

@@ -4,6 +4,7 @@ import { SetDefaultCategoryUseCase } from './set-default-category.use-case';
 import { I_TICKET_CATEGORY_REPOSITORY } from '../../domain/ports/ticket-category.repository.interface';
 import { TicketCategory } from '../../domain/ticket-category.entity';
 import { I_EVENT_REPOSITORY } from '../../domain/ports/event.repository.interface';
+import { UserRole } from '../../../organization/domain/organization-member.entity';
 
 describe('SetDefaultCategoryUseCase', () => {
   let useCase: SetDefaultCategoryUseCase;
@@ -67,5 +68,17 @@ describe('SetDefaultCategoryUseCase', () => {
     eventRepository.findById.mockResolvedValue({ id: 'evt-1', organizationId: 'other-org' });
 
     await expect(useCase.execute('cat-1', 'org-1')).rejects.toThrow('Forbidden');
+  });
+
+  it('should allow admin to set default even if org mismatch', async () => {
+    const category = new TicketCategory('evt-1', 'VIP', 100, 100);
+    category.id = 'cat-1';
+    
+    categoryRepository.findById.mockResolvedValue(category);
+    eventRepository.findById.mockResolvedValue({ id: 'evt-1', organizationId: 'other-org' });
+
+    await useCase.execute('cat-1', 'org-1', UserRole.ADMIN);
+
+    expect(categoryRepository.unsetDefaultForEvent).toHaveBeenCalledWith('evt-1');
   });
 });
