@@ -26,6 +26,10 @@ export class MikroOrmTicketRepository implements ITicketRepository {
     return this.repo.find({ eventId });
   }
 
+  async findByEventIds(eventIds: string[]): Promise<Ticket[]> {
+    return this.repo.find({ eventId: { $in: eventIds } });
+  }
+
   async findByToken(token: string): Promise<Ticket | null> {
     return this.repo.findOne({ token });
   }

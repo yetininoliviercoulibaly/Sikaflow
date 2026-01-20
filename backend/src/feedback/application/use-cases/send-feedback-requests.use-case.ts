@@ -27,41 +27,52 @@ export class SendFeedbackRequestsUseCase {
 
     this.logger.log(`Found ${events.length} events needing feedback requests.`);
 
+    const eventIds = events.map(e => e.id);
+    const allTickets = await this.ticketRepository.findByEventIds(eventIds);
+
+    // Group tickets by event for efficient lookup
+    const ticketsByEvent = allTickets.reduce((acc, ticket) => {
+      if (!acc[ticket.eventId]) {
+        acc[ticket.eventId] = [];
+      }
+      acc[ticket.eventId].push(ticket);
+      return acc;
+    }, {});
+
     for (const event of events) {
       try {
-        // 2. Find Attendees - Deduplicate by phone
-        const tickets = await this.ticketRepository.findByEventId(event.id);
+        const eventTickets = ticketsByEvent[event.id] || [];
         const uniquePhones = new Set<string>();
-        tickets.forEach(t => {
-            if (t.attendeePhone) uniquePhones.add(t.attendeePhone);
+        eventTickets.forEach(t => {
+          if (t.attendeePhone) uniquePhones.add(t.attendeePhone);
         });
 
         this.logger.log(`Event ${event.name}: Found ${uniquePhones.size} unique attendees.`);
 
         for (const phone of uniquePhones) {
-             // Send Interactive Message (List for 1-5 Rating)
-             await this.whatsAppService.sendInteractiveList(
-                 phone,
-                 'Votre Avis',
-                 `Comment avez-vous trouvé *${event.name}* ?`,
-                 'Noter',
-                 [{
-                     title: 'Note sur 5',
-                     rows: [
-                         { id: 'FEEDBACK|5', title: '⭐⭐⭐⭐⭐ (5/5)', description: 'Génial !' },
-                         { id: 'FEEDBACK|4', title: '⭐⭐⭐⭐ (4/5)', description: 'Très bien' },
-                         { id: 'FEEDBACK|3', title: '⭐⭐⭐ (3/5)', description: 'Bien' },
-                         { id: 'FEEDBACK|2', title: '⭐⭐ (2/5)', description: 'Moyen' },
-                         { id: 'FEEDBACK|1', title: '⭐ (1/5)', description: 'Décevant' }
-                     ]
-                 }]
-             );
+          // Send Interactive Message (List for 1-5 Rating)
+          await this.whatsAppService.sendInteractiveList(
+            phone,
+            'Votre Avis',
+            `Comment avez-vous trouvé *${event.name}* ?`,
+            'Noter',
+            [{
+              title: 'Note sur 5',
+              rows: [
+                { id: 'FEEDBACK|5', title: '⭐⭐⭐⭐⭐ (5/5)', description: 'Génial !' },
+                { id: 'FEEDBACK|4', title: '⭐⭐⭐⭐ (4/5)', description: 'Très bien' },
+                { id: 'FEEDBACK|3', title: '⭐⭐⭐ (3/5)', description: 'Bien' },
+                { id: 'FEEDBACK|2', title: '⭐⭐ (2/5)', description: 'Moyen' },
+                { id: 'FEEDBACK|1', title: '⭐ (1/5)', description: 'Décevant' }
+              ]
+            }]
+          );
         }
 
         // 3. Mark Event as Processed
         event.feedbackSent = true;
         await this.eventRepository.save(event);
-        
+
         this.logger.log(`Feedback requests sent for event ${event.name} to ${uniquePhones.size} attendees.`);
 
       } catch (e) {
