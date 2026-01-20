@@ -72,10 +72,11 @@ export class GenerateDailyReportUseCase {
           if (!user || !user.phoneNumber) return;
 
           // Metrics
-          const revCurrent = await this.biService.getRawMetric(orgId, 'REVENUE', currentStart, currentEnd);
-          const revPrev = await this.biService.getRawMetric(orgId, 'REVENUE', prevStart, prevEnd);
-          
-          const expCurrent = await this.biService.getRawMetric(orgId, 'EXPENSES', currentStart, currentEnd);
+          const [revCurrent, revPrev, expCurrent] = await Promise.all([
+            this.biService.getRawMetric(orgId, 'REVENUE', currentStart, currentEnd),
+            this.biService.getRawMetric(orgId, 'REVENUE', prevStart, prevEnd),
+            this.biService.getRawMetric(orgId, 'EXPENSES', currentStart, currentEnd),
+          ]);
           // const expPrev = await this.biService.getRawMetric(orgId, 'EXPENSES', prevStart, prevEnd);
 
           // Growth (Revenue only for Daily Flash is usually enough, but let's keep it simple)
