@@ -1,6 +1,6 @@
 export interface ValidateTicketResponse {
   valid: boolean;
-  status: 'VALID' | 'ALREADY_USED' | 'CANCELLED' | 'INVALID_SIGNATURE' | 'NOT_FOUND';
+  status: 'VALID' | 'ALREADY_USED' | 'CANCELLED' | 'INVALID_SIGNATURE' | 'NOT_FOUND' | 'INVALID_DATE';
   ticketId?: string;
   eventName?: string;
   eventDate?: string;

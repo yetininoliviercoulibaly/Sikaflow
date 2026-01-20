@@ -1,6 +1,7 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { ITicketRepository, I_TICKET_REPOSITORY } from '../../domain/ports/ticket.repository.interface';
 import { IEventRepository, I_EVENT_REPOSITORY } from '../../domain/ports/event.repository.interface';
+import { ITicketCategoryRepository, I_TICKET_CATEGORY_REPOSITORY } from '../../domain/ports/ticket-category.repository.interface';
 import { IQRCodeService, I_QRCODE_SERVICE } from '../../domain/ports/qrcode.service.interface';
 import { TicketStatus } from '../../domain/ticket.entity';
 
@@ -23,6 +24,7 @@ export class ValidateTicketUseCase {
   constructor(
     @Inject(I_TICKET_REPOSITORY) private readonly ticketRepository: ITicketRepository,
     @Inject(I_EVENT_REPOSITORY) private readonly eventRepository: IEventRepository,
+    @Inject(I_TICKET_CATEGORY_REPOSITORY) private readonly categoryRepository: ITicketCategoryRepository,
     @Inject(I_QRCODE_SERVICE) private readonly qrCodeService: IQRCodeService,
   ) {}
 
@@ -68,6 +70,13 @@ export class ValidateTicketUseCase {
     // 3. Get event info
     const event = await this.eventRepository.findById(ticket.eventId);
 
+    // 3a. Get category name if ticket has categoryId
+    let categoryName: string | undefined;
+    if (ticket.categoryId) {
+      const category = await this.categoryRepository.findById(ticket.categoryId);
+      categoryName = category?.name;
+    }
+
     // 3b. Check Date Validity (Window: +/- 12h)
     if (event) {
       const now = new Date().getTime();
@@ -81,6 +90,7 @@ export class ValidateTicketUseCase {
            ticketId: ticket.id,
            eventName: event.name,
            eventDate: event.date,
+           categoryName,
            message: 'Trop tôt : L\'événement n\'a pas encore commencé',
         };
       }
@@ -92,6 +102,7 @@ export class ValidateTicketUseCase {
            ticketId: ticket.id,
            eventName: event.name,
            eventDate: event.date,
+           categoryName,
            message: 'Expiré : L\'événement est terminé',
         };
       }
@@ -105,6 +116,7 @@ export class ValidateTicketUseCase {
         ticketId: ticket.id,
         eventName: event?.name,
         eventDate: event?.date,
+        categoryName,
         attendeePhone: ticket.attendeePhone,
         usedAt: ticket.usedAt ?? undefined,
         message: `Billet déjà utilisé${ticket.usedAt ? ` le ${ticket.usedAt.toLocaleString()}` : ''}`,
@@ -117,6 +129,7 @@ export class ValidateTicketUseCase {
         status: 'CANCELLED',
         ticketId: ticket.id,
         eventName: event?.name,
+        categoryName,
         message: 'Billet annulé',
       };
     }
@@ -134,6 +147,7 @@ export class ValidateTicketUseCase {
       ticketId: ticket.id,
       eventName: event?.name,
       eventDate: event?.date,
+      categoryName,
       attendeePhone: ticket.attendeePhone,
       message: 'Entrée validée',
     };

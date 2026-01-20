@@ -46,6 +46,9 @@ export function ValidationResult({ result, onDismiss }: ValidationResultProps) {
             {result.data.eventName && (
               <p className="event-name">{result.data.eventName}</p>
             )}
+            {result.data.categoryName && (
+              <span className="category-badge">{result.data.categoryName}</span>
+            )}
             {result.data.ticketId && (
               <p className="ticket-id">Billet: {result.data.ticketId.substring(0, 8)}...</p>
             )}
