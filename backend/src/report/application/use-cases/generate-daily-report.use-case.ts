@@ -4,6 +4,7 @@ import { IMessagingService, I_MESSAGING_SERVICE } from '../../../common/messagin
 import { ISubscriptionRepository, I_SUBSCRIPTION_REPOSITORY } from '../../../subscription/domain/ports/subscription.repository.interface';
 import { IOrganizationRepository, I_ORGANIZATION_REPOSITORY } from '../../../organization/domain/ports/organization.repository.interface';
 import { IUserRepository, I_USER_REPOSITORY } from '../../../user/domain/ports/user.repository.interface';
+import { getCurrency } from '../../../common/utils/currency.util';
 
 @Injectable()
 export class GenerateDailyReportUseCase {
@@ -82,7 +83,7 @@ export class GenerateDailyReportUseCase {
           const revGrowth = this.calculateGrowth(revPrev, revCurrent);
 
           // Format
-          const currency = 'FCFA'; 
+          const currency = getCurrency(); 
           const fmt = (n: number) => new Intl.NumberFormat('fr-FR').format(n);
 
           // Emojis based on performance

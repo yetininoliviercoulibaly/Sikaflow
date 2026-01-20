@@ -6,6 +6,7 @@ import { AddDebtPayload, SettleDebtPayload, SendReminderPayload } from '../dtos/
 import { DebtIntents } from '../constants/debt.constants';
 import { MessagingPlatforms } from '../../../common/messaging/domain/constants/messaging-platforms.enum';
 import { IPaymentProvider, PAYMENT_PROVIDER_TOKEN } from '../../../payment/domain/ports/payment-provider.interface';
+import { getCurrency } from '../../../common/utils/currency.util';
 
 /**
  * Handler for debt-related intents:

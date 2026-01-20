@@ -5,6 +5,7 @@ import { IActionHandler, ActionContext } from './action-handler.interface';
 import { CreateTransactionUseCase } from '../../../transaction/application/use-cases/create-transaction.use-case';
 import { TransactionType } from '../../../transaction/domain/transaction.entity';
 import { LLMIntent } from '../../../common/llm/llm-types';
+import { getCurrency } from '../../../common/utils/currency.util';
 
 @Injectable()
 export class CreateTransactionHandler implements IActionHandler {
