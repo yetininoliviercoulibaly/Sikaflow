@@ -46,7 +46,7 @@ export class ContactService {
       contact.id,
       TransactionType.DEBT,
       data.amount,
-      data.currency || 'XOF',
+      data.currency || process.env.CURRENCY || 'XOF',
       `Créance pour ${contact.displayName}`,
     );
 
@@ -80,7 +80,7 @@ export class ContactService {
       contact.id,
       TransactionType.CREDIT,
       data.amount,
-      data.currency || 'XOF',
+      data.currency || process.env.CURRENCY || 'XOF',
       `Dette envers ${contact.displayName}`,
     );
 
@@ -128,7 +128,7 @@ export class ContactService {
       contact.id,
       TransactionType.INCOME,
       settleAmount,
-      'XOF',
+      process.env.CURRENCY || 'XOF',
       `Remboursement de ${contact.displayName}`,
       TransactionStatus.COMPLETED,
     );

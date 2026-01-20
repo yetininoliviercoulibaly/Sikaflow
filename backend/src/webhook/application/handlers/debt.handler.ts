@@ -3,6 +3,8 @@ import { IActionHandler, ActionContext } from './action-handler.interface';
 import { I_CONTACT_REPOSITORY, IContactRepository } from '../../../contact/domain/ports/contact.repository.interface';
 import { ContactService } from '../../../contact/application/services/contact.service';
 import { AddDebtPayload, SettleDebtPayload, SendReminderPayload } from '../dtos/debt.dto';
+import { DebtIntents } from '../constants/debt.constants';
+import { MessagingPlatforms } from '../../../common/messaging/domain/constants/messaging-platforms.enum';
 
 /**
  * Handler for debt-related intents:
@@ -24,14 +26,7 @@ export class DebtHandler implements IActionHandler {
   ) {}
 
   canHandle(intent: string): boolean {
-    return [
-      'ADD_DEBT',
-      'ADD_CREDIT',
-      'LIST_DEBTS',
-      'LIST_CREDITS',
-      'SETTLE_DEBT',
-      'SEND_REMINDER',
-    ].includes(intent);
+    return Object.values(DebtIntents).includes(intent as any);
   }
 
   async handle(data: Record<string, any>, context: ActionContext): Promise<void> {
@@ -49,22 +44,22 @@ export class DebtHandler implements IActionHandler {
 
     try {
       switch (intent) {
-        case 'ADD_DEBT':
+        case DebtIntents.ADD_DEBT:
           await this.handleAddDebt(data as unknown as AddDebtPayload, context);
           break;
-        case 'ADD_CREDIT':
+        case DebtIntents.ADD_CREDIT:
           await this.handleAddCredit(data as unknown as AddDebtPayload, context);
           break;
-        case 'LIST_DEBTS':
+        case DebtIntents.LIST_DEBTS:
           await this.handleListDebts(context);
           break;
-        case 'LIST_CREDITS':
+        case DebtIntents.LIST_CREDITS:
           await this.handleListCredits(context);
           break;
-        case 'SETTLE_DEBT':
+        case DebtIntents.SETTLE_DEBT:
           await this.handleSettleDebt(data as unknown as SettleDebtPayload, context);
           break;
-        case 'SEND_REMINDER':
+        case DebtIntents.SEND_REMINDER:
           await this.handleSendReminder(data as unknown as SendReminderPayload, context);
           break;
         default:
@@ -90,7 +85,7 @@ export class DebtHandler implements IActionHandler {
     context: ActionContext,
   ): Promise<void> {
     const { senderPhoneNumber, messagingService, user, organizationId } = context;
-    const { amount, contactName, contactPhone, contactContext, currency = 'XOF' } = data;
+    const { amount, contactName, contactPhone, contactContext, currency = process.env.CURRENCY || 'XOF' } = data;
 
     if (!amount || !contactName) {
       await messagingService.sendMessage(
@@ -132,7 +127,7 @@ export class DebtHandler implements IActionHandler {
     context: ActionContext,
   ): Promise<void> {
     const { senderPhoneNumber, messagingService, user, organizationId } = context;
-    const { amount, contactName, contactPhone, contactContext, currency = 'XOF' } = data;
+    const { amount, contactName, contactPhone, contactContext, currency = process.env.CURRENCY || 'XOF' } = data;
 
     if (!amount || !contactName) {
       await messagingService.sendMessage(
@@ -280,7 +275,7 @@ export class DebtHandler implements IActionHandler {
     data: SendReminderPayload,
     context: ActionContext,
   ): Promise<void> {
-    const { senderPhoneNumber, messagingService, user } = context;
+    const { senderPhoneNumber, messagingService, user, platform } = context;
     const { contactName } = data;
     
     if (!contactName) {
@@ -306,16 +301,27 @@ export class DebtHandler implements IActionHandler {
          return;
     }
 
+    // Determine platform link
+    let link = '';
+    if (platform === MessagingPlatforms.WHATSAPP) {
+        // Remove +, spaces, etc.
+        const cleanPhone = contact.phone.replace(/[^0-9]/g, '');
+        link = `https://wa.me/${cleanPhone}`;
+    } else if (platform === MessagingPlatforms.TELEGRAM) {
+        // Telegram often uses username, but t.me/+phone sometimes works if they allow it
+        const cleanPhone = contact.phone.replace(/[^0-9]/g, '');
+        link = `https://t.me/+${cleanPhone}`;
+    }
+
     // Send formatted reminder to the Debtor
-    const link = `https://wa.me/NormallyUserPhone`; // Placeholder for payment link in future
     await messagingService.sendMessage(
         contact.phone,
-        `👋 Bonjour ${contact.displayName},\n\nCeci est un rappel de ${user!.firstName || 'votre contact'} concernant une dette de *${contact.totalOwed.toLocaleString('fr-FR')} FCFA*.\n\nMerci de régulariser dès que possible ! 🙏`
+        `👋 Bonjour ${contact.displayName},\n\nCeci est un rappel de ${user!.fullName || 'votre contact'} concernant une dette de *${contact.totalOwed.toLocaleString('fr-FR')} FCFA*.\n\nMerci de régulariser dès que possible ! 🙏`
     );
 
     await messagingService.sendMessage(
         senderPhoneNumber,
-        `✅ Relance envoyée à ${contact.displayName} (${contact.phone}).`
+        `✅ Relance envoyée à ${contact.displayName} (${contact.phone}).` + (link ? `\n🔗 Lien: ${link}` : '')
     );
   }
 }
