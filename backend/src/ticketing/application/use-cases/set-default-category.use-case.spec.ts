@@ -3,10 +3,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SetDefaultCategoryUseCase } from './set-default-category.use-case';
 import { I_TICKET_CATEGORY_REPOSITORY } from '../../domain/ports/ticket-category.repository.interface';
 import { TicketCategory } from '../../domain/ticket-category.entity';
+import { I_EVENT_REPOSITORY } from '../../domain/ports/event.repository.interface';
 
 describe('SetDefaultCategoryUseCase', () => {
   let useCase: SetDefaultCategoryUseCase;
   let categoryRepository: any;
+  let eventRepository: any;
 
   beforeEach(async () => {
     categoryRepository = {
@@ -15,11 +17,15 @@ describe('SetDefaultCategoryUseCase', () => {
       update: jest.fn(),
       findByEventId: jest.fn(),
     };
+    eventRepository = {
+      findById: jest.fn(),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SetDefaultCategoryUseCase,
         { provide: I_TICKET_CATEGORY_REPOSITORY, useValue: categoryRepository },
+        { provide: I_EVENT_REPOSITORY, useValue: eventRepository },
       ],
     }).compile();
 
@@ -32,8 +38,9 @@ describe('SetDefaultCategoryUseCase', () => {
     category.isDefault = false;
 
     categoryRepository.findById.mockResolvedValue(category);
+    eventRepository.findById.mockResolvedValue({ id: 'evt-1', organizationId: 'org-1' });
 
-    await useCase.execute('cat-1');
+    await useCase.execute('cat-1', 'org-1');
 
     expect(categoryRepository.unsetDefaultForEvent).toHaveBeenCalledWith('evt-1');
     expect(category.isDefault).toBe(true);
@@ -43,6 +50,22 @@ describe('SetDefaultCategoryUseCase', () => {
   it('should throw error if category not found', async () => {
     categoryRepository.findById.mockResolvedValue(null);
 
-    await expect(useCase.execute('999')).rejects.toThrow('Category not found');
+    await expect(useCase.execute('999', 'org-1')).rejects.toThrow('Category not found');
+  });
+
+  it('should throw error if event not found', async () => {
+    const category = new TicketCategory('evt-1', 'VIP', 100, 100);
+    categoryRepository.findById.mockResolvedValue(category);
+    eventRepository.findById.mockResolvedValue(null);
+
+    await expect(useCase.execute('cat-1', 'org-1')).rejects.toThrow('Event not found');
+  });
+
+  it('should throw error if user does not own event', async () => {
+    const category = new TicketCategory('evt-1', 'VIP', 100, 100);
+    categoryRepository.findById.mockResolvedValue(category);
+    eventRepository.findById.mockResolvedValue({ id: 'evt-1', organizationId: 'other-org' });
+
+    await expect(useCase.execute('cat-1', 'org-1')).rejects.toThrow('Forbidden');
   });
 });

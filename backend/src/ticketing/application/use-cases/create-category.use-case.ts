@@ -22,11 +22,15 @@ export class CreateCategoryUseCase {
     private readonly eventRepository: IEventRepository,
   ) {}
 
-  async execute(eventId: string, dto: CreateCategoryDto): Promise<TicketCategory> {
+  async execute(eventId: string, dto: CreateCategoryDto, organizationId: string): Promise<TicketCategory> {
     // Verify event exists
     const event = await this.eventRepository.findById(eventId);
     if (!event) {
       throw new Error('Event not found');
+    }
+
+    if (event.organizationId !== organizationId) {
+      throw new Error('Forbidden: You do not own this event');
     }
 
     // If this is marked as default, unset other defaults (bulk update)

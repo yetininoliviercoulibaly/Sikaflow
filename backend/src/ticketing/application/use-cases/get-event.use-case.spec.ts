@@ -36,10 +36,10 @@ describe('GetEventUseCase', () => {
     useCase = module.get<GetEventUseCase>(GetEventUseCase);
   });
 
-  it('should return event details when found', async () => {
+  it('should return event details when found and owner matches', async () => {
     eventRepository.findById.mockResolvedValue(mockEvent);
 
-    const result = await useCase.execute('123');
+    const result = await useCase.execute('123', 'org-1');
     expect(result).toBe(mockEvent);
     expect(eventRepository.findById).toHaveBeenCalledWith('123');
   });
@@ -47,6 +47,12 @@ describe('GetEventUseCase', () => {
   it('should throw NotFoundException when event not found', async () => {
     eventRepository.findById.mockResolvedValue(null);
 
-    await expect(useCase.execute('999')).rejects.toThrow(NotFoundException);
+    await expect(useCase.execute('999', 'org-1')).rejects.toThrow(NotFoundException);
+  });
+
+  it('should throw NotFoundException when user does not own event', async () => {
+    eventRepository.findById.mockResolvedValue(mockEvent);
+
+    await expect(useCase.execute('123', 'other-org')).rejects.toThrow(NotFoundException);
   });
 });

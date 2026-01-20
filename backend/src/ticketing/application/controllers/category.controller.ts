@@ -1,6 +1,5 @@
-import { 
   Controller, Get, Post, Put, Delete, 
-  Param, Body, UseGuards, HttpCode, HttpStatus 
+  Param, Body, UseGuards, HttpCode, HttpStatus, Req, UnauthorizedException 
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiSecurity, ApiBody, ApiParam } from '@nestjs/swagger';
 import { CompositeAuthGuard } from '../../../common/guards/composite-auth.guard';
@@ -77,8 +76,10 @@ export class CategoryController {
   @ApiOperation({ summary: 'List all categories for an event' })
   @ApiParam({ name: 'eventId', description: 'Event ID' })
   @ApiResponse({ status: 200, description: 'List of categories' })
-  async list(@Param('eventId') eventId: string) {
-    return this.listCategoriesUseCase.execute(eventId);
+  async list(@Param('eventId') eventId: string, @Req() req: any) {
+    const orgId = req.user.orgId;
+    if (!orgId) throw new UnauthorizedException('Organization ID missing in token');
+    return this.listCategoriesUseCase.execute(eventId, orgId);
   }
 
   @Post()
@@ -90,8 +91,11 @@ export class CategoryController {
   async create(
     @Param('eventId') eventId: string,
     @Body() dto: CreateCategoryRequestDto,
+    @Req() req: any,
   ) {
-    return this.createCategoryUseCase.execute(eventId, dto);
+    const orgId = req.user.orgId;
+    if (!orgId) throw new UnauthorizedException('Organization ID missing in token');
+    return this.createCategoryUseCase.execute(eventId, dto, orgId);
   }
 
   @Put(':categoryId')
@@ -128,7 +132,16 @@ export class CategoryController {
   @ApiParam({ name: 'eventId', description: 'Event ID' })
   @ApiParam({ name: 'categoryId', description: 'Category ID' })
   @ApiResponse({ status: 204, description: 'Category set as default' })
-  async setDefault(@Param('categoryId') categoryId: string) {
-    await this.setDefaultCategoryUseCase.execute(categoryId);
+  async setDefault(
+    @Param('eventId') eventId: string,
+    @Param('categoryId') categoryId: string,
+    @Req() req: any,
+  ) {
+    const orgId = req.user.orgId;
+    if (!orgId) throw new UnauthorizedException('Organization ID missing in token');
+    
+    // We pass eventId to ensure the category matches the URL param if needed, 
+    // but the use-case will verify category ownership via organizationId
+    await this.setDefaultCategoryUseCase.execute(categoryId, orgId);
   }
 }

@@ -16,10 +16,14 @@ export class GetEventStatsUseCase {
     private readonly eventRepository: IEventRepository,
   ) {}
 
-  async execute(eventId: string): Promise<EventStats> {
+  async execute(eventId: string, organizationId: string): Promise<EventStats> {
     const event = await this.eventRepository.findById(eventId);
     if (!event) {
       throw new NotFoundException('Event not found');
+    }
+
+    if (event.organizationId !== organizationId) {
+       throw new NotFoundException('Event not found');
     }
 
     return {

@@ -33,7 +33,7 @@ describe('CreateCategoryUseCase', () => {
   });
 
   it('should create a category successfully', async () => {
-    eventRepository.findById.mockResolvedValue({ id: 'evt-1' });
+    eventRepository.findById.mockResolvedValue({ id: 'evt-1', organizationId: 'org-1' });
     const dto: CreateCategoryDto = {
       name: 'VIP',
       price: 5000,
@@ -42,7 +42,7 @@ describe('CreateCategoryUseCase', () => {
       isDefault: false,
     };
 
-    const result = await useCase.execute('evt-1', dto);
+    const result = await useCase.execute('evt-1', dto, 'org-1');
 
     expect(result).toBeInstanceOf(TicketCategory);
     expect(result.name).toBe('VIP');
@@ -51,7 +51,7 @@ describe('CreateCategoryUseCase', () => {
   });
 
   it('should handle isDefault=true by unsetting others', async () => {
-    eventRepository.findById.mockResolvedValue({ id: 'evt-1' });
+    eventRepository.findById.mockResolvedValue({ id: 'evt-1', organizationId: 'org-1' });
     const dto: CreateCategoryDto = {
       name: 'Standard',
       price: 1000,
@@ -59,7 +59,7 @@ describe('CreateCategoryUseCase', () => {
       isDefault: true,
     };
 
-    await useCase.execute('evt-1', dto);
+    await useCase.execute('evt-1', dto, 'org-1');
 
     expect(categoryRepository.unsetDefaultForEvent).toHaveBeenCalledWith('evt-1');
     expect(categoryRepository.save).toHaveBeenCalledWith(expect.objectContaining({ isDefault: true }));
@@ -69,6 +69,13 @@ describe('CreateCategoryUseCase', () => {
     eventRepository.findById.mockResolvedValue(null);
     const dto: CreateCategoryDto = { name: 'VIP', price: 10, capacity: 10 };
 
-    await expect(useCase.execute('bad-id', dto)).rejects.toThrow();
+    await expect(useCase.execute('bad-id', dto, 'org-1')).rejects.toThrow();
+  });
+
+  it('should throw error if user does not own event', async () => {
+    eventRepository.findById.mockResolvedValue({ id: 'evt-1', organizationId: 'other-org' });
+    const dto: CreateCategoryDto = { name: 'VIP', price: 10, capacity: 10 };
+
+    await expect(useCase.execute('evt-1', dto, 'org-1')).rejects.toThrow('Forbidden');
   });
 });

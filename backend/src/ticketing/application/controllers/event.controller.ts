@@ -25,8 +25,10 @@ export class EventController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get details of a specific event' })
-  async get(@Param('id') id: string) {
-    return this.getEventUseCase.execute(id);
+  async get(@Param('id') id: string, @Req() req: any) {
+    const orgId = req.user.orgId;
+    if (!orgId) throw new UnauthorizedException('Organization ID missing in token');
+    return this.getEventUseCase.execute(id, orgId);
   }
 
   @Get()
@@ -55,7 +57,9 @@ export class EventController {
 
   @Get(':id/stats')
   @ApiOperation({ summary: 'Get stats for a specific event' })
-  async getStats(@Param('id') id: string) {
-    return this.getEventStatsUseCase.execute(id);
+  async getStats(@Param('id') id: string, @Req() req: any) {
+    const orgId = req.user.orgId;
+    if (!orgId) throw new UnauthorizedException('Organization ID missing in token');
+    return this.getEventStatsUseCase.execute(id, orgId);
   }
 }
