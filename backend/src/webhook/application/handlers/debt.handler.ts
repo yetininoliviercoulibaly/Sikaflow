@@ -294,7 +294,8 @@ export class DebtHandler implements IActionHandler {
     context: ActionContext,
   ): Promise<void> {
     const { senderPhoneNumber, messagingService, user, platform } = context;
-    const { contactName } = data;
+    const rawData = data as any;
+    const contactName = rawData.contactName || rawData.contact_name;
     
     if (!contactName) {
         await messagingService.sendMessage(senderPhoneNumber, '❌ Précisez le nom du contact à relancer.');
