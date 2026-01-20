@@ -18,6 +18,10 @@ export class MikroOrmUserRepository implements IUserRepository {
     return this.em.findOne(User, { phoneNumber: normalized });
   }
 
+  async findAll(): Promise<User[]> {
+    return this.em.find(User, {});
+  }
+
   async create(user: User): Promise<User> {
     const newUser = this.em.create(User, user);
     await this.em.persistAndFlush(newUser);
