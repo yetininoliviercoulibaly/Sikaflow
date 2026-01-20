@@ -90,15 +90,9 @@ function App() {
     setIsPaused(false);
   }, []);
 
-  // Auto-dismiss after 5 seconds to prevent stuck screen
-  useEffect(() => {
-    if (lastResult && !isValidating) {
-      const timer = setTimeout(() => {
-        handleDismiss();
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [lastResult, isValidating, handleDismiss]);
+  // NOTE: Auto-dismiss removed intentionally.
+  // User must tap "Appuyez pour continuer" to dismiss the result.
+  // This prevents infinite rescan loops when the same QR is still in frame.
 
   const handleLogout = useCallback(() => {
     scannerService.clearToken();
