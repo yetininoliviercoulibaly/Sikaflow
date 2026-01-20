@@ -35,12 +35,12 @@ const config: Options = {
   allowGlobalContext: false, // For simple app usage, usually false in prod
   migrations: {
     path: join(__dirname, 'database', 'migrations'),
-    pathTs: process.env.NODE_ENV === 'production' ? undefined : join(process.cwd(), 'src', 'database', 'migrations'),
+    pathTs: process.env.NODE_ENV === 'development' ? join(process.cwd(), 'src', 'database', 'migrations') : undefined,
     disableForeignKeys: false, // Recommended for PG
   },
   seeder: {
     path: join(__dirname, 'database', 'seeders'),
-    pathTs: process.env.NODE_ENV === 'production' ? undefined : join(process.cwd(), 'src', 'database', 'seeders'),
+    pathTs: process.env.NODE_ENV === 'development' ? join(process.cwd(), 'src', 'database', 'seeders') : undefined,
   },
   extensions: [Migrator, SeedManager],
   pool: {
