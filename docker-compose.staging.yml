@@ -48,6 +48,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
       MIKRO_ORM_MIGRATIONS_DISABLE_FOREIGN_KEYS: "false"
+      MIKRO_ORM_ALLOW_TS: "false"
     depends_on:
       db:
         condition: service_healthy
