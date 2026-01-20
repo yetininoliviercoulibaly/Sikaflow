@@ -33,12 +33,12 @@ const config: Options = {
   debug: process.env.NODE_ENV !== 'production',
   allowGlobalContext: false, // For simple app usage, usually false in prod
   migrations: {
-    path: 'dist/database/migrations',
+    path: 'dist/src/database/migrations',
     pathTs: 'src/database/migrations',
     disableForeignKeys: false, // Recommended for PG
   },
   seeder: {
-    path: 'dist/database/seeders',
+    path: 'dist/src/database/seeders',
     pathTs: 'src/database/seeders',
   },
   extensions: [Migrator, SeedManager],
