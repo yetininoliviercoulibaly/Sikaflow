@@ -3,10 +3,11 @@ import { Html5Qrcode } from 'html5-qrcode';
 
 interface QRScannerProps {
   onScan: (decodedText: string) => void;
+  onQrRemoved?: () => void; // Called when QR is no longer detected
   isPaused?: boolean;
 }
 
-export function QRScanner({ onScan, isPaused = false }: QRScannerProps) {
+export function QRScanner({ onScan, onQrRemoved, isPaused = false }: QRScannerProps) {
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const [isStarted, setIsStarted] = useState(false);
   const [cameras, setCameras] = useState<{ id: string; label: string }[]>([]);
@@ -14,11 +15,16 @@ export function QRScanner({ onScan, isPaused = false }: QRScannerProps) {
   const [error, setError] = useState<string>('');
   const lastScannedRef = useRef<string>('');
   const lastScanTimeRef = useRef<number>(0);
+  const noQrDetectedCountRef = useRef<number>(0);
 
   const SCAN_COOLDOWN = 30000; // 30 seconds - prevents rescanning same QR too soon
+  const NO_QR_THRESHOLD = 15; // ~1.5 seconds at 10fps before considering QR removed
 
   const handleScan = useCallback((decodedText: string) => {
     const now = Date.now();
+    // Reset the "no QR" counter when we detect a QR
+    noQrDetectedCountRef.current = 0;
+    
     if (
       decodedText === lastScannedRef.current &&
       now - lastScanTimeRef.current < SCAN_COOLDOWN
@@ -29,6 +35,21 @@ export function QRScanner({ onScan, isPaused = false }: QRScannerProps) {
     lastScanTimeRef.current = now;
     onScan(decodedText);
   }, [onScan]);
+
+  const handleNoQrDetected = useCallback(() => {
+    // Only trigger if we had a previous scan and onQrRemoved is provided
+    if (lastScannedRef.current && onQrRemoved) {
+      noQrDetectedCountRef.current++;
+      
+      // After ~1.5 seconds of no QR detection, consider it removed
+      if (noQrDetectedCountRef.current >= NO_QR_THRESHOLD) {
+        noQrDetectedCountRef.current = 0;
+        lastScannedRef.current = ''; // Clear so next scan of same QR works
+        lastScanTimeRef.current = 0;
+        onQrRemoved();
+      }
+    }
+  }, [onQrRemoved]);
 
   useEffect(() => {
     Html5Qrcode.getCameras()
@@ -82,7 +103,7 @@ export function QRScanner({ onScan, isPaused = false }: QRScannerProps) {
         selectedCamera,
         { fps: 10, qrbox: { width: 250, height: 250 } },
         handleScan,
-        () => {}
+        handleNoQrDetected // Called when no QR is detected in frame
       )
       .then(() => setIsStarted(true))
       .catch((err) => {
@@ -94,7 +115,7 @@ export function QRScanner({ onScan, isPaused = false }: QRScannerProps) {
       safeStopScanner(scannerRef.current);
       scannerRef.current = null;
     };
-  }, [selectedCamera, handleScan, safeStopScanner]);
+  }, [selectedCamera, handleScan, handleNoQrDetected, safeStopScanner]);
 
   return (
     <div className="scanner-container">

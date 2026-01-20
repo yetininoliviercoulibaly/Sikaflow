@@ -90,15 +90,14 @@ function App() {
     setIsPaused(false);
   }, []);
 
-  // Auto-dismiss after 5 seconds to prevent stuck screen
-  useEffect(() => {
-    if (lastResult && !isValidating) {
-      const timer = setTimeout(() => {
-        handleDismiss();
-      }, 5000);
-      return () => clearTimeout(timer);
+  // Smart auto-dismiss: triggered when QR is removed from camera view
+  // User can also tap to dismiss manually
+  const handleQrRemoved = useCallback(() => {
+    // Only auto-dismiss if we have a result showing
+    if (lastResult) {
+      handleDismiss();
     }
-  }, [lastResult, isValidating, handleDismiss]);
+  }, [lastResult, handleDismiss]);
 
   const handleLogout = useCallback(() => {
     scannerService.clearToken();
@@ -158,7 +157,11 @@ function App() {
       </div>
 
       <main className="main">
-        <QRScanner onScan={handleScan} isPaused={isPaused || isValidating} />
+        <QRScanner 
+          onScan={handleScan} 
+          onQrRemoved={handleQrRemoved}
+          isPaused={isPaused || isValidating} 
+        />
       </main>
 
       <ValidationResult result={lastResult} onDismiss={handleDismiss} />
