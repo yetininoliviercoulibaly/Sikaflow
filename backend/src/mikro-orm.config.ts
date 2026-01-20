@@ -1,4 +1,5 @@
 import { Options, PostgreSqlDriver } from '@mikro-orm/postgresql';
+import { join } from 'path';
 import { Migrator } from '@mikro-orm/migrations';
 import { SeedManager } from '@mikro-orm/seeder';
 import { OrganizationSchema } from './organization/infrastructure/persistence/organization.schema';
@@ -33,13 +34,13 @@ const config: Options = {
   debug: process.env.NODE_ENV !== 'production',
   allowGlobalContext: false, // For simple app usage, usually false in prod
   migrations: {
-    path: 'dist/src/database/migrations',
-    pathTs: 'src/database/migrations',
+    path: join(__dirname, 'database', 'migrations'),
+    pathTs: process.env.NODE_ENV === 'production' ? undefined : join(process.cwd(), 'src', 'database', 'migrations'),
     disableForeignKeys: false, // Recommended for PG
   },
   seeder: {
-    path: 'dist/src/database/seeders',
-    pathTs: 'src/database/seeders',
+    path: join(__dirname, 'database', 'seeders'),
+    pathTs: process.env.NODE_ENV === 'production' ? undefined : join(process.cwd(), 'src', 'database', 'seeders'),
   },
   extensions: [Migrator, SeedManager],
   pool: {
