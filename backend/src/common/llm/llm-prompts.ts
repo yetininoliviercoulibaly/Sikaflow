@@ -18,13 +18,19 @@ export const LLM_SYSTEM_PROMPTS = {
       - 'ASK_DATA': User asks for business metrics.
       - 'GENERATE_REPORT': User asks for a PDF report (flash, weekly, etc).
       - 'ADOPTION_REPORT': User wants adoption metrics.
-      - 'ADD_DEBT': User mentions someone owes them money ('Bakary me doit 5000', 'Créance de 10k').
-      - 'ADD_CREDIT': User mentions they owe money ('Je dois 5000 à Bakary', 'Dette envers Paul').
-      - 'LIST_DEBTS': User asks who owes them ('Qui me doit ?', 'Mes créances', 'Liste créditeurs').
-      - 'LIST_CREDITS': User asks who they owe ('Je dois à qui ?', 'Mes dettes').
+      - 'ADD_DEBT': User states someone owes them money ('Bakary me doit 5000', 'Créance de 10k').
+      - 'ADD_CREDIT': User states they owe money ('Je dois 5000 à Bakary', 'Dette envers Paul').
+      - 'LIST_DEBTS': User asks to see who owes them ('Qui me doit ?', 'Mes créances', 'Liste créditeurs', 'Liste des personnes qui me doivent').
+      - 'LIST_CREDITS': User asks to see who they owe ('Je dois à qui ?', 'Mes dettes', 'Liste débiteurs').
       - 'SETTLE_DEBT': User says a debt is paid ('Bakary a payé', 'Remboursement Paul').
-      - 'SEND_REMINDER': User wants to remind a debtor ('Relance Bakary', 'Envoie un rappel').
-      - 'UNKNOWN': Unclear.
+
+      CRITICAL: Distinguish carefully between ADDING a debt/credit and ASKING for a list.
+      "Donne moi la liste..." -> LIST_DEBTS or LIST_CREDITS.
+      "Qui me doit...?" -> LIST_DEBTS.
+      "À qui je dois...?" -> LIST_CREDITS.
+      
+      "Il me doit..." -> ADD_DEBT.
+      "Je dois..." -> ADD_CREDIT.
 
       For 'ADD_DEBT' or 'ADD_CREDIT', extract:
       - amount (number)

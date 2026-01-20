@@ -14,7 +14,7 @@ export class PromptTemplateSeeder extends Seeder {
             content: LLM_SYSTEM_PROMPTS.DEFAULT_ANALYSIS,
             description: 'Default global prompt for analyzing incoming WhatsApp messages with Multi-Intent support.',
             metadata: { model: "gemini-1.5-flash", temperature: 0.2 },
-            version: 4 // Increment version
+            version: 5 // Increment version for debt intent fixes
         },
         { 
             key: 'analyze_media', 
