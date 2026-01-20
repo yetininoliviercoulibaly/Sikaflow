@@ -10,6 +10,7 @@ import { Contact } from '../src/contact/domain/contact.entity';
 import { ActionContext } from '../src/webhook/application/handlers/action-handler.interface';
 import { DebtIntents } from '../src/webhook/application/constants/debt.constants';
 import { MessagingPlatforms } from '../src/common/messaging/domain/constants/messaging-platforms.enum';
+import { PAYMENT_PROVIDER_TOKEN } from '../src/payment/domain/ports/payment-provider.interface';
 
 describe('Recovery Feature Flow (Relance Impayés)', () => {
   let contactService: ContactService;
@@ -20,6 +21,7 @@ describe('Recovery Feature Flow (Relance Impayés)', () => {
   let transactionRepositoryMock: any;
   let userRepositoryMock: any;
   let messagingServiceMock: any;
+  let paymentProviderMock: any;
 
   beforeEach(async () => {
     // Mocks
@@ -46,6 +48,10 @@ describe('Recovery Feature Flow (Relance Impayés)', () => {
       sendMessage: jest.fn(),
     };
 
+    paymentProviderMock = {
+        createPaymentLink: jest.fn().mockResolvedValue('https://pay.me/link-123'),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ContactService,
@@ -55,6 +61,7 @@ describe('Recovery Feature Flow (Relance Impayés)', () => {
         { provide: I_TRANSACTION_REPOSITORY, useValue: transactionRepositoryMock },
         { provide: I_USER_REPOSITORY, useValue: userRepositoryMock },
         { provide: I_MESSAGING_SERVICE, useValue: messagingServiceMock },
+        { provide: PAYMENT_PROVIDER_TOKEN, useValue: paymentProviderMock },
       ],
     }).compile();
 
@@ -171,9 +178,14 @@ describe('Recovery Feature Flow (Relance Impayés)', () => {
           expect(debtorMessage).toContain('Bonjour Tanty Marie');
           expect(debtorMessage).toContain('Boutique Sika'); // User context
           expect(debtorMessage).toContain('20 000 FCFA');
-          // Check for "Lien Smart Payment" gap
-          // Based on code analysis, it is NOT present yet.
-          // This test confirms if it's there or not.
+          
+          // Check for Smart Payment Link
+          expect(paymentProviderMock.createPaymentLink).toHaveBeenCalledWith(
+            20000, 
+            'XOF', 
+            expect.objectContaining({ contactId: contact.id })
+          );
+          expect(debtorMessage).toContain('https://pay.me/link-123');
       });
   });
 });

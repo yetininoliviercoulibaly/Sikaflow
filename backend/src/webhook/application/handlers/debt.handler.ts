@@ -5,6 +5,7 @@ import { ContactService } from '../../../contact/application/services/contact.se
 import { AddDebtPayload, SettleDebtPayload, SendReminderPayload } from '../dtos/debt.dto';
 import { DebtIntents } from '../constants/debt.constants';
 import { MessagingPlatforms } from '../../../common/messaging/domain/constants/messaging-platforms.enum';
+import { IPaymentProvider, PAYMENT_PROVIDER_TOKEN } from '../../../payment/domain/ports/payment-provider.interface';
 
 /**
  * Handler for debt-related intents:
@@ -23,6 +24,7 @@ export class DebtHandler implements IActionHandler {
     @Inject(I_CONTACT_REPOSITORY)
     private readonly contactRepository: IContactRepository,
     private readonly contactService: ContactService,
+    @Inject(PAYMENT_PROVIDER_TOKEN) private readonly paymentProvider: IPaymentProvider,
   ) {}
 
   canHandle(intent: string): boolean {
@@ -313,10 +315,34 @@ export class DebtHandler implements IActionHandler {
         link = `https://t.me/+${cleanPhone}`;
     }
 
+    // Generate Smart Payment Link
+    let paymentLink = '';
+    try {
+        const amount = contact.totalOwed;
+        if (amount > 0) {
+            paymentLink = await this.paymentProvider.createPaymentLink(
+                amount,
+                'XOF', // Default currency for now, ideally derived from context or contact settings
+                {
+                    contactId: contact.id,
+                    reason: 'Debt Settlement',
+                    senderId: user!.id
+                }
+            );
+        }
+    } catch (error) {
+        this.logger.warn(`Failed to generate payment link for ${contact.id}: ${error.message}`);
+    }
+
     // Send formatted reminder to the Debtor
+    const baseMessage = `👋 Bonjour ${contact.displayName},\n\nCeci est un rappel de ${user!.fullName || 'votre contact'} concernant une dette de *${contact.totalOwed.toLocaleString('fr-FR')} FCFA*.\n\nMerci de régulariser dès que possible ! 🙏`;
+    const messageWithLink = paymentLink 
+        ? `${baseMessage}\n\n💳 *Payer maintenant :* ${paymentLink}`
+        : baseMessage;
+
     await messagingService.sendMessage(
         contact.phone,
-        `👋 Bonjour ${contact.displayName},\n\nCeci est un rappel de ${user!.fullName || 'votre contact'} concernant une dette de *${contact.totalOwed.toLocaleString('fr-FR')} FCFA*.\n\nMerci de régulariser dès que possible ! 🙏`
+        messageWithLink
     );
 
     await messagingService.sendMessage(
