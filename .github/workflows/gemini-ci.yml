@@ -36,23 +36,31 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         continue-on-error: true
+        shell: bash
         run: |
-          gemini prompt "Act as a Senior Software Engineer. Review the code changes in 'changes.diff' with the context of 'commit_message.txt'. Focus on: 1. Clean Code 2. Security 3. Potential Bugs 4. Hexagonal Architecture compliance (see GEMINI.md). Keep your response concise/markdown format." \
-            --context GEMINI.md \
-            --context commit_message.txt \
-            --context changes.diff \
-            > review_output.txt
+          # Combine context into one stream
+          {
+            echo "--- AGENT CONTEXT (GEMINI.md) ---"
+            cat GEMINI.md
+            echo ""
+            echo "--- COMMIT MESSAGE ---"
+            cat commit_message.txt
+            echo ""
+            echo "--- CODE CHANGES ---"
+            cat changes.diff
+          } > full_context.txt
+
+          # Pipe context to Gemini
+          cat full_context.txt | gemini "Act as a Senior Software Engineer. Review the code changes provided below. Focus on: 1. Clean Code 2. Security 3. Potential Bugs 4. Hexagonal Architecture compliance. Keep your response concise and in markdown format." > review_output.txt
 
       - name: Run Gemini QA Plan
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         continue-on-error: true
+        shell: bash
         run: |
-          gemini prompt "Act as a QA Engineer. Based on the changes in 'changes.diff' and 'commit_message.txt', propose a Functional Testing plan. listing scenarios to verify. Keep it concise/markdown." \
-            --context GEMINI.md \
-            --context commit_message.txt \
-            --context changes.diff \
-            > qa_output.txt
+          # Reuse full_context.txt
+          cat full_context.txt | gemini "Act as a QA Engineer. Based on the code changes provided below, propose a Functional Testing plan. List scenarios to verify. Keep it concise and in markdown." > qa_output.txt
 
       - name: Post Feedback Comment
         uses: actions/github-script@v7
