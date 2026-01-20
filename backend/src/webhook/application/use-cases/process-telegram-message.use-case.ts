@@ -307,12 +307,16 @@ export class ProcessTelegramMessageUseCase {
       }
 
       // Name heuristic: If name/event_name is missing, use raw message if it looks like a name
-      const nameField = missingFields.includes('event_name') ? 'event_name' : (missingFields.includes('name') ? 'name' : null);
+      const nameField = missingFields.includes('event_name')
+          ? 'event_name'
+          : (missingFields.includes('name') ? 'name' : (missingFields.includes('contact_name') ? 'contact_name' : null));
+
       if (nameField && !mergedData[nameField]) {
           const isNameIntent = [
               LLMIntent.CREATE_ORGANIZATION, 
               LLMIntent.CREATE_EVENT, 
-              LLMIntent.GENERATE_CLAIM_LINKS
+              LLMIntent.GENERATE_CLAIM_LINKS,
+              LLMIntent.ADD_DEBT,
           ].includes(pending.intent as any);
 
           if (isNameIntent && content.length > 2 && content.length < 100 && !content.includes('/') && !/^\d+$/.test(content)) {
