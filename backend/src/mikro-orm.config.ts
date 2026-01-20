@@ -20,6 +20,7 @@ import { OnboardingProgressSchema } from './onboarding/infrastructure/persistenc
 import { OnboardingStepConfigSchema } from './onboarding/infrastructure/persistence/onboarding-step-config.schema';
 
 import { TicketCategorySchema } from './ticketing/infrastructure/persistence/ticket-category.schema';
+import { ContactSchema } from './contact/infrastructure/persistence/contact.schema';
 
 const config: Options = {
   driver: PostgreSqlDriver,
@@ -28,7 +29,7 @@ const config: Options = {
   password: process.env.DB_PASSWORD || 'postgres',
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '5432', 10),
-  entities: [OrganizationSchema, UserSchema, TransactionSchema, OrganizationMemberSchema, IncidentSchema, PromptTemplateSchema, EventPassSchema, SubscriptionSchema, PaymentMethodSchema, SubscriptionPlanSchema, EventSchema, TicketSchema, TicketCategorySchema, Report, TicketClaimSchema, EventFeedbackSchema, OnboardingProgressSchema, OnboardingStepConfigSchema],
+  entities: [OrganizationSchema, UserSchema, TransactionSchema, OrganizationMemberSchema, IncidentSchema, PromptTemplateSchema, EventPassSchema, SubscriptionSchema, PaymentMethodSchema, SubscriptionPlanSchema, EventSchema, TicketSchema, TicketCategorySchema, Report, TicketClaimSchema, EventFeedbackSchema, OnboardingProgressSchema, OnboardingStepConfigSchema, ContactSchema],
   debug: process.env.NODE_ENV !== 'production',
   allowGlobalContext: false, // For simple app usage, usually false in prod
   migrations: {

@@ -8,6 +8,7 @@ import { IQRCodeService, I_QRCODE_SERVICE } from '../../domain/ports/qrcode.serv
 import { IMessagingService } from '../../../common/messaging/messaging.service.interface';
 import { Ticket, TicketStatus } from '../../domain/ticket.entity';
 import { v4 as uuidv4 } from 'uuid';
+import { getCurrency } from '../../../common/utils/currency.util';
 
 @Injectable()
 export class IssueTicketUseCase {
@@ -103,7 +104,7 @@ export class IssueTicketUseCase {
       }
 
       // 5. Send via platform-agnostic messaging
-      const currencyDisplay = process.env.DEFAULT_CURRENCY || 'EUR';
+      const currencyDisplay = getCurrency();
       const categoryLabel = category ? ` (${categoryName})` : '';
       await messagingService.sendMessage(attendeePhone, 
         `✅ Paiement reçu (${amountPaid} ${currencyDisplay}) !\nVoici vos ${quantity} billet(s)${categoryLabel} pour *${event.name}*.`

@@ -5,6 +5,7 @@ import { OrganizationMember, UserRole } from '../../domain/organization-member.e
 import { IOrganizationRepository, I_ORGANIZATION_REPOSITORY } from '../../domain/ports/organization.repository.interface';
 import { IUserRepository, I_USER_REPOSITORY } from '../../../user/domain/ports/user.repository.interface';
 import { User } from '../../../user/domain/user.entity';
+import { getCurrency } from '../../../common/utils/currency.util';
 
 export interface CreateOrganizationCommand {
   ownerId?: string;
@@ -56,7 +57,7 @@ export class CreateOrganizationUseCase {
       organizationId,
       name,
       userId,
-      { currency: command.currency || process.env.DEFAULT_CURRENCY || 'EUR' },
+      { currency: command.currency || getCurrency() },
       new Date(),
     );
 

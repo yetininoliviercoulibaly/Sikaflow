@@ -67,6 +67,8 @@ import { GenerateTicketsQRHandler } from './application/handlers/generate-ticket
 import { CancelDeletionHandler } from './application/handlers/cancel-deletion.handler';
 import { RequestDashboardAccessHandler } from './application/handlers/request-dashboard-access.handler';
 import { RequestScannerAccessHandler } from './application/handlers/request-scanner-access.handler';
+import { DebtHandler } from './application/handlers/debt.handler';
+import { ContactModule } from '../contact/contact.module';
 
 @Module({
   imports: [
@@ -92,6 +94,7 @@ import { RequestScannerAccessHandler } from './application/handlers/request-scan
     OnboardingModule,
     IncidentModule,
     AuthModule,
+    ContactModule,
   ],
   controllers: [WhatsAppController, TelegramController],
   providers: [
@@ -147,6 +150,7 @@ import { RequestScannerAccessHandler } from './application/handlers/request-scan
     RequestDashboardAccessHandler,
     RequestScannerAccessHandler,
     SubscribeMonthlyHandler,
+    DebtHandler,
     {
       provide: ACTION_HANDLER_TOKEN,
       useFactory: (
@@ -175,6 +179,7 @@ import { RequestScannerAccessHandler } from './application/handlers/request-scan
         activatePass: ActivateEventPassHandler,
         execDel: ExecuteDeletionHandler,
         cancelDel: CancelDeletionHandler,
+        debt: DebtHandler,
       ) => [
         createOrg,
         addMember,
@@ -201,6 +206,7 @@ import { RequestScannerAccessHandler } from './application/handlers/request-scan
         activatePass,
         execDel,
         cancelDel,
+        debt,
       ],
       inject: [
         CreateOrganizationHandler,
@@ -228,6 +234,7 @@ import { RequestScannerAccessHandler } from './application/handlers/request-scan
         ActivateEventPassHandler,
         ExecuteDeletionHandler,
         CancelDeletionHandler,
+        DebtHandler,
       ],
     }
   ],

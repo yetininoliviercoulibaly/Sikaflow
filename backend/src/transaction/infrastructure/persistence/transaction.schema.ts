@@ -1,5 +1,5 @@
 import { EntitySchema } from '@mikro-orm/core';
-import { Transaction, TransactionType } from '../../domain/transaction.entity';
+import { Transaction, TransactionType, TransactionStatus } from '../../domain/transaction.entity';
 
 export const TransactionSchema = new EntitySchema<Transaction>({
   class: Transaction,
@@ -16,5 +16,9 @@ export const TransactionSchema = new EntitySchema<Transaction>({
     description: { type: 'text', nullable: true },
     transactionDate: { type: 'timestamp' },
     createdAt: { type: 'timestamp' },
+    status: { type: 'enum', enum: true, items: () => TransactionStatus, default: TransactionStatus.COMPLETED },
+    contactId: { type: 'uuid', nullable: true },
+    dueDate: { type: 'timestamp', nullable: true },
+    settledAt: { type: 'timestamp', nullable: true },
   },
 });
