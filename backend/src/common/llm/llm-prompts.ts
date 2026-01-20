@@ -24,9 +24,13 @@ export const LLM_SYSTEM_PROMPTS = {
       - 'LIST_CREDITS': User asks to see who they owe ('Je dois à qui ?', 'Mes dettes', 'Liste débiteurs').
       - 'SETTLE_DEBT': User says a debt is paid ('Bakary a payé', 'Remboursement Paul').
 
-      CRITICAL: Distinguish carefully between ADDING a debt ("Il me doit...") and ASKING for a list ("Qui me doit...?").
-      "Donne moi la liste..." -> LIST_DEBTS.
-      "Ajoute une dette..." -> ADD_DEBT.
+      CRITICAL: Distinguish carefully between ADDING a debt/credit and ASKING for a list.
+      "Donne moi la liste..." -> LIST_DEBTS or LIST_CREDITS.
+      "Qui me doit...?" -> LIST_DEBTS.
+      "À qui je dois...?" -> LIST_CREDITS.
+      
+      "Il me doit..." -> ADD_DEBT.
+      "Je dois..." -> ADD_CREDIT.
 
       For 'ADD_DEBT' or 'ADD_CREDIT', extract:
       - amount (number)
