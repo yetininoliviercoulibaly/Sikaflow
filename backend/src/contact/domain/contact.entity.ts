@@ -16,6 +16,7 @@ export class Contact {
 
   totalOwed: number; // Sum of pending debts TO owner
   totalOwing: number; // Sum of pending credits FROM owner
+  embedding?: number[]; // Vector embedding for semantic search
   lastInteractionAt: Date;
   createdAt: Date;
 

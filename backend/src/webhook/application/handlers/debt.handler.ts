@@ -2,6 +2,9 @@ import { Injectable, Inject, Logger } from '@nestjs/common';
 import { IActionHandler, ActionContext } from './action-handler.interface';
 import { I_CONTACT_REPOSITORY, IContactRepository } from '../../../contact/domain/ports/contact.repository.interface';
 import { Contact } from '../../../contact/domain/contact.entity';
+import { I_TRANSACTION_REPOSITORY, ITransactionRepository } from '../../../transaction/domain/ports/transaction.repository.interface';
+import { Transaction, TransactionType, TransactionStatus } from '../../../transaction/domain/transaction.entity';
+import { v4 } from 'uuid';
 
 /**
  * Handler for debt-related intents:
@@ -19,6 +22,8 @@ export class DebtHandler implements IActionHandler {
   constructor(
     @Inject(I_CONTACT_REPOSITORY)
     private readonly contactRepository: IContactRepository,
+    @Inject(I_TRANSACTION_REPOSITORY)
+    private readonly transactionRepository: ITransactionRepository,
   ) {}
 
   canHandle(intent: string): boolean {
@@ -140,11 +145,34 @@ export class DebtHandler implements IActionHandler {
 
     // Update debt total
     const numericAmount = parseFloat(amount);
-    contact.totalOwed = (contact.totalOwed || 0) + numericAmount;
-    contact.lastInteractionAt = new Date();
-    await this.contactRepository.update(contact);
+    if (isNaN(numericAmount) || numericAmount <= 0) {
+      await messagingService.sendMessage(
+        senderPhoneNumber,
+        '❌ Montant invalide.',
+      );
+      return;
+    }
 
-    // TODO: Create DEBT transaction entry (to be implemented with use-case)
+    // Atomically update balance
+    contact = await this.contactRepository.updateBalances(contact.id, numericAmount, 0);
+
+    // Create DEBT transaction
+    const transaction = new Transaction(
+      v4(),
+      organizationId!,
+      user!.id,
+      null,
+      TransactionType.DEBT,
+      numericAmount,
+      currency,
+      'debt',
+      `Créance: ${contact.displayName}`,
+      new Date(),
+      new Date(),
+      TransactionStatus.PENDING,
+      contact.id
+    );
+    await this.transactionRepository.create(transaction);
 
     await messagingService.sendMessage(
       senderPhoneNumber,
@@ -190,9 +218,34 @@ export class DebtHandler implements IActionHandler {
     }
 
     const numericAmount = parseFloat(amount);
-    contact.totalOwing = (contact.totalOwing || 0) + numericAmount;
-    contact.lastInteractionAt = new Date();
-    await this.contactRepository.update(contact);
+    if (isNaN(numericAmount) || numericAmount <= 0) {
+      await messagingService.sendMessage(
+        senderPhoneNumber,
+        '❌ Montant invalide.',
+      );
+      return;
+    }
+
+    // Atomically update balance
+    contact = await this.contactRepository.updateBalances(contact.id, 0, numericAmount);
+
+    // Create CREDIT transaction (User owes money)
+    const transaction = new Transaction(
+      v4(),
+      organizationId!,
+      user!.id,
+      null,
+      TransactionType.CREDIT,
+      numericAmount,
+      currency,
+      'debt',
+      `Dette envers: ${contact.displayName}`,
+      new Date(),
+      new Date(),
+      TransactionStatus.PENDING,
+      contact.id
+    );
+    await this.transactionRepository.create(transaction);
 
     await messagingService.sendMessage(
       senderPhoneNumber,
@@ -300,9 +353,48 @@ export class DebtHandler implements IActionHandler {
 
     // Settle amount (partial or full)
     const settleAmount = amount ? parseFloat(amount) : contact.totalOwed;
-    contact.totalOwed = Math.max(0, contact.totalOwed - settleAmount);
-    contact.lastInteractionAt = new Date();
-    await this.contactRepository.update(contact);
+    if (isNaN(settleAmount) || settleAmount <= 0) {
+      await messagingService.sendMessage(
+        senderPhoneNumber,
+        '❌ Montant invalide.',
+      );
+      return;
+    }
+
+    const remainingDebt = contact.totalOwed - settleAmount;
+    let deltaOwed = -settleAmount;
+    let deltaOwing = 0;
+
+    // Handle overpayment (negative remaining debt becomes credit)
+    if (remainingDebt < 0) {
+        deltaOwed = -contact.totalOwed; // Reduce debt to exactly 0
+        deltaOwing = Math.abs(remainingDebt); // Add rest as credit (I owe them)
+    }
+
+    contact = await this.contactRepository.updateBalances(contact.id, deltaOwed, deltaOwing);
+
+    // Create INCOME transaction to represent payment received
+    const transaction = new Transaction(
+      v4(),
+      context.organizationId!,
+      user!.id,
+      null,
+      TransactionType.INCOME,
+      settleAmount,
+      'XOF', // Should ideally come from context or previous tx
+      'reimbursement',
+      `Remboursement de ${contact.displayName}`,
+      new Date(),
+      new Date(),
+      TransactionStatus.COMPLETED,
+      contact.id,
+      null,
+      new Date()
+    );
+    await this.transactionRepository.create(transaction);
+
+    // Also mark related pending DEBT transactions as settled if full payment?
+    // For now simple tracking.
 
     const status = contact.totalOwed === 0 ? '🎉 Créance soldée !' : `📉 Reste : ${contact.totalOwed.toLocaleString('fr-FR')}F`;
 

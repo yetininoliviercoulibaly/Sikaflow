@@ -49,6 +49,14 @@ export interface IContactRepository {
   update(contact: Contact): Promise<Contact>;
 
   /**
+   * Atomically update debt/credit balances
+   * @param id Contact ID
+   * @param deltaOwed Amount to add to totalOwed (can be negative)
+   * @param deltaOwing Amount to add to totalOwing (can be negative)
+   */
+  updateBalances(id: string, deltaOwed: number, deltaOwing: number): Promise<Contact>;
+
+  /**
    * Delete a contact
    */
   delete(id: string): Promise<void>;

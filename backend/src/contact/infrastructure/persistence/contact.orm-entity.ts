@@ -38,6 +38,9 @@ export class ContactOrmEntity {
   @Property({ type: 'decimal', precision: 12, scale: 2, default: 0 })
   totalOwing!: number;
 
+  @Property({ type: 'vector', length: 1536, nullable: true })
+  embedding?: number[];
+
   @Property({ type: 'timestamptz' })
   lastInteractionAt!: Date;
 

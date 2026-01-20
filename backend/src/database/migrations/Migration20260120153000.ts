@@ -2,6 +2,9 @@ import { Migration } from '@mikro-orm/migrations';
 
 export class Migration20260120153000 extends Migration {
   async up(): Promise<void> {
+    // Enable vector extension if not exists
+    this.addSql(`CREATE EXTENSION IF NOT EXISTS vector;`);
+
     // Create contact table
     this.addSql(`
       CREATE TABLE "contact" (
@@ -12,6 +15,7 @@ export class Migration20260120153000 extends Migration {
         "phone" varchar(20) NULL,
         "display_name" varchar(255) NOT NULL,
         "context" varchar(255) NULL,
+        "embedding" vector(1536) NULL,
         "total_owed" decimal(12,2) NOT NULL DEFAULT 0,
         "total_owing" decimal(12,2) NOT NULL DEFAULT 0,
         "last_interaction_at" timestamptz NOT NULL DEFAULT now(),
@@ -26,6 +30,14 @@ export class Migration20260120153000 extends Migration {
     this.addSql(`CREATE INDEX "idx_contact_short_id" ON "contact" ("short_id");`);
     this.addSql(`CREATE INDEX "idx_contact_organization_id" ON "contact" ("organization_id");`);
     this.addSql(`CREATE INDEX "idx_contact_phone" ON "contact" ("owner_id", "phone");`);
+
+    // Create IVFFLAT index for vector similarity search
+    // We use inner product (<#>) for cosine similarity since vectors will be normalized
+    this.addSql(`
+      CREATE INDEX "idx_contact_embedding" ON "contact"
+      USING ivfflat ("embedding" vector_ip_ops)
+      WITH (lists = 100);
+    `);
 
     // Extend transaction table with debt tracking fields
     this.addSql(`

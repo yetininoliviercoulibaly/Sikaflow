@@ -98,6 +98,27 @@ export class MikroOrmContactRepository implements IContactRepository {
     return contact;
   }
 
+  async updateBalances(id: string, deltaOwed: number, deltaOwing: number): Promise<Contact> {
+    // We use a custom query to perform atomic update
+    // Note: MikroORM doesn't support increment directly via entity, so we use QueryBuilder or native query.
+    // However, to return the updated entity, we can use QB with RETURNING.
+
+    const qb = this.em.createQueryBuilder(ContactOrmEntity);
+
+    await qb.update({
+        totalOwed: qb.raw(`total_owed + ${deltaOwed}`),
+        totalOwing: qb.raw(`total_owing + ${deltaOwing}`),
+        lastInteractionAt: new Date(),
+      })
+      .where({ id })
+      .execute();
+
+    // Fetch fresh entity
+    const updated = await this.findById(id);
+    if (!updated) throw new Error('Contact not found after update');
+    return updated;
+  }
+
   async delete(id: string): Promise<void> {
     const ormEntity = await this.em.findOne(ContactOrmEntity, { id });
     if (ormEntity) {
@@ -121,6 +142,7 @@ export class MikroOrmContactRepository implements IContactRepository {
     ormEntity.context = contact.context;
     ormEntity.totalOwed = contact.totalOwed;
     ormEntity.totalOwing = contact.totalOwing;
+    ormEntity.embedding = contact.embedding;
     ormEntity.lastInteractionAt = contact.lastInteractionAt;
     ormEntity.createdAt = contact.createdAt;
     return ormEntity;
@@ -138,6 +160,7 @@ export class MikroOrmContactRepository implements IContactRepository {
     contact.shortId = ormEntity.shortId;
     contact.totalOwed = Number(ormEntity.totalOwed);
     contact.totalOwing = Number(ormEntity.totalOwing);
+    contact.embedding = ormEntity.embedding;
     contact.lastInteractionAt = ormEntity.lastInteractionAt;
     contact.createdAt = ormEntity.createdAt;
     
