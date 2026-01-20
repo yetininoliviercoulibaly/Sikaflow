@@ -193,15 +193,42 @@ export class ProcessTelegramMessageUseCase {
       let analysis = await this.analyzeText(content, String(userId), pending);
       
       if (!pending) return analysis;
+      
+      const upperContent = content.toUpperCase();
+      
+      
+      // 1. Enhanced Cancellation
+      const stopKeywords = ['STOP', 'ANNULER', 'CANCEL', 'EXIT', 'NON', 'RIEN', 'ABANDONNER', 'QUITTER'];
+      if (stopKeywords.includes(upperContent)) {
+        this.logger.log(`User explicitly cancelled action ${pending.intent}`);
+        this.conversationState.clearPendingAction(String(chatId));
+        return { intent: LLMIntent.UNKNOWN, data: {} }; // Return empty to stop processing
+      }
+
+      // 2. Help/Menu Priority
+      const helpKeywords = ['AIDE', 'HELP', 'MENU', 'ACCUEIL', 'DEMARRER', 'START'];
+      if (helpKeywords.includes(upperContent) || (analysis.intent === LLMIntent.HELP && (analysis.confidence || 0) > 0.8)) {
+         this.logger.log(`User requested HELP/MENU, clearing pending action ${pending.intent}`);
+         this.conversationState.clearPendingAction(String(chatId));
+         return { intent: LLMIntent.HELP, data: {} };
+      }
+
+      // 3. Smart Loop Break (New High Confidence Intent)
+      // If the new analysis found a DIFFERENT intent with HIGH confidence, favor it over the pending one.
+      // Exception: If the pending missing field is 'role' and the user says 'Manager' (which might be misclassified), be careful.
+      // But generally if user says "Nouvelle Dépense" (Intent: CREATE_TRANSACTION), we should switch.
+      const highConfidenceThreshold = 0.85;
+
+      if (analysis.intent && analysis.intent !== LLMIntent.UNKNOWN && analysis.intent !== pending.intent) {
+          if ((analysis.confidence || 0) >= highConfidenceThreshold) {
+              this.logger.log(`Breaking loop: New high confidence intent ${analysis.intent} (${analysis.confidence}) overrides pending ${pending.intent}`);
+              this.conversationState.clearPendingAction(String(chatId));
+              return analysis;
+          }
+      }
 
       this.logger.log(`Merging pending context for ${chatId}: ${JSON.stringify(pending)}`);
       
-      const isStopCommand = ['STOP', 'ANNULER', 'CANCEL', 'EXIT'].includes(content.toUpperCase());
-      if (isStopCommand) {
-        this.conversationState.clearPendingAction(String(chatId));
-        return analysis;
-      }
-
       const mergedData = this.applyHeuristics(content, pending, analysis.data || {});
       const remainingMissing = (pending.missing_fields || []).filter(field => {
         const val = mergedData[field];
@@ -229,27 +256,112 @@ export class ProcessTelegramMessageUseCase {
       const missingFields = pending.missing_fields || [];
       const lowerContent = content.toLowerCase();
 
-      if (!mergedData['amount'] && missingFields.includes('amount')) {
-          const extracted = this.extractAmountFromText(content);
-          if (extracted !== null) mergedData['amount'] = extracted;
+      
+      // Date heuristic: Check this FIRST to avoid matching date parts as amounts
+      let isDate = false;
+      if (!mergedData['date'] && missingFields.includes('date')) {
+          const datePattern = /(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})|(\d{1,2}\s+(janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre))/i;
+          if (datePattern.test(content) || (content.length > 4 && content.length < 50)) {
+               // Ensure it's not just a pure number which might be price/capacity
+               if (!/^\d+$/.test(content)) {
+                   mergedData['date'] = this.cleanupDate(content);
+                   isDate = true;
+               }
+          }
+      }
+
+      if (!mergedData['amount'] && missingFields.includes('amount') && !isDate) {
+           const extracted = this.extractAmountFromText(content);
+           if (extracted !== null) mergedData['amount'] = extracted;
       }
       if (!mergedData['period'] && missingFields.includes('period')) {
-          const extracted = this.extractPeriodFromText(lowerContent);
-          if (extracted) mergedData['period'] = extracted;
+           const extracted = this.extractPeriodFromText(lowerContent);
+           if (extracted) mergedData['period'] = extracted;
       }
       if (!mergedData['metric'] && missingFields.includes('metric')) {
-          const extracted = this.extractMetricFromText(lowerContent);
-          if (extracted) mergedData['metric'] = extracted;
+           const extracted = this.extractMetricFromText(lowerContent);
+           if (extracted) mergedData['metric'] = extracted;
       }
-      
-      // Name heuristic: If creating organization and name is missing, use raw message if it looks like a name
-      if (!mergedData['name'] && missingFields.includes('name') && pending.intent === LLMIntent.CREATE_ORGANIZATION) {
-          if (content.length > 2 && content.length < 50 && !content.includes('/')) {
-              mergedData['name'] = content;
+
+      let amountExtracted = false;
+      if (!mergedData['capacity'] && missingFields.includes('capacity') && !isDate) {
+          const extracted = this.extractAmountFromText(content);
+          if (extracted !== null) {
+              mergedData['capacity'] = String(extracted);
+              amountExtracted = true;
+          }
+      }
+
+      if (!mergedData['price'] && missingFields.includes('price') && !isDate && !amountExtracted) {
+          const extracted = this.extractAmountFromText(content);
+          if (extracted !== null) mergedData['price'] = String(extracted);
+      }
+
+      // Name heuristic: If name/event_name is missing, use raw message if it looks like a name
+      const nameField = missingFields.includes('event_name') ? 'event_name' : (missingFields.includes('name') ? 'name' : null);
+      if (nameField && !mergedData[nameField]) {
+          const isNameIntent = [
+              LLMIntent.CREATE_ORGANIZATION, 
+              LLMIntent.CREATE_EVENT, 
+              LLMIntent.GENERATE_CLAIM_LINKS
+          ].includes(pending.intent as any);
+
+          if (isNameIntent && content.length > 2 && content.length < 100 && !content.includes('/') && !/^\d+$/.test(content)) {
+              mergedData[nameField] = this.cleanupName(content);
           }
       }
 
       return mergedData;
+  }
+
+  private cleanupName(text: string): string {
+      const prefixes = [
+          "le nom est ",
+          "le nom de l'organisation est ",
+          "le nom de l'événement est ",
+          "l'événement s'appelle ",
+          "l'organisation s'appelle ",
+          "c'est ",
+          "il s'appelle ",
+          "c'est l'",
+          "le nom c'est "
+      ];
+      let cleaned = text.trim();
+      const lowerCleaned = cleaned.toLowerCase();
+      
+      for (const prefix of prefixes) {
+          if (lowerCleaned.startsWith(prefix)) {
+              cleaned = cleaned.substring(prefix.length).trim();
+              
+              // Remove optional articles at the start of the remaining name
+              if (cleaned.toLowerCase().startsWith('le ')) cleaned = cleaned.substring(3);
+              if (cleaned.toLowerCase().startsWith('la ')) cleaned = cleaned.substring(3);
+              if (cleaned.toLowerCase().startsWith('l\'')) cleaned = cleaned.substring(2);
+              
+              break; 
+          }
+      }
+      
+      // Also remove trailing period if any
+      if (cleaned.endsWith('.')) cleaned = cleaned.slice(0, -1);
+      
+      return cleaned.trim();
+  }
+
+  private cleanupDate(text: string): string {
+      let cleaned = text.trim();
+      const lowerCleaned = cleaned.toLowerCase();
+      
+      const prefixes = ["le ", "la date est ", "c'est le ", "pour le "];
+      for (const prefix of prefixes) {
+          if (lowerCleaned.startsWith(prefix)) {
+              cleaned = cleaned.substring(prefix.length).trim();
+              break;
+          }
+      }
+      
+      if (cleaned.endsWith('.')) cleaned = cleaned.slice(0, -1);
+      return cleaned.trim();
   }
 
   private extractAmountFromText(text: string): number | null {

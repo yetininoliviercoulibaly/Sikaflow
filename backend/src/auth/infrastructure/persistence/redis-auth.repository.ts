@@ -41,6 +41,7 @@ export class RedisAuthRepository implements IAuthRepository, OnModuleInit, OnMod
       parsed.phoneNumber,
       new Date(parsed.expiresAt),
       parsed.isUsed,
+      parsed.firstUsedAt ? new Date(parsed.firstUsedAt) : null,
     );
   }
 

@@ -7,14 +7,29 @@ import { ISubscriptionRepository } from '../../domain/ports/subscription.reposit
 export class MikroOrmSubscriptionRepository implements ISubscriptionRepository {
   constructor(private readonly em: EntityManager) {}
 
+  /**
+   * Get EntityManager - forks if no request context (e.g., cron jobs)
+   */
+  private getEm(): EntityManager {
+    try {
+      // Try to get the context-aware EM
+      return this.em.getContext();
+    } catch {
+      // No request context (cron job), fork the global EM
+      return this.em.fork();
+    }
+  }
+
   async create(subscription: Subscription): Promise<Subscription> {
-    const newSub = this.em.create(Subscription, subscription);
-    await this.em.persistAndFlush(newSub);
+    const em = this.getEm();
+    const newSub = em.create(Subscription, subscription);
+    await em.persistAndFlush(newSub);
     return newSub;
   }
 
   async findByOrganizationId(organizationId: string): Promise<Subscription | null> {
-    const subs = await this.em.find(
+    const em = this.getEm();
+    const subs = await em.find(
       Subscription,
       { organizationId },
       { orderBy: { currentPeriodEnd: 'DESC' }, limit: 1 }
@@ -23,22 +38,25 @@ export class MikroOrmSubscriptionRepository implements ISubscriptionRepository {
   }
 
   async findAllActive(): Promise<Subscription[]> {
+      const em = this.getEm();
       const now = new Date();
-      return this.em.find(Subscription, {
+      return em.find(Subscription, {
           status: SubscriptionStatus.ACTIVE,
           currentPeriodEnd: { $gt: now }
       });
   }
 
   async findByStripeSubscriptionId(stripeSubscriptionId: string): Promise<Subscription | null> {
-    return this.em.findOne(Subscription, { stripeSubscriptionId });
+    const em = this.getEm();
+    return em.findOne(Subscription, { stripeSubscriptionId });
   }
 
   async update(subscription: Subscription): Promise<Subscription> {
-    const existing = await this.em.findOne(Subscription, { id: subscription.id });
+    const em = this.getEm();
+    const existing = await em.findOne(Subscription, { id: subscription.id });
     if (existing) {
-        this.em.assign(existing, subscription);
-        await this.em.flush();
+        em.assign(existing, subscription);
+        await em.flush();
         return existing;
     }
     return subscription;

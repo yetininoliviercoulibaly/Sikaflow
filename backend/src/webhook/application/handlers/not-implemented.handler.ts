@@ -7,7 +7,7 @@ export class NotImplementedHandler implements IActionHandler {
     constructor() {}
 
     canHandle(intent: string): boolean {
-        return [LLMIntent.CANCEL_LAST_ACTION, LLMIntent.UPDATE_LAST_ACTION].includes(intent as LLMIntent);
+        return [LLMIntent.UPDATE_LAST_ACTION].includes(intent as LLMIntent);
     }
 
     async handle(data: any, context: ActionContext): Promise<void> {

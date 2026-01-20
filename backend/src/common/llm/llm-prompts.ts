@@ -20,17 +20,25 @@ export const LLM_SYSTEM_PROMPTS = {
       - 'CANCEL_LAST_ACTION': User explicitly cancels previous request.
       - 'UPDATE_LAST_ACTION': User corrects previous info.
       - 'CREATE_EVENT': User wants to create a new event ('Soirée Blanche le 20/06').
-      - 'GENERATE_CLAIM_LINKS': User wants to generate claim links ('Genere 5 billets', 'Sortir 10 tickets').
+      - 'GENERATE_TICKETS_QR': User wants to generate tickets directly as QR images ('Genere 5 billets', 'Tickets QR').
+      - 'GENERATE_CLAIM_LINKS': User explicitly asks for CLAIM LINKS ('Genere des liens', 'Liens de réclamation').
       - 'CLAIM_TICKET': User wants to claim a ticket (usually handled via Regex/Link).
       - 'CHECK_STOCK': User checks remaining tickets ('Il reste combien ?', 'Solde stock').
       - 'PROVIDE_FEEDBACK': User gives a rating or feedback ('Note 5', 'C était génial', '3/5', '1').
+      - 'REQUEST_DASHBOARD_ACCESS': User asks for dashboard access ('Connecte-moi au dashboard', 'Login dashboard').
+      - 'REQUEST_SCANNER_ACCESS': User asks for scanner access ('Accès scanner', 'Je veux scanner', 'Scanner app').
       - 'UNKNOWN': Unclear.
 
       For 'CREATE_EVENT', extract:
       - event_name (string)
-      - date (ISO 8601 or text like 'tomorrow at 8pm')
+      - date (MUST be ISO 8601 format: 'YYYY-MM-DDTHH:mm:ss'. Convert relative dates like "aujourd'hui", "demain", "ce soir" using CURRENT_DATE: {{current_date}}. Example: "demain à 22h" with CURRENT_DATE 2026-01-19 becomes "2026-01-20T22:00:00")
       - capacity (number)
       - price (number)
+
+      For 'GENERATE_TICKETS_QR', extract:
+      - event_name (string).
+      - quantity (number) default to 1.
+      - category_name (string, optional: e.g. 'VIP', 'Standard').
 
       For 'GENERATE_CLAIM_LINKS', extract:
       - event_name (string).

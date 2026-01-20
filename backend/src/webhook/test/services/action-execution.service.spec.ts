@@ -82,7 +82,7 @@ describe('ActionExecutionService', () => {
 
   it('should executes handler successfully when subscription is valid', async () => {
     const params: ActionExecutionParams = {
-        actions: [{ intent: 'TEST_INTENT', data: { foo: 'bar' } }],
+        actions: [{ intent: LLMIntent.CREATE_EVENT, data: { foo: 'bar' } }], // Use protected intent
         messagingService: mockMessagingService,
         user: { lastActiveOrganizationId: 'org1', preferredLanguage: 'fr' } as User,
         senderPhoneNumber: '+123',
@@ -100,9 +100,43 @@ describe('ActionExecutionService', () => {
     expect(mockHandler.handle).toHaveBeenCalled();
   });
 
+  it('should reject action if user does not exist for protected intent', async () => {
+    const params: ActionExecutionParams = {
+        actions: [{ intent: LLMIntent.CREATE_EVENT }],
+        messagingService: mockMessagingService,
+        user: null,
+        senderPhoneNumber: '+123',
+        messageId: 'msg1',
+        platform: MessagingPlatforms.WHATSAPP
+    };
+
+    await service.execute(params);
+
+    expect(mockMessagingService.sendMessage).toHaveBeenCalledWith(expect.stringContaining('+123'), expect.stringContaining("Vous n'êtes pas reconnu"));
+    expect(mockConversationStateService.clearPendingAction).toHaveBeenCalledWith('+123');
+    expect(mockHandler.handle).not.toHaveBeenCalled();
+  });
+
+  it('should reject action if organization is missing for organization-bound intent', async () => {
+    const params: ActionExecutionParams = {
+        actions: [{ intent: LLMIntent.CREATE_EVENT }],
+        messagingService: mockMessagingService,
+        user: { lastActiveOrganizationId: null } as any, // User exists but no org
+        senderPhoneNumber: '+123',
+        messageId: 'msg1',
+        platform: MessagingPlatforms.WHATSAPP
+    };
+
+    await service.execute(params);
+
+    expect(mockMessagingService.sendMessage).toHaveBeenCalledWith(expect.stringContaining('+123'), expect.stringContaining("Aucune organisation active"));
+    expect(mockConversationStateService.clearPendingAction).toHaveBeenCalledWith('+123');
+    expect(mockHandler.handle).not.toHaveBeenCalled();
+  });
+
   it('should block execution if subscription is expired', async () => {
     const params: ActionExecutionParams = {
-        actions: [{ intent: 'TEST_INTENT' }],
+        actions: [{ intent: LLMIntent.CREATE_EVENT }], // Use protected intent
         messagingService: mockMessagingService,
         user: { lastActiveOrganizationId: 'org1' } as User,
         senderPhoneNumber: '+123',
@@ -138,13 +172,15 @@ describe('ActionExecutionService', () => {
 
   it('should report missing fields', async () => {
     const params: ActionExecutionParams = {
-        actions: [{ intent: 'TEST', missing_fields: ['date'] }],
+        actions: [{ intent: LLMIntent.CREATE_EVENT, missing_fields: ['date'] }],
         messagingService: mockMessagingService,
-        user: null,
+        user: { lastActiveOrganizationId: 'org1' } as User, // Must have org to reach missing fields
         senderPhoneNumber: '+123',
         messageId: 'msg1',
         platform: MessagingPlatforms.TELEGRAM
     };
+
+    mockCheckSubscriptionUseCase.execute.mockResolvedValue({ hasAccess: true } as any);
 
     await service.execute(params);
 
@@ -157,7 +193,7 @@ describe('ActionExecutionService', () => {
     const params: ActionExecutionParams = {
         actions: [{ intent: LLMIntent.UNKNOWN }],
         messagingService: mockMessagingService,
-        user: { lastActiveOrganizationId: 'org1' } as User,
+        user: null, // UNKNOWN is public, so no user needed
         senderPhoneNumber: '+123',
         messageId: 'msg1',
         platform: MessagingPlatforms.WHATSAPP

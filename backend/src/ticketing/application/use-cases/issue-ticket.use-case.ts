@@ -3,6 +3,7 @@ import { Injectable, Inject, Logger } from '@nestjs/common';
 import { EntityManager } from '@mikro-orm/core';
 import { IEventRepository, I_EVENT_REPOSITORY } from '../../domain/ports/event.repository.interface';
 import { ITicketRepository, I_TICKET_REPOSITORY } from '../../domain/ports/ticket.repository.interface';
+import { ITicketCategoryRepository, I_TICKET_CATEGORY_REPOSITORY } from '../../domain/ports/ticket-category.repository.interface';
 import { IQRCodeService, I_QRCODE_SERVICE } from '../../domain/ports/qrcode.service.interface';
 import { IMessagingService } from '../../../common/messaging/messaging.service.interface';
 import { Ticket, TicketStatus } from '../../domain/ticket.entity';
@@ -15,6 +16,7 @@ export class IssueTicketUseCase {
   constructor(
     @Inject(I_EVENT_REPOSITORY) private readonly eventRepository: IEventRepository,
     @Inject(I_TICKET_REPOSITORY) private readonly ticketRepository: ITicketRepository,
+    @Inject(I_TICKET_CATEGORY_REPOSITORY) private readonly categoryRepository: ITicketCategoryRepository,
     @Inject(I_QRCODE_SERVICE) private readonly qrCodeService: IQRCodeService,
     private readonly em: EntityManager,
   ) {}
@@ -24,7 +26,8 @@ export class IssueTicketUseCase {
     eventId: string, 
     amountPaid: number, 
     quantity: number = 1,
-    messagingService: IMessagingService
+    messagingService: IMessagingService,
+    categoryId?: string // Optional: if not provided, uses default category
   ): Promise<void> {
     await this.em.transactional(async (em) => {
       // 1. Fetch Event
@@ -34,19 +37,48 @@ export class IssueTicketUseCase {
         throw new Error('Event not found');
       }
 
-      // 2. Inventory Check
-      try {
-        event.incrementSold(quantity);
-      } catch (e) {
-        this.logger.warn(`Sold Out for event ${eventId}`);
-        await messagingService.sendMessage(attendeePhone, `❌ Désolé, l'événement '${event.name}' est complet (ou pas assez de places). Votre paiement sera remboursé.`);
-        // TODO: Trigger Refund Logic
-        return;
+      // 2. Resolve Category
+      let category = categoryId 
+        ? await this.categoryRepository.findById(categoryId)
+        : await this.categoryRepository.findDefaultByEventId(eventId);
+      
+      // Fallback: get first category if no default
+      if (!category) {
+        const categories = await this.categoryRepository.findByEventId(eventId);
+        if (categories.length > 0) {
+          category = categories[0];
+        }
       }
 
-      // 3. Create N Tickets
+      // 3. Inventory Check (Category-based if available, else event-level)
+      if (category) {
+        if (!category.canSell(quantity)) {
+          this.logger.warn(`Sold Out for category ${category.name} on event ${eventId}`);
+          await messagingService.sendMessage(attendeePhone, 
+            `❌ Désolé, la catégorie '${category.name}' pour '${event.name}' est complète. Votre paiement sera remboursé.`
+          );
+          return;
+        }
+        category.incrementSold(quantity);
+        await this.categoryRepository.update(category);
+      } else {
+        // Legacy: use event-level capacity
+        try {
+          event.incrementSold(quantity);
+        } catch (e) {
+          this.logger.warn(`Sold Out for event ${eventId}`);
+          await messagingService.sendMessage(attendeePhone, 
+            `❌ Désolé, l'événement '${event.name}' est complet. Votre paiement sera remboursé.`
+          );
+          return;
+        }
+        await this.eventRepository.save(event);
+      }
+
+      // 4. Create N Tickets
       const tickets: Ticket[] = [];
       const qrBuffers: Buffer[] = [];
+      const categoryName = category?.name || 'Standard';
 
       for (let i = 0; i < quantity; i++) {
           const ticketId = uuidv4();
@@ -57,7 +89,10 @@ export class IssueTicketUseCase {
             eventId,
             attendeePhone,
             TicketStatus.VALID,
-            signedPayload
+            signedPayload,
+            new Date(),
+            undefined,
+            category?.id // Link to category
           );
           tickets.push(ticket);
           
@@ -67,18 +102,19 @@ export class IssueTicketUseCase {
           qrBuffers.push(qrBuffer);
       }
 
-      // 4. Persistence
-      await this.eventRepository.save(event);
-
       // 5. Send via platform-agnostic messaging
-      await messagingService.sendMessage(attendeePhone, `✅ Paiement reçu (${amountPaid} FCFA) !\nVoici vos ${quantity} billet(s) pour *${event.name}*.`);
+      const currencyDisplay = process.env.DEFAULT_CURRENCY || 'EUR';
+      const categoryLabel = category ? ` (${categoryName})` : '';
+      await messagingService.sendMessage(attendeePhone, 
+        `✅ Paiement reçu (${amountPaid} ${currencyDisplay}) !\nVoici vos ${quantity} billet(s)${categoryLabel} pour *${event.name}*.`
+      );
 
       for (let i = 0; i < qrBuffers.length; i++) {
            await messagingService.sendDocument(
             attendeePhone,
             qrBuffers[i],
-            `ticket-${event.name}-${i+1}.png`,
-            `🎫 Billet ${i+1}/${quantity}`
+            `ticket-${event.name}-${categoryName}-${i+1}.png`,
+            `🎫 Billet ${i+1}/${quantity} - ${categoryName}`
           );
       }
     });

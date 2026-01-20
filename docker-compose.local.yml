@@ -1,0 +1,101 @@
+version: "3.8"
+
+# LOCAL TESTING - Simulates staging environment
+# Usage: docker compose -f docker-compose.local.yml up --build
+
+services:
+  # DATABASE
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: sikaflow
+      POSTGRES_PASSWORD: localpass123
+      POSTGRES_DB: sikaflow_local
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_local:/var/lib/postgresql/data
+    networks:
+      - sikaflow_local
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sikaflow -d sikaflow_local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # REDIS
+  redis:
+    image: redis:alpine
+    command: redis-server --appendonly yes
+    ports:
+      - "6380:6379"
+    networks:
+      - sikaflow_local
+
+  # BACKEND
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      APP_URL: http://localhost:3000
+      FRONTEND_URL: http://localhost:3001
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: sikaflow
+      DB_PASSWORD: localpass123
+      DB_NAME: sikaflow_local
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # Fake keys for local testing
+      ADMIN_API_KEY: local_admin_key
+      WHATSAPP_PHONE_NUMBER_ID: fake
+      WHATSAPP_ACCESS_TOKEN: fake
+      WHATSAPP_VERIFY_TOKEN: fake
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-fake}
+      GEMINI_MODEL_NAME: gemini-1.5-flash
+      TELEGRAM_BOT_TOKEN: fake
+      BYPASS_SUBSCRIPTION_CHECK: "true"
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - sikaflow_local
+
+  # FRONTEND (Dashboard)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: http://localhost:3000
+    ports:
+      - "3001:3000"
+    networks:
+      - sikaflow_local
+
+  # SCANNER (PWA)
+  scanner:
+    build:
+      context: ./scanner
+      dockerfile: Dockerfile
+    environment:
+      VITE_API_URL: http://localhost:3000
+    ports:
+      - "3002:80"
+    networks:
+      - sikaflow_local
+
+volumes:
+  postgres_local:
+
+networks:
+  sikaflow_local:
+    driver: bridge

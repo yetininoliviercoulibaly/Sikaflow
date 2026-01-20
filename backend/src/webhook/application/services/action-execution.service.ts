@@ -51,8 +51,44 @@ export class ActionExecutionService {
     const { actions, messagingService, user, senderPhoneNumber, messageId, messageBody, platform } = params;
     const organizationId = user?.lastActiveOrganizationId;
 
+    // Intents that don't require ensuring the user exists (Public)
+    const PUBLIC_INTENTS = [
+        LLMIntent.GREETING,
+        LLMIntent.HELP,
+        LLMIntent.CREATE_ORGANIZATION,
+        LLMIntent.UNKNOWN,
+        LLMIntent.START_ONBOARDING,
+        LLMIntent.ONBOARDING_NEXT,
+    ];
+
+    // Intents that explicitly require an active organization
+    const REQUIRES_ORG_INTENTS = [
+        LLMIntent.CREATE_EVENT,
+        LLMIntent.CREATE_TRANSACTION,
+        LLMIntent.REPORT_INCIDENT,
+        LLMIntent.ASK_DATA,
+        LLMIntent.GENERATE_REPORT,
+        LLMIntent.ADD_MEMBER,
+        LLMIntent.CHECK_STOCK,
+        LLMIntent.GENERATE_CLAIM_LINKS,
+    ];
+
     for (const action of actions) {
       try {
+        // [BLOCKER] 0. Check User Existence for protected intents
+        if (!user && !PUBLIC_INTENTS.includes(action.intent as LLMIntent)) {
+             await messagingService.sendMessage(senderPhoneNumber, "⚠️ Vous n'êtes pas reconnu. Veuillez créer une organisation pour commencer : tapez 'Créer organisation'.");
+             this.conversationState.clearPendingAction(senderPhoneNumber);
+             continue;
+        }
+
+        // [BLOCKER] 0.5 Check Organization Selection for organization-bound intents
+        if (user && !organizationId && REQUIRES_ORG_INTENTS.includes(action.intent as LLMIntent)) {
+            await messagingService.sendMessage(senderPhoneNumber, "❌ Aucune organisation active. Veuillez en créer une ou en sélectionner une.");
+            this.conversationState.clearPendingAction(senderPhoneNumber);
+            continue;
+        }
+
         // 1. Check Subscription (unless bypassed)
         const bypassSubscriptionConfig = this.configService.get('BYPASS_SUBSCRIPTION_CHECK') === 'true';
         if (!bypassSubscriptionConfig && !this.BYPASS_INTENTS.includes(action.intent) && organizationId) {
