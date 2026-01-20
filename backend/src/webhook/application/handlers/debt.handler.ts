@@ -88,12 +88,13 @@ export class DebtHandler implements IActionHandler {
     context: ActionContext,
   ): Promise<void> {
     const { senderPhoneNumber, messagingService, user, organizationId } = context;
+    const rawData = data as any;
     // Support both matches (LLM often returns snake_case)
-    const amount = data.amount; 
-    const contactName = data.contactName || data.contact_name;
-    const contactPhone = data.contactPhone || data.contact_phone;
-    const contactContext = data.contactContext || data.contact_context;
-    const currency = data.currency || getCurrency();
+    const amount = rawData.amount; 
+    const contactName = rawData.contactName || rawData.contact_name;
+    const contactPhone = rawData.contactPhone || rawData.contact_phone;
+    const contactContext = rawData.contactContext || rawData.contact_context;
+    const currency = rawData.currency || getCurrency();
 
     if (!amount || !contactName) {
       await messagingService.sendMessage(
@@ -135,12 +136,13 @@ export class DebtHandler implements IActionHandler {
     context: ActionContext,
   ): Promise<void> {
     const { senderPhoneNumber, messagingService, user, organizationId } = context;
+    const rawData = data as any;
     // Support both matches (LLM often returns snake_case)
-    const amount = data.amount;
-    const contactName = data.contactName || data.contact_name;
-    const contactPhone = data.contactPhone || data.contact_phone;
-    const contactContext = data.contactContext || data.contact_context;
-    const currency = data.currency || getCurrency();
+    const amount = rawData.amount;
+    const contactName = rawData.contactName || rawData.contact_name;
+    const contactPhone = rawData.contactPhone || rawData.contact_phone;
+    const contactContext = rawData.contactContext || rawData.contact_context;
+    const currency = rawData.currency || getCurrency();
 
     if (!amount || !contactName) {
       await messagingService.sendMessage(
@@ -249,9 +251,10 @@ export class DebtHandler implements IActionHandler {
     context: ActionContext,
   ): Promise<void> {
     const { senderPhoneNumber, messagingService, user, organizationId } = context;
-    const contactName = data.contactName || data.contact_name;
-    const contactShortId = data.contactShortId || data.contact_short_id;
-    const amount = data.amount;
+    const rawData = data as any;
+    const contactName = rawData.contactName || rawData.contact_name;
+    const contactShortId = rawData.contactShortId || rawData.contact_short_id;
+    const amount = rawData.amount;
 
     const numericAmount = amount ? parseFloat(amount) : undefined;
     if (numericAmount !== undefined && (isNaN(numericAmount) || numericAmount <= 0)) {
