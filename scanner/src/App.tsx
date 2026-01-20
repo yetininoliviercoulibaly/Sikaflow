@@ -90,9 +90,14 @@ function App() {
     setIsPaused(false);
   }, []);
 
-  // NOTE: Auto-dismiss removed intentionally.
-  // User must tap "Appuyez pour continuer" to dismiss the result.
-  // This prevents infinite rescan loops when the same QR is still in frame.
+  // Smart auto-dismiss: triggered when QR is removed from camera view
+  // User can also tap to dismiss manually
+  const handleQrRemoved = useCallback(() => {
+    // Only auto-dismiss if we have a result showing
+    if (lastResult) {
+      handleDismiss();
+    }
+  }, [lastResult, handleDismiss]);
 
   const handleLogout = useCallback(() => {
     scannerService.clearToken();
@@ -152,7 +157,11 @@ function App() {
       </div>
 
       <main className="main">
-        <QRScanner onScan={handleScan} isPaused={isPaused || isValidating} />
+        <QRScanner 
+          onScan={handleScan} 
+          onQrRemoved={handleQrRemoved}
+          isPaused={isPaused || isValidating} 
+        />
       </main>
 
       <ValidationResult result={lastResult} onDismiss={handleDismiss} />
