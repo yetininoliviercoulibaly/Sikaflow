@@ -19,6 +19,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AuthModule } from './auth/auth.module';
+import { ContactModule } from './contact/contact.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { AuthModule } from './auth/auth.module';
     PaymentModule,
     FeedbackModule,
     OnboardingModule,
+    ContactModule, // Added specific module
     EventEmitterModule.forRoot(),
     AuthModule,
   ],

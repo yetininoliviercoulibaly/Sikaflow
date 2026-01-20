@@ -114,5 +114,30 @@ describe('CommandIntentMapper', () => {
             data: { transactionId: 'tx-123' },
         });
     });
+
+    // Debt Recovery Tests
+    it('should map CMD_ADD_DEBT to ADD_DEBT intent', () => {
+      const result = mapper.map('CMD_ADD_DEBT');
+      expect(result).toEqual({ intent: LLMIntent.ADD_DEBT, data: {} });
+    });
+
+    it('should map CMD_LIST_DEBTS to LIST_DEBTS intent', () => {
+      const result = mapper.map('CMD_LIST_DEBTS');
+      expect(result).toEqual({ intent: LLMIntent.LIST_DEBTS, data: {} });
+    });
+
+    it('should map CMD_LIST_CREDITS to LIST_CREDITS intent', () => {
+      const result = mapper.map('CMD_LIST_CREDITS');
+      expect(result).toEqual({ intent: LLMIntent.LIST_CREDITS, data: {} });
+    });
+
+    it('should map CMD_SETTLE_DEBT to SETTLE_DEBT intent', () => {
+      const result = mapper.map('CMD_SETTLE_DEBT');
+      expect(result).toEqual({
+        intent: LLMIntent.SETTLE_DEBT,
+        data: {},
+        missing_fields: ['contact_name', 'amount'],
+      });
+    });
   });
 });
