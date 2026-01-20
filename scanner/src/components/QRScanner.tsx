@@ -15,7 +15,7 @@ export function QRScanner({ onScan, isPaused = false }: QRScannerProps) {
   const lastScannedRef = useRef<string>('');
   const lastScanTimeRef = useRef<number>(0);
 
-  const SCAN_COOLDOWN = 2000;
+  const SCAN_COOLDOWN = 30000; // 30 seconds - prevents rescanning same QR too soon
 
   const handleScan = useCallback((decodedText: string) => {
     const now = Date.now();
