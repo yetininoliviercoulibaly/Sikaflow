@@ -97,4 +97,36 @@ describe('DebtHandler', () => {
       expect(mockContactRepo.searchByName).toHaveBeenCalledWith('user1', 'Roland Camel', 1);
     });
   });
+
+  describe('handleListDebts', () => {
+    it('should calculate totalOwed correctly using numeric summation and incorrect string types', async () => {
+       const context: ActionContext = {
+         senderPhoneNumber: '123456789',
+         messagingService: mockMessaging,
+         user: { id: 'user1' } as any,
+         platform: MessagingPlatforms.TELEGRAM,
+       } as ActionContext;
+
+       // Simulate repository returning numbers as strings (or mix)
+       const contacts = [
+         { displayName: 'Alice', totalOwed: '50', lastInteractionAt: new Date() },
+         { displayName: 'Bob', totalOwed: 100, lastInteractionAt: new Date() },
+       ];
+       mockContactRepo.findWithPendingDebts.mockResolvedValue(contacts);
+
+       await handler.handle({ intent: DebtIntents.LIST_DEBTS }, context);
+
+       // Expect 150 (50+100), not 50100
+       // We check if the message contains "150" formatted
+       expect(mockMessaging.sendMessage).toHaveBeenCalledWith(
+           '123456789',
+           expect.stringMatching(/Total : 150/)
+       );
+       // Check for Currency (default EUR)
+       expect(mockMessaging.sendMessage).toHaveBeenCalledWith(
+           '123456789',
+           expect.stringMatching(/EUR/)
+       );
+    });
+  });
 });

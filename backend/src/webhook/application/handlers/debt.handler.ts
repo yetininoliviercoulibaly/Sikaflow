@@ -195,7 +195,10 @@ export class DebtHandler implements IActionHandler {
       return;
     }
 
-    const totalOwed = contacts.reduce((sum, c) => sum + c.totalOwed, 0);
+    // Ensure numeric conversion to avoid string concatenation
+    const totalOwed = contacts.reduce((sum, c) => sum + Number(c.totalOwed), 0); 
+    const currency = getCurrency();
+
     const list = contacts
       .slice(0, 10) // Limit to 10 for readability
       .map((c, i) => {
@@ -203,7 +206,7 @@ export class DebtHandler implements IActionHandler {
           (Date.now() - c.lastInteractionAt.getTime()) / (1000 * 60 * 60 * 24),
         );
         const alert = daysSince > 14 ? ' ⚠️' : '';
-        return `${i + 1}. ${c.displayName} : *${c.totalOwed.toLocaleString('fr-FR')}F*${alert}`;
+        return `${i + 1}. ${c.displayName} : *${Number(c.totalOwed).toLocaleString('fr-FR')} ${currency}*${alert}`;
       })
       .join('\n');
 
@@ -211,7 +214,7 @@ export class DebtHandler implements IActionHandler {
 
     await messagingService.sendMessage(
       senderPhoneNumber,
-      `📋 *Créances en cours* (${contacts.length} contacts)\n\n${list}${moreCount}\n\n💰 *Total : ${totalOwed.toLocaleString('fr-FR')}F*\n\n💡 Répondez "Relance [nom]" pour envoyer un rappel.`,
+      `📋 *Créances en cours* (${contacts.length} contacts)\n\n${list}${moreCount}\n\n💰 *Total : ${totalOwed.toLocaleString('fr-FR')} ${currency}*\n\n💡 Répondez "Relance [nom]" pour envoyer un rappel.`,
     );
   }
 
@@ -232,14 +235,17 @@ export class DebtHandler implements IActionHandler {
       return;
     }
 
-    const totalOwing = withCredits.reduce((sum, c) => sum + c.totalOwing, 0);
+    const currency = getCurrency();
+
+    // Ensure numeric conversion
+    const totalOwing = withCredits.reduce((sum, c) => sum + Number(c.totalOwing), 0);
     const list = withCredits
-      .map((c, i) => `${i + 1}. ${c.displayName} : *${c.totalOwing.toLocaleString('fr-FR')}F*`)
+      .map((c, i) => `${i + 1}. ${c.displayName} : *${Number(c.totalOwing).toLocaleString('fr-FR')} ${currency}*`)
       .join('\n');
 
     await messagingService.sendMessage(
       senderPhoneNumber,
-      `📋 *Vos dettes*\n\n${list}\n\n💸 *Total : ${totalOwing.toLocaleString('fr-FR')}F*`,
+      `📋 *Vos dettes*\n\n${list}\n\n💸 *Total : ${totalOwing.toLocaleString('fr-FR')} ${currency}*`,
     );
   }
 
