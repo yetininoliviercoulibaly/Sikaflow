@@ -7,6 +7,7 @@ export interface ITicketRepository {
   save(ticket: Ticket): Promise<void>;
   findById(id: string): Promise<Ticket | null>;
   findByEventId(eventId: string): Promise<Ticket[]>;
+  findByEventIds(eventIds: string[]): Promise<Ticket[]>;
   findByToken(token: string): Promise<Ticket | null>;
   findLastTicketForPhone(phone: string): Promise<Ticket | null>;
 }
