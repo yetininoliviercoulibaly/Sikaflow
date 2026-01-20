@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { ContactOrmEntity } from './infrastructure/persistence/contact.orm-entity';
+import { ContactSchema } from './infrastructure/persistence/contact.schema';
 import { MikroOrmContactRepository } from './infrastructure/persistence/mikro-orm-contact.repository';
 import { I_CONTACT_REPOSITORY } from './domain/ports/contact.repository.interface';
 import { DebtReminderJob } from './application/jobs/debt-reminder.job';
@@ -9,7 +9,7 @@ import { MessagingModule } from '../common/messaging/messaging.module';
 
 @Module({
   imports: [
-    MikroOrmModule.forFeature([ContactOrmEntity]),
+    MikroOrmModule.forFeature([ContactSchema]),
     UserModule,
     MessagingModule,
   ],
