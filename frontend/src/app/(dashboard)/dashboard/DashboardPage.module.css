@@ -1,0 +1,214 @@
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.title h1 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 0.25rem;
+}
+
+.title p {
+  color: var(--color-text-muted);
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.statsGrid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(1, 1fr);
+}
+
+@media (min-width: 768px) {
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .statsGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.mainGrid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .mainGrid {
+    grid-template-columns: repeat(7, 1fr);
+  }
+}
+
+.recentActivity {
+  grid-column: span 1;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .recentActivity {
+    grid-column: span 4;
+  }
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.sectionHeader h3 {
+  font-weight: 600;
+  font-size: 1.125rem;
+}
+
+.link {
+  font-size: 0.875rem;
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.activityList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.activityItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  transition: background-color var(--transition-fast);
+}
+
+.activityItem:hover {
+  background-color: var(--color-bg);
+}
+
+.activityInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.iconWrapper {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.incomeIcon {
+  background-color: hsla(150, 60%, 45%, 0.1);
+  color: var(--color-success);
+}
+
+.expenseIcon {
+  background-color: hsla(0, 70%, 60%, 0.1);
+  color: var(--color-error);
+}
+
+.scanIcon {
+  background-color: hsla(210, 100%, 50%, 0.1);
+  color: #3b82f6;
+}
+
+.activityText p:first-child {
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.activityText p:last-child {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.amount {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.amountIncome {
+  color: var(--color-success);
+}
+
+.amountExpense {
+  color: var(--color-error);
+}
+
+.amountNeutral {
+  color: var(--color-text-muted);
+}
+
+.performanceCard {
+  grid-column: span 1;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .performanceCard {
+    grid-column: span 3;
+  }
+}
+
+.performanceIcon {
+  padding: 1rem;
+  background-color: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.1);
+  color: var(--color-primary);
+  border-radius: 50%;
+  margin-bottom: 0.5rem;
+}
+
+.performanceCard h3 {
+  font-weight: 600;
+  font-size: 1.125rem;
+}
+
+.performanceCard p {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  max-width: 250px;
+}
+
+.highlight {
+  color: var(--color-success);
+  font-weight: 700;
+}

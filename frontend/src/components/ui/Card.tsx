@@ -1,5 +1,6 @@
 import * as React from "react"
-import { cn } from "@/lib/utils"
+import { clsx } from "clsx"
+import styles from "./Card.module.css"
 
 const Card = React.forwardRef<
   HTMLDivElement,
@@ -7,10 +8,10 @@ const Card = React.forwardRef<
 >(({ className, glass, hoverable, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn(
-      "rounded-xl border bg-card text-card-foreground shadow",
-      glass && "bg-white/50 dark:bg-slate-950/50 backdrop-blur-md border-white/20 dark:border-slate-800/50",
-      hoverable && "transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer",
+    className={clsx(
+      styles.card,
+      glass && styles.glass,
+      hoverable && styles.hoverable,
       className
     )}
     {...props}
@@ -24,7 +25,7 @@ const CardHeader = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex flex-col space-y-1.5 p-6", className)}
+    className={clsx(styles.cardHeader, className)}
     {...props}
   />
 ))
@@ -36,7 +37,7 @@ const CardTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <h3
     ref={ref}
-    className={cn("font-semibold leading-none tracking-tight", className)}
+    className={clsx(styles.cardTitle, className)}
     {...props}
   />
 ))
@@ -48,7 +49,7 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("text-sm text-muted-foreground", className)}
+    className={clsx(styles.cardDescription, className)}
     {...props}
   />
 ))
@@ -58,7 +59,7 @@ const CardContent = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
+  <div ref={ref} className={clsx(styles.cardContent, className)} {...props} />
 ))
 CardContent.displayName = "CardContent"
 
@@ -68,7 +69,7 @@ const CardFooter = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex items-center p-6 pt-0", className)}
+    className={clsx(styles.cardFooter, className)}
     {...props}
   />
 ))

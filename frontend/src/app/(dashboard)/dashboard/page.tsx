@@ -5,6 +5,7 @@ import { AnimatedCard } from '@/components/ui/AnimatedCard';
 import { Wallet, Users, QrCode, AlertCircle, TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
+import styles from './DashboardPage.module.css';
 
 // Mock Data
 const STATS = [
@@ -32,29 +33,20 @@ export default function DashboardPage() {
     }
   };
 
-  const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 }
-  };
-
   return (
-    <div className="space-y-8 p-8 max-w-7xl mx-auto">
+    <div className={styles.container}>
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-            Tableau de Bord
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Aperçu en temps réel de votre activité.
-          </p>
+      <div className={styles.header}>
+        <div className={styles.title}>
+          <h1>Tableau de Bord</h1>
+          <p>Aperçu en temps réel de votre activité.</p>
         </div>
-        <div className="flex gap-2">
-            <Button variant="outline" className="gap-2">
-                <AlertCircle size={16} /> Rapport
+        <div className={styles.actions}>
+            <Button variant="outline" startIcon={<AlertCircle size={16} />}>
+                 Rapport
             </Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2 shadow-lg hover:shadow-indigo-500/25 transition-all">
-                <QrCode size={16} /> Scanner
+            <Button variant="primary" startIcon={<QrCode size={16} />}>
+                 Scanner
             </Button>
         </div>
       </div>
@@ -64,7 +56,7 @@ export default function DashboardPage() {
         variants={container}
         initial="hidden"
         animate="show"
-        className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
+        className={styles.statsGrid}
       >
         {STATS.map((stat, i) => (
           <AnimatedCard 
@@ -76,44 +68,44 @@ export default function DashboardPage() {
       </motion.div>
 
       {/* Main Content Grid */}
-      <div className="grid gap-4 md:grid-cols-7">
+      <div className={styles.mainGrid}>
         
         {/* Recent Activity */}
         <motion.div 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4, duration: 0.5 }}
-            className="col-span-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-950/50 backdrop-blur-sm p-6 shadow-sm"
+            className={styles.recentActivity}
         >
-            <div className="flex justify-between items-center mb-6">
-                <h3 className="font-semibold text-lg">Activité Récente</h3>
-                <Link href="#" className="text-sm text-indigo-500 hover:text-indigo-400 flex items-center gap-1">
+            <div className={styles.sectionHeader}>
+                <h3>Activité Récente</h3>
+                <Link href="#" className={styles.link}>
                     Voir tout <ArrowRight size={14} />
                 </Link>
             </div>
             
-            <div className="space-y-4">
+            <div className={styles.activityList}>
                 {RECENT_ACTIVITY.map((act) => (
-                    <div key={act.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-100/50 dark:hover:bg-slate-900/50 transition-colors group cursor-pointer border border-transparent hover:border-slate-200 dark:hover:border-slate-800">
-                        <div className="flex items-center gap-4">
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                                act.type === 'INCOME' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' :
-                                act.type === 'EXPENSE' ? 'bg-rose-100 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400' :
-                                'bg-blue-100 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'
+                    <div key={act.id} className={styles.activityItem}>
+                        <div className={styles.activityInfo}>
+                            <div className={`${styles.iconWrapper} ${
+                                act.type === 'INCOME' ? styles.incomeIcon :
+                                act.type === 'EXPENSE' ? styles.expenseIcon :
+                                styles.scanIcon
                             }`}>
                                 {act.type === 'INCOME' && <TrendingUp size={18} />}
                                 {act.type === 'EXPENSE' && <TrendingDown size={18} />}
                                 {act.type === 'SCAN' && <QrCode size={18} />}
                             </div>
-                            <div>
-                                <p className="font-medium text-sm group-hover:text-indigo-600 transition-colors">{act.desc}</p>
-                                <p className="text-xs text-muted-foreground">{act.time}</p>
+                            <div className={styles.activityText}>
+                                <p>{act.desc}</p>
+                                <p>{act.time}</p>
                             </div>
                         </div>
-                        <div className={`font-semibold text-sm ${
-                             act.type === 'INCOME' ? 'text-emerald-600 dark:text-emerald-400' :
-                             act.type === 'EXPENSE' ? 'text-rose-600 dark:text-rose-400' :
-                             'text-slate-600 dark:text-slate-400'
+                        <div className={`${styles.amount} ${
+                             act.type === 'INCOME' ? styles.amountIncome :
+                             act.type === 'EXPENSE' ? styles.amountExpense :
+                             styles.amountNeutral
                         }`}>
                             {act.amount}
                         </div>
@@ -127,16 +119,16 @@ export default function DashboardPage() {
              initial={{ opacity: 0, x: 20 }}
              animate={{ opacity: 1, x: 0 }}
              transition={{ delay: 0.5, duration: 0.5 }}
-             className="col-span-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-950/50 backdrop-blur-sm p-6 shadow-sm flex flex-col justify-center items-center text-center space-y-4"
+             className={styles.performanceCard}
         >
-            <div className="p-4 bg-indigo-50 dark:bg-indigo-500/10 rounded-full text-indigo-600 dark:text-indigo-400 mb-2">
+            <div className={styles.performanceIcon}>
                 <TrendingUp size={32} />
             </div>
-            <h3 className="font-semibold text-lg">Performance Hebdomadaire</h3>
-            <p className="text-sm text-muted-foreground max-w-[250px]">
-                Vos revenus sont en hausse de <span className="text-emerald-500 font-bold">12%</span> cette semaine. Continuez comme ça !
+            <h3>Performance Hebdomadaire</h3>
+            <p>
+                Vos revenus sont en hausse de <span className={styles.highlight}>12%</span> cette semaine. Continuez comme ça !
             </p>
-            <Button variant="outline" className="mt-4 w-full">Voir les détails</Button>
+            <Button variant="outline" fullWidth style={{ marginTop: '1rem' }}>Voir les détails</Button>
         </motion.div>
       </div>
     </div>
