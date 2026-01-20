@@ -29,10 +29,6 @@ export class ActionExecutionService {
     LLMIntent.UNKNOWN,
     LLMIntent.GREETING,
     LLMIntent.CREATE_ORGANIZATION,
-    LLMIntent.ACTIVATE_EVENT_PASS,
-    LLMIntent.UNKNOWN,
-    LLMIntent.GREETING,
-    LLMIntent.CREATE_ORGANIZATION,
     LLMIntent.HELP,
     LLMIntent.SUBSCRIBE,
     LLMIntent.SUBSCRIBE_MONTHLY
@@ -71,6 +67,12 @@ export class ActionExecutionService {
         LLMIntent.ADD_MEMBER,
         LLMIntent.CHECK_STOCK,
         LLMIntent.GENERATE_CLAIM_LINKS,
+        LLMIntent.ADD_DEBT,
+        LLMIntent.ADD_CREDIT,
+        LLMIntent.LIST_DEBTS,
+        LLMIntent.LIST_CREDITS,
+        LLMIntent.SETTLE_DEBT,
+        LLMIntent.SEND_REMINDER,
     ];
 
     for (const action of actions) {
