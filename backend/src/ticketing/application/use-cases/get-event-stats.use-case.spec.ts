@@ -5,9 +5,12 @@ import { I_EVENT_REPOSITORY } from '../../domain/ports/event.repository.interfac
 import { NotFoundException } from '@nestjs/common';
 import { UserRole } from '../../../organization/domain/organization-member.entity';
 
+import { I_PERMISSION_SERVICE } from '../../domain/services/permission.service';
+
 describe('GetEventStatsUseCase', () => {
   let useCase: GetEventStatsUseCase;
   let eventRepository: any;
+  let permissionService: any;
 
   const mockEvent = {
     id: 'evt-1',
@@ -22,11 +25,15 @@ describe('GetEventStatsUseCase', () => {
     eventRepository = {
       findById: jest.fn(),
     };
+    permissionService = {
+      verifyEventOwnership: jest.fn(),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         GetEventStatsUseCase,
         { provide: I_EVENT_REPOSITORY, useValue: eventRepository },
+        { provide: I_PERMISSION_SERVICE, useValue: permissionService },
       ],
     }).compile();
 
@@ -35,6 +42,7 @@ describe('GetEventStatsUseCase', () => {
 
   it('should return stats when event found and user owns it', async () => {
     eventRepository.findById.mockResolvedValue(mockEvent);
+    permissionService.verifyEventOwnership.mockImplementation(() => {});
 
     const result = await useCase.execute('evt-1', 'org-1');
 
@@ -44,6 +52,7 @@ describe('GetEventStatsUseCase', () => {
       remainingCapacity: 80,
       revenue: 1000,
     });
+    expect(permissionService.verifyEventOwnership).toHaveBeenCalled();
   });
 
   it('should throw NotFoundException if event not found', async () => {
@@ -54,12 +63,14 @@ describe('GetEventStatsUseCase', () => {
 
   it('should throw NotFoundException if user does not own event (hiding existence)', async () => {
     eventRepository.findById.mockResolvedValue(mockEvent);
+    permissionService.verifyEventOwnership.mockImplementation(() => { throw new Error('Forbidden'); });
 
     await expect(useCase.execute('evt-1', 'other-org')).rejects.toThrow(NotFoundException);
   });
 
   it('should return stats for admin even if org mismatch', async () => {
     eventRepository.findById.mockResolvedValue(mockEvent);
+    permissionService.verifyEventOwnership.mockImplementation(() => {});
 
     const result = await useCase.execute('evt-1', 'other-org', UserRole.ADMIN);
     expect(result).toBeDefined();

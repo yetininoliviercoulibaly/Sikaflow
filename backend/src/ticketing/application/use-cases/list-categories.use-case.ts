@@ -4,6 +4,7 @@ import { IEventRepository, I_EVENT_REPOSITORY } from '../../domain/ports/event.r
 import { TicketCategory } from '../../domain/ticket-category.entity';
 
 import { UserRole } from '../../../organization/domain/organization-member.entity';
+import { I_PERMISSION_SERVICE, IPermissionService } from '../../domain/services/permission.service';
 
 @Injectable()
 export class ListCategoriesUseCase {
@@ -12,6 +13,8 @@ export class ListCategoriesUseCase {
     private readonly categoryRepository: ITicketCategoryRepository,
     @Inject(I_EVENT_REPOSITORY)
     private readonly eventRepository: IEventRepository,
+    @Inject(I_PERMISSION_SERVICE)
+    private readonly permissionService: IPermissionService,
   ) {}
 
   async execute(eventId: string, organizationId: string, userRole?: UserRole): Promise<TicketCategory[]> {
@@ -20,11 +23,7 @@ export class ListCategoriesUseCase {
       throw new Error('Event not found');
     }
 
-    if (userRole !== UserRole.ADMIN && event.organizationId !== organizationId) {
-      // Forbidden - either throw error or return empty array depending on requirement.
-      // PR feedback suggests verification, so throwing is safer.
-      throw new Error('Forbidden: You do not own this event');
-    }
+    this.permissionService.verifyEventOwnership(event, organizationId, userRole);
 
     return this.categoryRepository.findByEventId(eventId);
   }

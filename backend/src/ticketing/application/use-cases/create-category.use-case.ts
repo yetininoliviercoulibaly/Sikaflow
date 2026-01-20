@@ -4,6 +4,7 @@ import { IEventRepository, I_EVENT_REPOSITORY } from '../../domain/ports/event.r
 import { TicketCategory } from '../../domain/ticket-category.entity';
 
 import { UserRole } from '../../../organization/domain/organization-member.entity';
+import { I_PERMISSION_SERVICE, IPermissionService } from '../../domain/services/permission.service';
 
 export interface CreateCategoryDto {
   name: string;
@@ -22,6 +23,8 @@ export class CreateCategoryUseCase {
     private readonly categoryRepository: ITicketCategoryRepository,
     @Inject(I_EVENT_REPOSITORY)
     private readonly eventRepository: IEventRepository,
+    @Inject(I_PERMISSION_SERVICE)
+    private readonly permissionService: IPermissionService,
   ) {}
 
   async execute(eventId: string, dto: CreateCategoryDto, organizationId: string, userRole?: UserRole): Promise<TicketCategory> {
@@ -31,9 +34,7 @@ export class CreateCategoryUseCase {
       throw new Error('Event not found');
     }
 
-    if (userRole !== UserRole.ADMIN && event.organizationId !== organizationId) {
-      throw new Error('Forbidden: You do not own this event');
-    }
+    this.permissionService.verifyEventOwnership(event, organizationId, userRole);
 
     // If this is marked as default, unset other defaults (bulk update)
     if (dto.isDefault) {

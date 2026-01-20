@@ -111,8 +111,12 @@ export class CategoryController {
   async update(
     @Param('categoryId') categoryId: string,
     @Body() dto: UpdateCategoryRequestDto,
+    @Req() req: any,
   ) {
-    await this.updateCategoryUseCase.execute(categoryId, dto);
+    const orgId = req.user.orgId;
+    const userRole = req.user.role;
+    if (!orgId) throw new UnauthorizedException('Organization ID missing in token');
+    await this.updateCategoryUseCase.execute(categoryId, dto, orgId, userRole);
   }
 
   @Delete(':categoryId')
@@ -123,8 +127,14 @@ export class CategoryController {
   @ApiParam({ name: 'categoryId', description: 'Category ID' })
   @ApiResponse({ status: 204, description: 'Category deleted' })
   @ApiResponse({ status: 400, description: 'Cannot delete - tickets already sold' })
-  async delete(@Param('categoryId') categoryId: string) {
-    await this.deleteCategoryUseCase.execute(categoryId);
+  async delete(
+    @Param('categoryId') categoryId: string,
+    @Req() req: any,
+  ) {
+    const orgId = req.user.orgId;
+    const userRole = req.user.role;
+    if (!orgId) throw new UnauthorizedException('Organization ID missing in token');
+    await this.deleteCategoryUseCase.execute(categoryId, orgId, userRole);
   }
 
   @Post(':categoryId/set-default')

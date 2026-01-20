@@ -1,14 +1,14 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { SetDefaultCategoryUseCase } from './set-default-category.use-case';
+import { DeleteCategoryUseCase } from './delete-category.use-case';
 import { I_TICKET_CATEGORY_REPOSITORY } from '../../domain/ports/ticket-category.repository.interface';
-import { TicketCategory } from '../../domain/ticket-category.entity';
 import { I_EVENT_REPOSITORY } from '../../domain/ports/event.repository.interface';
-import { UserRole } from '../../../organization/domain/organization-member.entity';
 import { I_PERMISSION_SERVICE } from '../../domain/services/permission.service';
+import { TicketCategory } from '../../domain/ticket-category.entity';
+import { UserRole } from '../../../organization/domain/organization-member.entity';
 
-describe('SetDefaultCategoryUseCase', () => {
-  let useCase: SetDefaultCategoryUseCase;
+describe('DeleteCategoryUseCase', () => {
+  let useCase: DeleteCategoryUseCase;
   let categoryRepository: any;
   let eventRepository: any;
   let permissionService: any;
@@ -16,9 +16,7 @@ describe('SetDefaultCategoryUseCase', () => {
   beforeEach(async () => {
     categoryRepository = {
       findById: jest.fn(),
-      unsetDefaultForEvent: jest.fn(),
-      update: jest.fn(),
-      findByEventId: jest.fn(),
+      delete: jest.fn(),
     };
     eventRepository = {
       findById: jest.fn(),
@@ -29,20 +27,19 @@ describe('SetDefaultCategoryUseCase', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        SetDefaultCategoryUseCase,
+        DeleteCategoryUseCase,
         { provide: I_TICKET_CATEGORY_REPOSITORY, useValue: categoryRepository },
         { provide: I_EVENT_REPOSITORY, useValue: eventRepository },
         { provide: I_PERMISSION_SERVICE, useValue: permissionService },
       ],
     }).compile();
 
-    useCase = module.get<SetDefaultCategoryUseCase>(SetDefaultCategoryUseCase);
+    useCase = module.get<DeleteCategoryUseCase>(DeleteCategoryUseCase);
   });
 
-  it('should set category as default and unset others', async () => {
+  it('should delete category when found and user owns event', async () => {
     const category = new TicketCategory('evt-1', 'VIP', 100, 100);
     category.id = 'cat-1';
-    category.isDefault = false;
     
     categoryRepository.findById.mockResolvedValue(category);
     eventRepository.findById.mockResolvedValue({ id: 'evt-1', organizationId: 'org-1' });
@@ -50,9 +47,7 @@ describe('SetDefaultCategoryUseCase', () => {
 
     await useCase.execute('cat-1', 'org-1');
 
-    expect(categoryRepository.unsetDefaultForEvent).toHaveBeenCalledWith('evt-1');
-    expect(category.isDefault).toBe(true);
-    expect(categoryRepository.update).toHaveBeenCalledWith(category);
+    expect(categoryRepository.delete).toHaveBeenCalledWith('cat-1');
     expect(permissionService.verifyEventOwnership).toHaveBeenCalled();
   });
 
@@ -79,7 +74,7 @@ describe('SetDefaultCategoryUseCase', () => {
     await expect(useCase.execute('cat-1', 'org-1')).rejects.toThrow('Forbidden');
   });
 
-  it('should allow admin to set default even if org mismatch', async () => {
+  it('should allow admin to delete category even if org mismatch', async () => {
     const category = new TicketCategory('evt-1', 'VIP', 100, 100);
     category.id = 'cat-1';
     
@@ -89,6 +84,18 @@ describe('SetDefaultCategoryUseCase', () => {
 
     await useCase.execute('cat-1', 'org-1', UserRole.ADMIN);
 
-    expect(categoryRepository.unsetDefaultForEvent).toHaveBeenCalledWith('evt-1');
+    expect(categoryRepository.delete).toHaveBeenCalledWith('cat-1');
+  });
+
+  it('should throw error if tickets are already sold', async () => {
+    const category = new TicketCategory('evt-1', 'VIP', 100, 100);
+    category.id = 'cat-1';
+    category.soldCount = 5; // Simulating sold tickets
+    
+    categoryRepository.findById.mockResolvedValue(category);
+    eventRepository.findById.mockResolvedValue({ id: 'evt-1', organizationId: 'org-1' });
+    permissionService.verifyEventOwnership.mockImplementation(() => {});
+
+    await expect(useCase.execute('cat-1', 'org-1')).rejects.toThrow("Cannot delete category 'VIP': 5 tickets already sold");
   });
 });

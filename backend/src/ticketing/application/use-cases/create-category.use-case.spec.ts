@@ -6,11 +6,13 @@ import { I_EVENT_REPOSITORY } from '../../domain/ports/event.repository.interfac
 import { TicketCategory } from '../../domain/ticket-category.entity';
 import { NotFoundException } from '@nestjs/common';
 import { UserRole } from '../../../organization/domain/organization-member.entity';
+import { I_PERMISSION_SERVICE } from '../../domain/services/permission.service';
 
 describe('CreateCategoryUseCase', () => {
   let useCase: CreateCategoryUseCase;
   let categoryRepository: any;
   let eventRepository: any;
+  let permissionService: any;
 
   beforeEach(async () => {
     categoryRepository = {
@@ -21,12 +23,16 @@ describe('CreateCategoryUseCase', () => {
     eventRepository = {
       findById: jest.fn(),
     };
+    permissionService = {
+      verifyEventOwnership: jest.fn(),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CreateCategoryUseCase,
         { provide: I_TICKET_CATEGORY_REPOSITORY, useValue: categoryRepository },
         { provide: I_EVENT_REPOSITORY, useValue: eventRepository },
+        { provide: I_PERMISSION_SERVICE, useValue: permissionService },
       ],
     }).compile();
 
@@ -35,6 +41,8 @@ describe('CreateCategoryUseCase', () => {
 
   it('should create a category successfully', async () => {
     eventRepository.findById.mockResolvedValue({ id: 'evt-1', organizationId: 'org-1' });
+    // Permission service should not throw
+    permissionService.verifyEventOwnership.mockImplementation(() => {});
     const dto: CreateCategoryDto = {
       name: 'VIP',
       price: 5000,
@@ -45,10 +53,12 @@ describe('CreateCategoryUseCase', () => {
 
     const result = await useCase.execute('evt-1', dto, 'org-1');
 
+
     expect(result).toBeInstanceOf(TicketCategory);
     expect(result.name).toBe('VIP');
     expect(result.price).toBe(5000);
     expect(categoryRepository.save).toHaveBeenCalled();
+    expect(permissionService.verifyEventOwnership).toHaveBeenCalled();
   });
 
   it('should handle isDefault=true by unsetting others', async () => {
@@ -64,6 +74,7 @@ describe('CreateCategoryUseCase', () => {
 
     expect(categoryRepository.unsetDefaultForEvent).toHaveBeenCalledWith('evt-1');
     expect(categoryRepository.save).toHaveBeenCalledWith(expect.objectContaining({ isDefault: true }));
+    expect(permissionService.verifyEventOwnership).toHaveBeenCalled();
   });
 
   it('should throw error if event does not exist', async () => {
@@ -75,6 +86,7 @@ describe('CreateCategoryUseCase', () => {
 
   it('should throw error if user does not own event', async () => {
     eventRepository.findById.mockResolvedValue({ id: 'evt-1', organizationId: 'other-org' });
+    permissionService.verifyEventOwnership.mockImplementation(() => { throw new Error('Forbidden: You do not own this event'); });
     const dto: CreateCategoryDto = { name: 'VIP', price: 10, capacity: 10 };
 
     await expect(useCase.execute('evt-1', dto, 'org-1')).rejects.toThrow('Forbidden');
@@ -89,12 +101,18 @@ describe('CreateCategoryUseCase', () => {
       benefits: ['Lounge'],
       isDefault: false,
     };
+    
+    // In this case, verifyEventOwnership should NOT throw if the user is ADMIN
+    // But since we are mocking it, we simply verify it IS called with correct args
+    
+    // We can rely on the real service logic in integration tests, or mock the expected behavior here.
+    // If we mock it to do nothing (success), then we test that the rest of flow proceeds.
+    permissionService.verifyEventOwnership.mockImplementation(() => {});
 
-    // Simulate Admin role (assuming UserRole.ADMIN is mapped to 'ADMIN' string or similar, but strict typing requires enum)
-    // Since we can't import UserRole easily in this test context without relative paths, and we just modified source to use it.
-    // We should import UserRole in the spec file too.
     const result = await useCase.execute('evt-1', dto, 'org-1', UserRole.ADMIN);
 
     expect(result).toBeInstanceOf(TicketCategory);
+    expect(permissionService.verifyEventOwnership).toHaveBeenCalled();
   });
 });
+

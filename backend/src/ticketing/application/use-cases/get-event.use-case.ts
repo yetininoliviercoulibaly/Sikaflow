@@ -3,12 +3,15 @@ import { IEventRepository, I_EVENT_REPOSITORY } from '../../domain/ports/event.r
 import { Event } from '../../domain/event.entity';
 
 import { UserRole } from '../../../organization/domain/organization-member.entity';
+import { I_PERMISSION_SERVICE, IPermissionService } from '../../domain/services/permission.service';
 
 @Injectable()
 export class GetEventUseCase {
   constructor(
     @Inject(I_EVENT_REPOSITORY)
     private readonly eventRepository: IEventRepository,
+    @Inject(I_PERMISSION_SERVICE)
+    private readonly permissionService: IPermissionService,
   ) {}
 
   async execute(eventId: string, organizationId: string, userRole?: UserRole): Promise<Event> {
@@ -17,7 +20,9 @@ export class GetEventUseCase {
       throw new NotFoundException('Event not found');
     }
 
-    if (userRole !== UserRole.ADMIN && event.organizationId !== organizationId) {
+    try {
+      this.permissionService.verifyEventOwnership(event, organizationId, userRole);
+    } catch (e) {
       throw new NotFoundException('Event not found'); // Use 404 to hide existence
     }
 

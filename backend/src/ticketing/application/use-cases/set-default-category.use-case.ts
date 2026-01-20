@@ -3,6 +3,7 @@ import { ITicketCategoryRepository, I_TICKET_CATEGORY_REPOSITORY } from '../../d
 import { IEventRepository, I_EVENT_REPOSITORY } from '../../domain/ports/event.repository.interface';
 
 import { UserRole } from '../../../organization/domain/organization-member.entity';
+import { I_PERMISSION_SERVICE, IPermissionService } from '../../domain/services/permission.service';
 
 @Injectable()
 export class SetDefaultCategoryUseCase {
@@ -13,6 +14,8 @@ export class SetDefaultCategoryUseCase {
     private readonly categoryRepository: ITicketCategoryRepository,
     @Inject(I_EVENT_REPOSITORY)
     private readonly eventRepository: IEventRepository,
+    @Inject(I_PERMISSION_SERVICE)
+    private readonly permissionService: IPermissionService,
   ) {}
 
   async execute(categoryId: string, organizationId: string, userRole?: UserRole): Promise<void> {
@@ -26,9 +29,7 @@ export class SetDefaultCategoryUseCase {
        throw new Error('Event not found');
     }
 
-    if (userRole !== UserRole.ADMIN && event.organizationId !== organizationId) {
-      throw new Error('Forbidden: You do not own this event');
-    }
+    this.permissionService.verifyEventOwnership(event, organizationId, userRole);
 
     // Unset all other defaults for this event (bulk update)
     await this.categoryRepository.unsetDefaultForEvent(category.eventId);

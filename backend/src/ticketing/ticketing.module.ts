@@ -15,6 +15,7 @@ import { I_QRCODE_SERVICE } from './domain/ports/qrcode.service.interface';
 import { TicketClaimSchema } from './infrastructure/persistence/ticket-claim.schema';
 import { MikroOrmTicketClaimRepository } from './infrastructure/persistence/mikro-orm-ticket-claim.repository';
 import { I_TICKET_CLAIM_REPOSITORY } from './domain/ports/ticket-claim.repository.interface';
+import { I_PERMISSION_SERVICE, PermissionService } from './domain/services/permission.service';
 
 import { CreateEventUseCase } from './application/use-cases/create-event.use-case';
 import { GetEventUseCase } from './application/use-cases/get-event.use-case';
@@ -67,6 +68,7 @@ import { AuthModule } from '../auth/auth.module';
     UpdateCategoryUseCase,
     DeleteCategoryUseCase,
     SetDefaultCategoryUseCase,
+    { provide: I_PERMISSION_SERVICE, useClass: PermissionService },
   ],
   exports: [
     I_EVENT_REPOSITORY, 
