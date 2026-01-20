@@ -24,6 +24,7 @@ describe('Recovery Feature Flow (Relance Impayés)', () => {
   let paymentProviderMock: any;
 
   beforeEach(async () => {
+    process.env.CURRENCY = 'XOF';
     // Mocks
     contactRepositoryMock = {
       create: jest.fn(),

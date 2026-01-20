@@ -87,7 +87,7 @@ export class DebtHandler implements IActionHandler {
     context: ActionContext,
   ): Promise<void> {
     const { senderPhoneNumber, messagingService, user, organizationId } = context;
-    const { amount, contactName, contactPhone, contactContext, currency = process.env.CURRENCY || 'XOF' } = data;
+    const { amount, contactName, contactPhone, contactContext, currency = getCurrency() } = data;
 
     if (!amount || !contactName) {
       await messagingService.sendMessage(
@@ -129,7 +129,7 @@ export class DebtHandler implements IActionHandler {
     context: ActionContext,
   ): Promise<void> {
     const { senderPhoneNumber, messagingService, user, organizationId } = context;
-    const { amount, contactName, contactPhone, contactContext, currency = process.env.CURRENCY || 'XOF' } = data;
+    const { amount, contactName, contactPhone, contactContext, currency = getCurrency() } = data;
 
     if (!amount || !contactName) {
       await messagingService.sendMessage(
@@ -322,7 +322,7 @@ export class DebtHandler implements IActionHandler {
         if (amount > 0) {
             paymentLink = await this.paymentProvider.createPaymentLink(
                 amount,
-                'XOF', // Default currency for now, ideally derived from context or contact settings
+                getCurrency(), // Currency derived from util
                 {
                     contactId: contact.id,
                     reason: 'Debt Settlement',

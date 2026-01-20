@@ -28,7 +28,7 @@ export class CreateTransactionHandler implements IActionHandler {
              const amount = data.amount;
              const type = data.type;
              const category = data.category || 'Uncategorized';
-             const currency = data.currency || 'EUR';
+             const currency = data.currency || getCurrency();
              
              // Encode essential data in payload (Max ~200 chars safe)
              // Format: CONFIRM_TX|Amount|Currency|Type|Category
@@ -60,7 +60,7 @@ export class CreateTransactionHandler implements IActionHandler {
 
         // Send confirmation message
         const typeLabel = CategoryTranslator.translate(data.type);
-        const currency = data.currency || 'EUR';
+        const currency = data.currency || getCurrency();
         const categoryLabel = CategoryTranslator.translate(data.category);
 
         await messagingService.sendMessage(

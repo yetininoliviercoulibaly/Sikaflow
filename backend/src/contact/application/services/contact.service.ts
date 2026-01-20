@@ -5,6 +5,7 @@ import { Contact } from '../../domain/contact.entity';
 import { Transaction, TransactionType, TransactionStatus } from '../../../transaction/domain/transaction.entity';
 import { v4 } from 'uuid';
 import * as crypto from 'crypto';
+import { getCurrency } from '../../../common/utils/currency.util';
 
 @Injectable()
 export class ContactService {
@@ -46,7 +47,7 @@ export class ContactService {
       contact.id,
       TransactionType.DEBT,
       data.amount,
-      data.currency || process.env.CURRENCY || 'XOF',
+      data.currency || getCurrency(),
       `Créance pour ${contact.displayName}`,
     );
 
@@ -80,7 +81,7 @@ export class ContactService {
       contact.id,
       TransactionType.CREDIT,
       data.amount,
-      data.currency || process.env.CURRENCY || 'XOF',
+      data.currency || getCurrency(),
       `Dette envers ${contact.displayName}`,
     );
 
@@ -128,7 +129,7 @@ export class ContactService {
       contact.id,
       TransactionType.INCOME,
       settleAmount,
-      process.env.CURRENCY || 'XOF',
+      getCurrency(),
       `Remboursement de ${contact.displayName}`,
       TransactionStatus.COMPLETED,
     );
