@@ -9,7 +9,7 @@ export const ContactSchema = new EntitySchema<Contact>({
     shortId: { type: 'varchar', length: 6 },
     ownerId: { type: 'uuid' },
     organizationId: { type: 'uuid', nullable: true },
-    phone: { type: 'varchar', length: 20, nullable: true },
+    phone: { type: 'varchar', length: 50, nullable: true },
     displayName: { type: 'varchar', length: 255 },
     context: { type: 'varchar', length: 255, nullable: true },
     embedding: { type: 'vector', length: 384, nullable: true },
