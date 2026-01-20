@@ -38,7 +38,7 @@ services:
   # ---------------------------------------------------------------------------
   migration-runner:
     image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/sikaflow-backend:latest
-    command: sh -c "npx mikro-orm migration:up"
+    command: sh -c "npx mikro-orm migration:up --config ./dist/src/mikro-orm.config.js"
     environment:
       NODE_ENV: production
       DB_HOST: db

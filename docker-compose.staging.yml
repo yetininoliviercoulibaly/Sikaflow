@@ -39,7 +39,7 @@ services:
   migration-runner:
     # HARDCODED IMAGE to avoid variable expansion issues
     image: ghcr.io/softilab/sikaflow-backend:develop
-    command: sh -c "npx mikro-orm migration:up --config ./dist/mikro-orm.config.js && npx mikro-orm seeder:run --config ./dist/mikro-orm.config.js"
+    command: sh -c "npx mikro-orm migration:up --config ./dist/src/mikro-orm.config.js && npx mikro-orm seeder:run --config ./dist/src/mikro-orm.config.js"
     environment:
       NODE_ENV: staging
       DB_HOST: db
