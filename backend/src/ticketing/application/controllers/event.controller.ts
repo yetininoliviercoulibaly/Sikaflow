@@ -3,6 +3,7 @@ import { Controller, Get, Post, Body, Param, UseGuards, Req, UnauthorizedExcepti
 import { CreateEventUseCase } from '../../application/use-cases/create-event.use-case';
 import { ListEventsUseCase } from '../../application/use-cases/list-events.use-case';
 import { GetEventStatsUseCase } from '../../application/use-cases/get-event-stats.use-case';
+import { GetEventUseCase } from '../../application/use-cases/get-event.use-case';
 import { CreateEventDto } from '../../application/dtos/event.dtos';
 import { CompositeAuthGuard } from '../../../common/guards/composite-auth.guard';
 import { RolesGuard } from '../../../common/guards/roles.guard';
@@ -19,7 +20,14 @@ export class EventController {
     private readonly createEventUseCase: CreateEventUseCase,
     private readonly listEventsUseCase: ListEventsUseCase,
     private readonly getEventStatsUseCase: GetEventStatsUseCase,
+    private readonly getEventUseCase: GetEventUseCase,
   ) {}
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get details of a specific event' })
+  async get(@Param('id') id: string) {
+    return this.getEventUseCase.execute(id);
+  }
 
   @Get()
   @ApiOperation({ summary: 'List all events for the organization' })

@@ -260,11 +260,20 @@ export class ProcessTelegramMessageUseCase {
       // Date heuristic: Check this FIRST to avoid matching date parts as amounts
       let isDate = false;
       if (!mergedData['date'] && missingFields.includes('date')) {
+          // Check for relative dates or date patterns
           const datePattern = /(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})|(\d{1,2}\s+(janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre))/i;
-          if (datePattern.test(content) || (content.length > 4 && content.length < 50)) {
+          
+          // Explicit check for relative keywords
+          const relativeKeywords = ["aujourd'hui", "demain", "après-demain", "ce soir"];
+          const hasRelativeKeyword = relativeKeywords.some(k => content.toLowerCase().includes(k));
+
+          if (hasRelativeKeyword || datePattern.test(content) || (content.length > 4 && content.length < 50)) {
                // Ensure it's not just a pure number which might be price/capacity
                if (!/^\d+$/.test(content)) {
-                   mergedData['date'] = this.cleanupDate(content);
+                   const cleaned = this.cleanupDate(content);
+                   // Attempt to parse relative date key words to ISO
+                   const isoDate = this.parseRelativeDateToIso(cleaned);
+                   mergedData['date'] = isoDate || cleaned; // Use ISO if parsed, else original cleaned text (LLM or validation will handle it)
                    isDate = true;
                }
           }
@@ -312,6 +321,33 @@ export class ProcessTelegramMessageUseCase {
       }
 
       return mergedData;
+  }
+
+  private parseRelativeDateToIso(text: string): string | null {
+      const lower = text.toLowerCase();
+      const now = new Date();
+      
+      // Default time helps avoid issues with "start of day" vs current time
+      // For events, usually setting it to somewhat later in the day or just current time is fine.
+      // Let's keep existing time components.
+
+      if (lower.includes("aujourd'hui") || lower.includes("ce jour") || lower.includes("ce soir")) {
+          return now.toISOString();
+      }
+      
+      if (lower.includes("après-demain")) {
+          const target = new Date(now);
+          target.setDate(now.getDate() + 2);
+          return target.toISOString();
+      }
+
+      if (lower.includes("demain")) {
+          const target = new Date(now);
+          target.setDate(now.getDate() + 1);
+          return target.toISOString();
+      }
+
+      return null;
   }
 
   private cleanupName(text: string): string {

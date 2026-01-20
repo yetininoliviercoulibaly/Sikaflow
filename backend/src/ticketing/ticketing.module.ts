@@ -17,6 +17,7 @@ import { MikroOrmTicketClaimRepository } from './infrastructure/persistence/mikr
 import { I_TICKET_CLAIM_REPOSITORY } from './domain/ports/ticket-claim.repository.interface';
 
 import { CreateEventUseCase } from './application/use-cases/create-event.use-case';
+import { GetEventUseCase } from './application/use-cases/get-event.use-case';
 import { IssueTicketUseCase } from './application/use-cases/issue-ticket.use-case';
 import { GenerateClaimLinkUseCase } from './application/use-cases/generate-claim-link.use-case';
 import { ClaimTicketUseCase } from './application/use-cases/claim-ticket.use-case';
@@ -25,8 +26,15 @@ import { ListEventsUseCase } from './application/use-cases/list-events.use-case'
 import { GetEventStatsUseCase } from './application/use-cases/get-event-stats.use-case';
 import { GenerateTicketsQRUseCase } from './application/use-cases/generate-tickets-qr.use-case';
 import { ValidateTicketUseCase } from './application/use-cases/validate-ticket.use-case';
+import { ListCategoriesUseCase } from './application/use-cases/list-categories.use-case';
+import { CreateCategoryUseCase } from './application/use-cases/create-category.use-case';
+import { UpdateCategoryUseCase } from './application/use-cases/update-category.use-case';
+import { DeleteCategoryUseCase } from './application/use-cases/delete-category.use-case';
+import { SetDefaultCategoryUseCase } from './application/use-cases/set-default-category.use-case';
+
 import { EventController } from './application/controllers/event.controller';
 import { TicketApiController } from './application/controllers/ticket-api.controller';
+import { CategoryController } from './application/controllers/category.controller';
 import { LlmModule } from '../common/llm/llm.module';
 import { AuthModule } from '../auth/auth.module';
 
@@ -36,7 +44,7 @@ import { AuthModule } from '../auth/auth.module';
     LlmModule,
     AuthModule,
   ],
-  controllers: [EventController, TicketApiController],
+  controllers: [EventController, TicketApiController, CategoryController],
   providers: [
     { provide: I_EVENT_REPOSITORY, useClass: MikroOrmEventRepository },
     { provide: I_TICKET_REPOSITORY, useClass: MikroOrmTicketRepository },
@@ -45,6 +53,7 @@ import { AuthModule } from '../auth/auth.module';
     { provide: I_TICKET_CLAIM_REPOSITORY, useClass: MikroOrmTicketClaimRepository },
     CreateEventUseCase,
     ListEventsUseCase,
+    GetEventUseCase,
     GetEventStatsUseCase,
     IssueTicketUseCase,
     ScanTicketUseCase,
@@ -52,6 +61,12 @@ import { AuthModule } from '../auth/auth.module';
     ClaimTicketUseCase,
     GenerateTicketsQRUseCase,
     ValidateTicketUseCase,
+    // Category Management
+    ListCategoriesUseCase,
+    CreateCategoryUseCase,
+    UpdateCategoryUseCase,
+    DeleteCategoryUseCase,
+    SetDefaultCategoryUseCase,
   ],
   exports: [
     I_EVENT_REPOSITORY, 
@@ -61,6 +76,7 @@ import { AuthModule } from '../auth/auth.module';
     I_QRCODE_SERVICE,
     CreateEventUseCase,
     ListEventsUseCase,
+    GetEventUseCase,
     GetEventStatsUseCase,
     IssueTicketUseCase,
     ScanTicketUseCase,
@@ -68,6 +84,11 @@ import { AuthModule } from '../auth/auth.module';
     ClaimTicketUseCase,
     GenerateTicketsQRUseCase,
     ValidateTicketUseCase,
+    ListCategoriesUseCase,
+    CreateCategoryUseCase,
+    UpdateCategoryUseCase,
+    DeleteCategoryUseCase,
+    SetDefaultCategoryUseCase,
   ],
 })
 export class TicketingModule {}

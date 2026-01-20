@@ -438,4 +438,42 @@ describe('ProcessTelegramMessageUseCase', () => {
       })]
     }));
   });
+  it('should parse relative date "Aujourd\'hui" correctly', async () => {
+    const chatId = 1010;
+    const update = {
+      update_id: 12,
+      message: {
+        message_id: 161,
+        chat: { id: chatId, type: 'private' },
+        from: { id: 1010, first_name: 'RelDateUser', is_bot: false },
+        text: "Aujourd'hui"
+      } as TelegramMessageDto
+    } as TelegramUpdateDto;
+
+    const mockPending = {
+      intent: 'CREATE_EVENT',
+      data: { event_name: 'Test Event' },
+      missing_fields: ['date'],
+    };
+
+    mockLLM.analyzeText.mockResolvedValue({ intent: null, data: {} });
+    mockUserRepo.findByPhoneNumber.mockResolvedValue({});
+
+    const conversationService = (useCase as any).conversationState;
+    conversationService.getPendingAction.mockReturnValue(mockPending);
+
+    await useCase.execute(update);
+
+    const actionService = (useCase as any).actionExecutionService;
+    // We expect the date to be converted to ISO format (YYYY-MM-DD)
+    // Since we can't predict the exact date in test without mocking Date, 
+    // we just check it matched the regex YYYY-MM-DD
+    expect(actionService.execute).toHaveBeenCalledWith(expect.objectContaining({
+      actions: [expect.objectContaining({
+        data: expect.objectContaining({
+          date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/)
+        })
+      })]
+    }));
+  });
 });
