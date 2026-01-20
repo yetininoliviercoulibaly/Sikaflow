@@ -50,6 +50,7 @@ const config: Options = {
     idleTimeoutMillis: 30000,
     acquireTimeoutMillis: 60000,
   },
+  metadataCache: { enabled: false },
 };
 
 export default config;
