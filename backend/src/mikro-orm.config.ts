@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { Options, PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { join } from 'path';
 import { Migrator } from '@mikro-orm/migrations';
