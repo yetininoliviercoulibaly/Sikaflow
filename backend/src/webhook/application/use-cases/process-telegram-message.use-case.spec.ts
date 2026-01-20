@@ -476,4 +476,44 @@ describe('ProcessTelegramMessageUseCase', () => {
       })]
     }));
   });
+
+  it('should extract contact_name when ADD_DEBT is pending and LLM fails', async () => {
+    const chatId = 12345;
+    const update = {
+      update_id: 13,
+      message: {
+        message_id: 171,
+        chat: { id: chatId, type: 'private' },
+        from: { id: 12345, first_name: 'DebtUser', is_bot: false },
+        text: "Aurore"
+      } as TelegramMessageDto
+    } as TelegramUpdateDto;
+
+    const mockPending = {
+      intent: 'ADD_DEBT',
+      data: { amount: 5000 },
+      missing_fields: ['contact_name'],
+    };
+
+    mockLLM.analyzeText.mockResolvedValue({ intent: null, data: {} });
+    mockUserRepo.findByPhoneNumber.mockResolvedValue({});
+
+    const conversationService = (useCase as any).conversationState;
+    conversationService.getPendingAction.mockReturnValue(mockPending);
+
+    await useCase.execute(update);
+
+    const actionService = (useCase as any).actionExecutionService;
+    expect(actionService.execute).toHaveBeenCalledWith(expect.objectContaining({
+      actions: [expect.objectContaining({
+        data: expect.objectContaining({
+          contact_name: 'Aurore'
+        }),
+        missing_fields: []
+      })]
+    }));
+
+    // Should clear since all fields were filled
+    expect(conversationService.clearPendingAction).toHaveBeenCalledWith('12345');
+  });
 });
