@@ -516,4 +516,103 @@ describe('ProcessTelegramMessageUseCase', () => {
     // Should clear since all fields were filled
     expect(conversationService.clearPendingAction).toHaveBeenCalledWith('12345');
   });
+
+  it('should extract contact_name when ADD_CREDIT is pending', async () => {
+    const chatId = 12346;
+    const update = {
+      update_id: 14,
+      message: {
+        message_id: 172,
+        chat: { id: chatId, type: 'private' },
+        from: { id: chatId, first_name: 'CreditUser', is_bot: false },
+        text: "Moussa"
+      } as TelegramMessageDto
+    } as TelegramUpdateDto;
+
+    const mockPending = {
+      intent: 'ADD_CREDIT',
+      data: { amount: 2000 },
+      missing_fields: ['contact_name'],
+    };
+
+    mockLLM.analyzeText.mockResolvedValue({ intent: null, data: {} });
+    mockUserRepo.findByPhoneNumber.mockResolvedValue({});
+    const conversationService = (useCase as any).conversationState;
+    conversationService.getPendingAction.mockReturnValue(mockPending);
+
+    await useCase.execute(update);
+
+    const actionService = (useCase as any).actionExecutionService;
+    expect(actionService.execute).toHaveBeenCalledWith(expect.objectContaining({
+      actions: [expect.objectContaining({
+        data: expect.objectContaining({ contact_name: 'Moussa' })
+      })]
+    }));
+  });
+
+  it('should extract contact_name when SETTLE_DEBT is pending', async () => {
+    const chatId = 12347;
+    const update = {
+      update_id: 15,
+      message: {
+        message_id: 173,
+        chat: { id: chatId, type: 'private' },
+        from: { id: chatId, first_name: 'SettleUser', is_bot: false },
+        text: "Jean"
+      } as TelegramMessageDto
+    } as TelegramUpdateDto;
+
+    const mockPending = {
+      intent: 'SETTLE_DEBT',
+      data: { amount: 1000 },
+      missing_fields: ['contact_name'],
+    };
+
+    mockLLM.analyzeText.mockResolvedValue({ intent: null, data: {} });
+    mockUserRepo.findByPhoneNumber.mockResolvedValue({});
+    const conversationService = (useCase as any).conversationState;
+    conversationService.getPendingAction.mockReturnValue(mockPending);
+
+    await useCase.execute(update);
+
+    const actionService = (useCase as any).actionExecutionService;
+    expect(actionService.execute).toHaveBeenCalledWith(expect.objectContaining({
+      actions: [expect.objectContaining({
+        data: expect.objectContaining({ contact_name: 'Jean' })
+      })]
+    }));
+  });
+
+  it('should extract contact_name when SEND_REMINDER is pending', async () => {
+    const chatId = 12348;
+    const update = {
+      update_id: 16,
+      message: {
+        message_id: 174,
+        chat: { id: chatId, type: 'private' },
+        from: { id: chatId, first_name: 'RemindUser', is_bot: false },
+        text: "Roland"
+      } as TelegramMessageDto
+    } as TelegramUpdateDto;
+
+    const mockPending = {
+      intent: 'SEND_REMINDER',
+      data: {},
+      missing_fields: ['contact_name'],
+    };
+
+    mockLLM.analyzeText.mockResolvedValue({ intent: null, data: {} });
+    mockUserRepo.findByPhoneNumber.mockResolvedValue({});
+    const conversationService = (useCase as any).conversationState;
+    conversationService.getPendingAction.mockReturnValue(mockPending);
+
+    await useCase.execute(update);
+
+    const actionService = (useCase as any).actionExecutionService;
+    expect(actionService.execute).toHaveBeenCalledWith(expect.objectContaining({
+      actions: [expect.objectContaining({
+        data: expect.objectContaining({ contact_name: 'Roland' })
+      })]
+    }));
+  });
 });
