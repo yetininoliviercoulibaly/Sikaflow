@@ -13,6 +13,7 @@ export class Contact {
   phone?: string; // Primary key for search (indexed)
   displayName: string; // "Bakary Coulibaly"
   context?: string; // "le maçon", "mon cousin"
+  embedding?: number[]; // pgvector embedding
 
   totalOwed: number; // Sum of pending debts TO owner
   totalOwing: number; // Sum of pending credits FROM owner

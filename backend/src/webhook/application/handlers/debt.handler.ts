@@ -1,7 +1,8 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { IActionHandler, ActionContext } from './action-handler.interface';
 import { I_CONTACT_REPOSITORY, IContactRepository } from '../../../contact/domain/ports/contact.repository.interface';
-import { Contact } from '../../../contact/domain/contact.entity';
+import { ContactService } from '../../../contact/application/services/contact.service';
+import { AddDebtPayload, SettleDebtPayload, SendReminderPayload } from '../dtos/debt.dto';
 
 /**
  * Handler for debt-related intents:
@@ -19,6 +20,7 @@ export class DebtHandler implements IActionHandler {
   constructor(
     @Inject(I_CONTACT_REPOSITORY)
     private readonly contactRepository: IContactRepository,
+    private readonly contactService: ContactService,
   ) {}
 
   canHandle(intent: string): boolean {
@@ -45,39 +47,46 @@ export class DebtHandler implements IActionHandler {
 
     const intent = data.intent as string;
 
-    switch (intent) {
-      case 'ADD_DEBT':
-        await this.handleAddDebt(data, context);
-        break;
-      case 'ADD_CREDIT':
-        await this.handleAddCredit(data, context);
-        break;
-      case 'LIST_DEBTS':
-        await this.handleListDebts(context);
-        break;
-      case 'LIST_CREDITS':
-        await this.handleListCredits(context);
-        break;
-      case 'SETTLE_DEBT':
-        await this.handleSettleDebt(data, context);
-        break;
-      case 'SEND_REMINDER':
-        await this.handleSendReminder(data, context);
-        break;
-      default:
-        await messagingService.sendMessage(
-          senderPhoneNumber,
-          '❓ Action non reconnue.',
-        );
+    try {
+      switch (intent) {
+        case 'ADD_DEBT':
+          await this.handleAddDebt(data as unknown as AddDebtPayload, context);
+          break;
+        case 'ADD_CREDIT':
+          await this.handleAddCredit(data as unknown as AddDebtPayload, context);
+          break;
+        case 'LIST_DEBTS':
+          await this.handleListDebts(context);
+          break;
+        case 'LIST_CREDITS':
+          await this.handleListCredits(context);
+          break;
+        case 'SETTLE_DEBT':
+          await this.handleSettleDebt(data as unknown as SettleDebtPayload, context);
+          break;
+        case 'SEND_REMINDER':
+          await this.handleSendReminder(data as unknown as SendReminderPayload, context);
+          break;
+        default:
+          await messagingService.sendMessage(
+            senderPhoneNumber,
+            '❓ Action non reconnue.',
+          );
+      }
+    } catch (error) {
+      this.logger.error(`Error handling debt intent ${intent}`, error);
+      await messagingService.sendMessage(
+        senderPhoneNumber,
+        '❌ Une erreur est survenue lors du traitement de votre demande.',
+      );
     }
   }
 
   /**
    * Handle ADD_DEBT: Create or find contact, record debt
-   * Expected data: { amount, contactName, contactPhone?, contactContext? }
    */
   private async handleAddDebt(
-    data: Record<string, any>,
+    data: AddDebtPayload,
     context: ActionContext,
   ): Promise<void> {
     const { senderPhoneNumber, messagingService, user, organizationId } = context;
@@ -91,60 +100,23 @@ export class DebtHandler implements IActionHandler {
       return;
     }
 
-    // Find or create contact
-    let contact: Contact | null = null;
-
-    // Try phone-first lookup
-    if (contactPhone) {
-      contact = await this.contactRepository.findByPhone(user!.id, contactPhone);
-    }
-
-    if (!contact) {
-      // Search by name
-      const matches = await this.contactRepository.searchByName(user!.id, contactName, 3);
-
-      if (matches.length === 1) {
-        contact = matches[0];
-      } else if (matches.length > 1) {
-        // Disambiguation needed
-        const list = matches
-          .map((c, i) => `${i + 1}. ${c.displayName}${c.context ? ` (${c.context})` : ''} - #${c.shortId}`)
-          .join('\n');
-
-        await messagingService.sendMessage(
-          senderPhoneNumber,
-          `🔍 Plusieurs contacts correspondent à "${contactName}" :\n\n${list}\n\nPrécisez avec le numéro de téléphone ou le code #XX1234.`,
-        );
-        return;
-      }
-    }
-
-    // Create new contact if not found
-    if (!contact) {
-      contact = new Contact(user!.id, contactName, {
-        organizationId: organizationId || undefined,
-        phone: contactPhone,
-        context: contactContext,
-      });
-
-      // Ensure unique shortId
-      let attempts = 0;
-      while (!(await this.contactRepository.isShortIdUnique(user!.id, contact.shortId)) && attempts < 5) {
-        contact.shortId = Contact.generateShortId();
-        attempts++;
-      }
-
-      await this.contactRepository.create(contact);
-      this.logger.log(`Created new contact: ${contact.displayName} (#${contact.shortId})`);
-    }
-
-    // Update debt total
     const numericAmount = parseFloat(amount);
-    contact.totalOwed = (contact.totalOwed || 0) + numericAmount;
-    contact.lastInteractionAt = new Date();
-    await this.contactRepository.update(contact);
+    if (isNaN(numericAmount) || numericAmount <= 0) {
+       await messagingService.sendMessage(
+        senderPhoneNumber,
+        '❌ Le montant doit être un nombre positif valide.',
+      );
+      return;
+    }
 
-    // TODO: Create DEBT transaction entry (to be implemented with use-case)
+    // Delegate to Service
+    const contact = await this.contactService.addDebt(user!.id, organizationId || undefined, {
+      amount: numericAmount,
+      contactName,
+      contactPhone,
+      contactContext,
+      currency,
+    });
 
     await messagingService.sendMessage(
       senderPhoneNumber,
@@ -156,7 +128,7 @@ export class DebtHandler implements IActionHandler {
    * Handle ADD_CREDIT: Record money user owes to someone
    */
   private async handleAddCredit(
-    data: Record<string, any>,
+    data: AddDebtPayload,
     context: ActionContext,
   ): Promise<void> {
     const { senderPhoneNumber, messagingService, user, organizationId } = context;
@@ -170,29 +142,23 @@ export class DebtHandler implements IActionHandler {
       return;
     }
 
-    // Similar logic to ADD_DEBT but updates totalOwing
-    let contact = contactPhone 
-      ? await this.contactRepository.findByPhone(user!.id, contactPhone)
-      : null;
-
-    if (!contact) {
-      const matches = await this.contactRepository.searchByName(user!.id, contactName, 1);
-      contact = matches[0] || null;
-    }
-
-    if (!contact) {
-      contact = new Contact(user!.id, contactName, {
-        organizationId: organizationId || undefined,
-        phone: contactPhone,
-        context: contactContext,
-      });
-      await this.contactRepository.create(contact);
-    }
-
     const numericAmount = parseFloat(amount);
-    contact.totalOwing = (contact.totalOwing || 0) + numericAmount;
-    contact.lastInteractionAt = new Date();
-    await this.contactRepository.update(contact);
+    if (isNaN(numericAmount) || numericAmount <= 0) {
+       await messagingService.sendMessage(
+        senderPhoneNumber,
+        '❌ Le montant doit être un nombre positif valide.',
+      );
+      return;
+    }
+
+    // Delegate to Service
+    const contact = await this.contactService.addCredit(user!.id, organizationId || undefined, {
+      amount: numericAmount,
+      contactName,
+      contactPhone,
+      contactContext,
+      currency,
+    });
 
     await messagingService.sendMessage(
       senderPhoneNumber,
@@ -271,26 +237,26 @@ export class DebtHandler implements IActionHandler {
    * Handle SETTLE_DEBT: Mark debt as paid
    */
   private async handleSettleDebt(
-    data: Record<string, any>,
+    data: SettleDebtPayload,
     context: ActionContext,
   ): Promise<void> {
-    const { senderPhoneNumber, messagingService, user } = context;
+    const { senderPhoneNumber, messagingService, user, organizationId } = context;
     const { contactName, contactShortId, amount } = data;
 
-    let contact: Contact | null = null;
-
-    // Find by shortId if provided
-    if (contactShortId) {
-      contact = await this.contactRepository.findByShortId(user!.id, contactShortId);
+    const numericAmount = amount ? parseFloat(amount) : undefined;
+    if (numericAmount !== undefined && (isNaN(numericAmount) || numericAmount <= 0)) {
+       await messagingService.sendMessage(senderPhoneNumber, '❌ Montant invalide.');
+       return;
     }
 
-    // Otherwise search by name
-    if (!contact && contactName) {
-      const matches = await this.contactRepository.searchByName(user!.id, contactName, 1);
-      contact = matches[0] || null;
-    }
+    // Delegate to Service
+    const result = await this.contactService.settleDebt(user!.id, organizationId || undefined, {
+      amount: numericAmount,
+      contactName,
+      contactShortId,
+    });
 
-    if (!contact) {
+    if (!result) {
       await messagingService.sendMessage(
         senderPhoneNumber,
         `❌ Contact "${contactName || contactShortId}" non trouvé.`,
@@ -298,61 +264,58 @@ export class DebtHandler implements IActionHandler {
       return;
     }
 
-    // Settle amount (partial or full)
-    const settleAmount = amount ? parseFloat(amount) : contact.totalOwed;
-    contact.totalOwed = Math.max(0, contact.totalOwed - settleAmount);
-    contact.lastInteractionAt = new Date();
-    await this.contactRepository.update(contact);
-
+    const { contact, settledAmount } = result;
     const status = contact.totalOwed === 0 ? '🎉 Créance soldée !' : `📉 Reste : ${contact.totalOwed.toLocaleString('fr-FR')}F`;
 
     await messagingService.sendMessage(
       senderPhoneNumber,
-      `✅ *Paiement enregistré !*\n\n👤 ${contact.displayName}\n💰 Montant : ${settleAmount.toLocaleString('fr-FR')}F\n${status}`,
+      `✅ *Paiement enregistré !*\n\n👤 ${contact.displayName}\n💰 Montant : ${settledAmount.toLocaleString('fr-FR')}F\n${status}`,
     );
   }
 
   /**
-   * Handle SEND_REMINDER: Generate reminder message
+   * Handle SEND_REMINDER: Send reminder via WhatsApp/SMS
    */
   private async handleSendReminder(
-    data: Record<string, any>,
+    data: SendReminderPayload,
     context: ActionContext,
   ): Promise<void> {
     const { senderPhoneNumber, messagingService, user } = context;
-    const { contactName, contactShortId } = data;
-
-    let contact: Contact | null = null;
-
-    if (contactShortId) {
-      contact = await this.contactRepository.findByShortId(user!.id, contactShortId);
-    } else if (contactName) {
-      const matches = await this.contactRepository.searchByName(user!.id, contactName, 1);
-      contact = matches[0] || null;
+    const { contactName } = data;
+    
+    if (!contactName) {
+        await messagingService.sendMessage(senderPhoneNumber, '❌ Précisez le nom du contact à relancer.');
+        return;
     }
 
+    const contacts = await this.contactRepository.searchByName(user!.id, contactName, 1);
+    const contact = contacts[0];
+
     if (!contact) {
-      await messagingService.sendMessage(
-        senderPhoneNumber,
-        `❌ Contact non trouvé. Précisez le nom ou le code #XX1234.`,
-      );
+      await messagingService.sendMessage(senderPhoneNumber, `❌ Contact "${contactName}" introuvable.`);
       return;
     }
 
     if (contact.totalOwed <= 0) {
-      await messagingService.sendMessage(
-        senderPhoneNumber,
-        `✅ ${contact.displayName} n'a pas de créance en cours.`,
-      );
+      await messagingService.sendMessage(senderPhoneNumber, `✅ ${contact.displayName} ne vous doit rien.`);
       return;
     }
 
-    // Generate reminder message for user to forward
-    const reminderMessage = `👋 Bonjour ${contact.displayName},\n\nPetit rappel amical : il reste un solde de *${contact.totalOwed.toLocaleString('fr-FR')}F* sur votre compte.\n\nMerci et bonne journée ! 🙏`;
+    if (!contact.phone) {
+         await messagingService.sendMessage(senderPhoneNumber, `❌ impossible de relancer ${contact.displayName} : aucun numéro de téléphone associé.`);
+         return;
+    }
+
+    // Send formatted reminder to the Debtor
+    const link = `https://wa.me/NormallyUserPhone`; // Placeholder for payment link in future
+    await messagingService.sendMessage(
+        contact.phone,
+        `👋 Bonjour ${contact.displayName},\n\nCeci est un rappel de ${user!.firstName || 'votre contact'} concernant une dette de *${contact.totalOwed.toLocaleString('fr-FR')} FCFA*.\n\nMerci de régulariser dès que possible ! 🙏`
+    );
 
     await messagingService.sendMessage(
-      senderPhoneNumber,
-      `📝 *Message de relance généré :*\n\n---\n${reminderMessage}\n---\n\n👆 Transférez ce message à ${contact.displayName}${contact.phone ? ` (${contact.phone})` : ''}.`,
+        senderPhoneNumber,
+        `✅ Relance envoyée à ${contact.displayName} (${contact.phone}).`
     );
   }
 }

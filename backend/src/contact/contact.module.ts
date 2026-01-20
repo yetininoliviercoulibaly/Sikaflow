@@ -6,12 +6,15 @@ import { I_CONTACT_REPOSITORY } from './domain/ports/contact.repository.interfac
 import { DebtReminderJob } from './application/jobs/debt-reminder.job';
 import { UserModule } from '../user/user.module';
 import { MessagingModule } from '../common/messaging/messaging.module';
+import { ContactService } from './application/services/contact.service';
+import { TransactionModule } from '../transaction/transaction.module';
 
 @Module({
   imports: [
     MikroOrmModule.forFeature([ContactSchema]),
     UserModule,
     MessagingModule,
+    TransactionModule,
   ],
   providers: [
     {
@@ -20,8 +23,9 @@ import { MessagingModule } from '../common/messaging/messaging.module';
     },
     MikroOrmContactRepository,
     DebtReminderJob,
+    ContactService,
   ],
-  exports: [I_CONTACT_REPOSITORY, MikroOrmContactRepository],
+  exports: [I_CONTACT_REPOSITORY, MikroOrmContactRepository, ContactService],
 })
 export class ContactModule {}
 

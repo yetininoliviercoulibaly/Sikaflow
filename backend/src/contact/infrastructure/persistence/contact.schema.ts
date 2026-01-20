@@ -12,6 +12,7 @@ export const ContactSchema = new EntitySchema<Contact>({
     phone: { type: 'string', length: 20, nullable: true },
     displayName: { type: 'string', length: 255 },
     context: { type: 'string', length: 255, nullable: true },
+    embedding: { type: 'vector', length: 384, nullable: true },
     totalOwed: { type: 'decimal', precision: 12, scale: 2, default: 0 },
     totalOwing: { type: 'decimal', precision: 12, scale: 2, default: 0 },
     lastInteractionAt: { type: 'timestamptz' },
