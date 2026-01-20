@@ -20,6 +20,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AuthModule } from './auth/auth.module';
 import { ContactModule } from './contact/contact.module';
+import { HealthController } from './health.controller';
 
 @Module({
   imports: [
@@ -48,7 +49,7 @@ import { ContactModule } from './contact/contact.module';
     EventEmitterModule.forRoot(),
     AuthModule,
   ],
-  controllers: [],
+  controllers: [HealthController],
   providers: [],
 })
 export class AppModule {
