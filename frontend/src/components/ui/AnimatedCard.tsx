@@ -2,8 +2,9 @@
 
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { cn } from '@/lib/utils';
+import { clsx } from 'clsx';
 import { LucideIcon } from 'lucide-react';
+import styles from './Card.module.css';
 
 interface AnimatedCardProps {
   title: string;
@@ -33,23 +34,23 @@ export function AnimatedCard({
       transition={{ duration: 0.4, delay: delay * 0.1 }}
       whileHover={{ y: -5, transition: { duration: 0.2 } }}
     >
-      <Card className={cn('overflow-hidden border-slate-200 dark:border-slate-800 backdrop-blur-sm bg-white/50 dark:bg-slate-950/50 shadow-sm hover:shadow-md transition-shadow', className)}>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
+      <Card className={clsx(styles.animatedCard, className)}>
+        <CardHeader className={styles.cardHeader}>
+          <CardTitle className={styles.cardTitle}>
             {title}
           </CardTitle>
-          {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
+          {Icon && <Icon className={styles.cardIcon} />}
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">{value}</div>
+          <div className={styles.cardValue}>{value}</div>
           {(description || trend) && (
-             <p className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
+             <p className={styles.cardDescription}>
                {trend && (
-                 <span className={cn("font-medium", trendUp ? "text-emerald-500" : "text-rose-500")}>
+                 <span className={clsx(styles.trend, trendUp ? styles.trendUp : styles.trendDown)}>
                    {trend}
                  </span>
                )}
-               <span className="opacity-80">{description}</span>
+               <span className={styles.descriptionText}>{description}</span>
              </p>
           )}
         </CardContent>

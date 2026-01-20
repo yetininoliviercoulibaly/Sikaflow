@@ -1,16 +1,18 @@
 .card {
-  background: var(--color-surface);
+  background-color: var(--color-surface);
+  color: var(--color-text);
   border-radius: var(--radius-lg);
-  padding: 1.5rem;
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-sm);
   transition: all var(--transition-normal);
+  display: flex;
+  flex-direction: column;
 }
 
-.card.hoverable:hover {
+.hoverable:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
-  border-color: var(--color-primary); /* Subtle highlight */
+  cursor: pointer;
 }
 
 .glass {
@@ -25,4 +27,90 @@
     background: rgba(10, 10, 10, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.05);
   }
+}
+
+.cardHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 1.5rem;
+}
+
+.cardTitle {
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.025em;
+  margin: 0;
+}
+
+.cardDescription {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.cardContent {
+  padding: 1.5rem;
+  padding-top: 0;
+}
+
+.cardFooter {
+  display: flex;
+  align-items: center;
+  padding: 1.5rem;
+  padding-top: 0;
+}
+
+/* Animated Card specific styles */
+.animatedCard {
+  overflow: hidden;
+}
+
+.animatedCard .cardHeader {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.5rem;
+}
+
+.animatedCard .cardTitle {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.cardIcon {
+  height: 1rem;
+  width: 1rem;
+  color: var(--color-text-muted);
+}
+
+.cardValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.cardDescription {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+}
+
+.trend {
+  font-weight: 500;
+}
+
+.trendUp {
+  color: var(--color-success);
+}
+
+.trendDown {
+  color: var(--color-error);
+}
+
+.descriptionText {
+  opacity: 0.8;
 }
