@@ -88,7 +88,12 @@ export class DebtHandler implements IActionHandler {
     context: ActionContext,
   ): Promise<void> {
     const { senderPhoneNumber, messagingService, user, organizationId } = context;
-    const { amount, contactName, contactPhone, contactContext, currency = getCurrency() } = data;
+    // Support both matches (LLM often returns snake_case)
+    const amount = data.amount; 
+    const contactName = data.contactName || data.contact_name;
+    const contactPhone = data.contactPhone || data.contact_phone;
+    const contactContext = data.contactContext || data.contact_context;
+    const currency = data.currency || getCurrency();
 
     if (!amount || !contactName) {
       await messagingService.sendMessage(
@@ -130,7 +135,12 @@ export class DebtHandler implements IActionHandler {
     context: ActionContext,
   ): Promise<void> {
     const { senderPhoneNumber, messagingService, user, organizationId } = context;
-    const { amount, contactName, contactPhone, contactContext, currency = getCurrency() } = data;
+    // Support both matches (LLM often returns snake_case)
+    const amount = data.amount;
+    const contactName = data.contactName || data.contact_name;
+    const contactPhone = data.contactPhone || data.contact_phone;
+    const contactContext = data.contactContext || data.contact_context;
+    const currency = data.currency || getCurrency();
 
     if (!amount || !contactName) {
       await messagingService.sendMessage(
@@ -239,7 +249,9 @@ export class DebtHandler implements IActionHandler {
     context: ActionContext,
   ): Promise<void> {
     const { senderPhoneNumber, messagingService, user, organizationId } = context;
-    const { contactName, contactShortId, amount } = data;
+    const contactName = data.contactName || data.contact_name;
+    const contactShortId = data.contactShortId || data.contact_short_id;
+    const amount = data.amount;
 
     const numericAmount = amount ? parseFloat(amount) : undefined;
     if (numericAmount !== undefined && (isNaN(numericAmount) || numericAmount <= 0)) {
