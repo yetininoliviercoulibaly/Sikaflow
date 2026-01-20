@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { IActionHandler, ActionContext } from './action-handler.interface';
 import { CreateEventUseCase } from '../../../ticketing/application/use-cases/create-event.use-case';
 import { LLMIntent } from '../../../common/llm/llm-types';
+import { getCurrency } from '../../../common/utils/currency.util';
 
 @Injectable()
 export class CreateEventHandler implements IActionHandler {
@@ -24,13 +25,13 @@ export class CreateEventHandler implements IActionHandler {
     }
 
     if (!event_name || !date || !capacity || !price) {
-        await messagingService.sendMessage(senderPhoneNumber, `❌ Informations manquantes. Format: "Crée l'événement [Nom] le [Date] avec [Capacité] places à [Prix] ${process.env.DEFAULT_CURRENCY || 'EUR'}"`);
+        await messagingService.sendMessage(senderPhoneNumber, `❌ Informations manquantes. Format: "Crée l'événement [Nom] le [Date] avec [Capacité] places à [Prix] ${getCurrency()}"`);
         return;
     }
 
     try {
         const event = await this.createEventUseCase.execute(organizationId, event_name, date, parseInt(capacity), parseInt(price));
-        const message = `✅ Événement '${event.name}' créé avec succès !\n📅 Date : ${event.date.toLocaleDateString()}\n🎟️ Places : ${event.totalCapacity}\n💰 Prix : ${event.price} ${process.env.DEFAULT_CURRENCY || 'EUR'}`;
+        const message = `✅ Événement '${event.name}' créé avec succès !\n📅 Date : ${event.date.toLocaleDateString()}\n🎟️ Places : ${event.totalCapacity}\n💰 Prix : ${event.price} ${getCurrency()}`;
         await messagingService.sendMessage(senderPhoneNumber, message);
     } catch (e) {
         await messagingService.sendMessage(senderPhoneNumber, `❌ Erreur lors de la création: ${e.message}`);

@@ -28,18 +28,18 @@ export class CreateTransactionHandler implements IActionHandler {
              const amount = data.amount;
              const type = data.type;
              const category = data.category || 'Uncategorized';
-             const currency = data.currency || getCurrency();
+             const detectedCurrency = data.currency || getCurrency();
              
              // Encode essential data in payload (Max ~200 chars safe)
              // Format: CONFIRM_TX|Amount|Currency|Type|Category
-             const payload = `CONFIRM_TX|${amount}|${currency}|${type}|${category}`;
+             const payload = `CONFIRM_TX|${amount}|${detectedCurrency}|${type}|${category}`;
              
              // Localize for display
              const localizedCategory = CategoryTranslator.translate(category);
 
              await messagingService.sendInteractiveButtons(
                  senderPhoneNumber,
-                 `⚠️ J'ai un doute sur la lecture (Confiance: ${(confidence * 100).toFixed(0)}%).\n\nJ'ai lu : *${amount} ${currency}* (${localizedCategory}).\nEst-ce correct ?`,
+                 `⚠️ J'ai un doute sur la lecture (Confiance: ${(confidence * 100).toFixed(0)}%).\n\nJ'ai lu : *${amount} ${detectedCurrency}* (${localizedCategory}).\nEst-ce correct ?`,
                  [
                      { id: payload, title: "✅ Oui, confirmer" },
                      { id: "REJECT_TX", title: "❌ Non, corriger" }
@@ -60,12 +60,12 @@ export class CreateTransactionHandler implements IActionHandler {
 
         // Send confirmation message
         const typeLabel = CategoryTranslator.translate(data.type);
-        const currency = data.currency || getCurrency();
+        const confirmedCurrency = data.currency || getCurrency();
         const categoryLabel = CategoryTranslator.translate(data.category);
 
         await messagingService.sendMessage(
             senderPhoneNumber,
-            `✅ *${typeLabel} enregistré !*\n\n💰 Montant : *${data.amount} ${currency}*\n📁 Catégorie : ${categoryLabel}`
+            `✅ *${typeLabel} enregistré !*\n\n💰 Montant : *${data.amount} ${confirmedCurrency}*\n📁 Catégorie : ${categoryLabel}`
         );
 
         // Emit Event for Onboarding
