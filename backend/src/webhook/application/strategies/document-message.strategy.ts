@@ -21,7 +21,7 @@ export class DocumentMessageStrategy extends BaseMessageStrategy {
            (message.document?.mime_type === 'application/pdf');
   }
 
-  async process(message: WhatsAppMessageDto, senderPhoneNumber: string): Promise<LLMAnalysisResult | null> {
+  async process(message: WhatsAppMessageDto, senderPhoneNumber: string, context?: any): Promise<LLMAnalysisResult | null> {
     const document = message.document;
     if (!document) return null;
 
@@ -36,7 +36,10 @@ export class DocumentMessageStrategy extends BaseMessageStrategy {
 
         // Analyze
         return this.llmProvider.analyzeMedia(base64, media.mimeType, {
-            context: { userPhone: senderPhoneNumber },
+            context: { 
+                userPhone: senderPhoneNumber,
+                ...context 
+            },
             prompt: systemPrompt
         });
 

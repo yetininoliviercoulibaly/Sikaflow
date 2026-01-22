@@ -18,7 +18,7 @@ export abstract class BaseMessageStrategy implements IMessageStrategy {
   ) {}
 
   abstract canHandle(message: WhatsAppMessageDto): boolean;
-  abstract process(message: WhatsAppMessageDto, senderPhoneNumber: string): Promise<LLMAnalysisResult | null>;
+  abstract process(message: WhatsAppMessageDto, senderPhoneNumber: string, context?: any): Promise<LLMAnalysisResult | null>;
 
   /** Get prompt from cache or fetch from DB */
   protected async getPromptCached(key: string, organizationId?: string): Promise<string | undefined> {
@@ -40,7 +40,7 @@ export abstract class BaseMessageStrategy implements IMessageStrategy {
     return undefined;
   }
 
-  protected async analyzeText(text: string, senderPhoneNumber: string): Promise<LLMAnalysisResult> {
+  protected async analyzeText(text: string, senderPhoneNumber: string, context?: any): Promise<LLMAnalysisResult> {
      // Common logic for Prompt Fetching + Text Analysis with caching
      const organizationId = undefined; // Fallback to Global
      const promptKey = 'analyze_message'; 
@@ -48,7 +48,10 @@ export abstract class BaseMessageStrategy implements IMessageStrategy {
      const systemPrompt = await this.getPromptCached(promptKey, organizationId);
 
      return this.llmProvider.analyzeText(text, { 
-        context: { userPhone: senderPhoneNumber },
+        context: { 
+            userPhone: senderPhoneNumber,
+            ...context
+        },
         systemPrompt: systemPrompt
     });
   }

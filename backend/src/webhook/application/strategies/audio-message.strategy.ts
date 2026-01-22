@@ -20,7 +20,7 @@ export class AudioMessageStrategy extends BaseMessageStrategy {
     return message.type === 'audio' && !!message.audio;
   }
 
-  async process(message: WhatsAppMessageDto, senderPhoneNumber: string): Promise<LLMAnalysisResult | null> {
+  async process(message: WhatsAppMessageDto, senderPhoneNumber: string, context?: any): Promise<LLMAnalysisResult | null> {
     if (!message.audio) return null;
 
     try {
@@ -36,7 +36,7 @@ export class AudioMessageStrategy extends BaseMessageStrategy {
         // 3. Analyze Text
         // analyzeText is protected in BaseMessageStrategy. It uses promptRepository.
         // So I DO need promptRepository.
-        return this.analyzeText(transcribedText, senderPhoneNumber);
+        return this.analyzeText(transcribedText, senderPhoneNumber, context);
 
     } catch (error) {
         return null; 

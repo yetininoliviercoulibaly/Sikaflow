@@ -13,7 +13,7 @@ export class InteractiveMessageStrategy implements IMessageStrategy {
     return message.type === 'interactive';
   }
 
-  async process(message: WhatsAppMessageDto, senderPhoneNumber: string): Promise<LLMAnalysisResult | null> {
+  async process(message: WhatsAppMessageDto, senderPhoneNumber: string, context?: any): Promise<LLMAnalysisResult | null> {
     if (!message.interactive) return null;
 
     const interactive = message.interactive;
@@ -34,13 +34,13 @@ export class InteractiveMessageStrategy implements IMessageStrategy {
     if (mapped) {
         return {
             ...mapped,
+            confidence: 1.0, 
             actions: [mapped]
         };
     }
 
     return null;
-
-    return null;
   }
 }
+
 

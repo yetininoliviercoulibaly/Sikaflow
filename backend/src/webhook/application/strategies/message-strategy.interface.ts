@@ -16,5 +16,5 @@ export const MESSAGE_STRATEGY_TOKEN = 'MESSAGE_STRATEGY_TOKEN';
 
 export interface IMessageStrategy {
   canHandle(message: WhatsAppMessageDto): boolean;
-  process(message: WhatsAppMessageDto, senderPhoneNumber: string): Promise<LLMAnalysisResult | null>;
+  process(message: WhatsAppMessageDto, senderPhoneNumber: string, context?: any): Promise<LLMAnalysisResult | null>;
 }

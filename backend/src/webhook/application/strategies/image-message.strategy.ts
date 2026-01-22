@@ -20,7 +20,7 @@ export class ImageMessageStrategy extends BaseMessageStrategy {
     return message.type === 'image' && !!message.image;
   }
 
-  async process(message: WhatsAppMessageDto, senderPhoneNumber: string): Promise<LLMAnalysisResult | null> {
+  async process(message: WhatsAppMessageDto, senderPhoneNumber: string, context?: any): Promise<LLMAnalysisResult | null> {
     if (!message.image) return null;
 
     try {
@@ -35,7 +35,10 @@ export class ImageMessageStrategy extends BaseMessageStrategy {
 
         // Analyze
         return this.llmProvider.analyzeMedia(base64, media.mimeType, {
-            context: { userPhone: senderPhoneNumber },
+            context: { 
+                userPhone: senderPhoneNumber, 
+                ...context 
+            },
             prompt: `${systemPrompt}\n${userCaption}`
         });
     } catch (e) {
