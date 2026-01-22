@@ -180,6 +180,7 @@ import { ContactModule } from '../contact/contact.module';
         execDel: ExecuteDeletionHandler,
         cancelDel: CancelDeletionHandler,
         debt: DebtHandler,
+        feedback: FeedbackHandler,
       ) => [
         createOrg,
         addMember,
@@ -207,6 +208,7 @@ import { ContactModule } from '../contact/contact.module';
         execDel,
         cancelDel,
         debt,
+        feedback,
       ],
       inject: [
         CreateOrganizationHandler,
@@ -235,6 +237,7 @@ import { ContactModule } from '../contact/contact.module';
         ExecuteDeletionHandler,
         CancelDeletionHandler,
         DebtHandler,
+        FeedbackHandler,
       ],
     }
   ],
