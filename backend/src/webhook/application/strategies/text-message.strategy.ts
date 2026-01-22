@@ -9,10 +9,10 @@ export class TextMessageStrategy extends BaseMessageStrategy {
     return message.type === 'text' && !!message.text;
   }
 
-  async process(message: WhatsAppMessageDto, senderPhoneNumber: string): Promise<LLMAnalysisResult | null> {
+  async process(message: WhatsAppMessageDto, senderPhoneNumber: string, context?: any): Promise<LLMAnalysisResult | null> {
     const text = message.text?.body;
     if (!text) return null;
 
-    return this.analyzeText(text, senderPhoneNumber);
+    return this.analyzeText(text, senderPhoneNumber, context);
   }
 }
