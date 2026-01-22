@@ -80,14 +80,14 @@ export class ActionExecutionService {
         // [BLOCKER] 0. Check User Existence for protected intents
         if (!user && !PUBLIC_INTENTS.includes(action.intent as LLMIntent)) {
              await messagingService.sendMessage(senderPhoneNumber, "⚠️ Vous n'êtes pas reconnu. Veuillez créer une organisation pour commencer : tapez 'Créer organisation'.");
-             this.conversationState.clearPendingAction(senderPhoneNumber);
+             await this.conversationState.clearPendingAction(senderPhoneNumber);
              continue;
         }
 
         // [BLOCKER] 0.5 Check Organization Selection for organization-bound intents
         if (user && !organizationId && REQUIRES_ORG_INTENTS.includes(action.intent as LLMIntent)) {
             await messagingService.sendMessage(senderPhoneNumber, "❌ Aucune organisation active. Veuillez en créer une ou en sélectionner une.");
-            this.conversationState.clearPendingAction(senderPhoneNumber);
+            await this.conversationState.clearPendingAction(senderPhoneNumber);
             continue;
         }
 
@@ -110,7 +110,7 @@ export class ActionExecutionService {
              const guidance = this.guidanceService.getGuidance(action.intent, firstField, platform, action.data);
              
              // Store pending action so we can merge context when user responds
-             this.conversationState.setPendingAction(senderPhoneNumber, {
+             await this.conversationState.setPendingAction(senderPhoneNumber, {
                intent: action.intent,
                data: action.data || {},
                missing_fields: action.missing_fields,
@@ -155,7 +155,7 @@ export class ActionExecutionService {
             await handler.handle(handlerData, actionContext);
             // Proactively clear pending action if handled successfully
             if (!action.missing_fields || action.missing_fields.length === 0) {
-                this.conversationState.clearPendingAction(senderPhoneNumber);
+                await this.conversationState.clearPendingAction(senderPhoneNumber);
             }
         } else {
             this.logger.warn(`No handler found for intent: ${action.intent}`);

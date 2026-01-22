@@ -1,4 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import Redis from 'ioredis';
 
 export interface PendingAction {
   intent: string;
@@ -8,60 +9,69 @@ export interface PendingAction {
 }
 
 /**
- * Simple in-memory conversation state service.
- * Stores pending actions for users so we can maintain context between messages.
- * 
- * In production, this should be backed by Redis for persistence and scaling.
+ * Redis-backed conversation state service.
+ * Stores pending actions for users to maintain context between messages.
  */
 @Injectable()
-export class ConversationStateService {
+export class ConversationStateService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(ConversationStateService.name);
-  private readonly pendingActions = new Map<string, PendingAction>();
+  private redisClient: Redis;
+  private readonly REDIS_PREFIX = 'conversation_state:';
   
   // Actions expire after 10 minutes
-  private readonly TTL_MS = 10 * 60 * 1000;
+  private readonly TTL_SECONDS = 10 * 60;
+
+  onModuleInit() {
+    this.redisClient = new Redis({
+      host: process.env.REDIS_HOST || 'localhost',
+      port: parseInt(process.env.REDIS_PORT || '6379', 10),
+    });
+  }
+
+  onModuleDestroy() {
+    this.redisClient.disconnect();
+  }
 
   /**
    * Store a pending action for a user
    */
-  setPendingAction(userIdentifier: string, action: PendingAction): void {
-    this.logger.debug(`Setting pending action for ${userIdentifier}: ${JSON.stringify(action)}`);
-    this.pendingActions.set(userIdentifier, {
+  async setPendingAction(userIdentifier: string, action: PendingAction): Promise<void> {
+    const key = `${this.REDIS_PREFIX}${userIdentifier}`;
+    const payload = {
       ...action,
       createdAt: new Date(),
-    });
+    };
+    await this.redisClient.set(key, JSON.stringify(payload), 'EX', this.TTL_SECONDS);
+    this.logger.debug(`Set pending action for ${userIdentifier}`);
   }
 
   /**
    * Get and optionally clear the pending action for a user
    */
-  getPendingAction(userIdentifier: string, clear = false): PendingAction | null {
-    const action = this.pendingActions.get(userIdentifier);
+  async getPendingAction(userIdentifier: string, clear = false): Promise<PendingAction | null> {
+    const key = `${this.REDIS_PREFIX}${userIdentifier}`;
+    const data = await this.redisClient.get(key);
     
-    if (!action) {
-      return null;
-    }
-
-    // Check if expired
-    const ageMs = Date.now() - action.createdAt.getTime();
-    if (ageMs > this.TTL_MS) {
-      this.pendingActions.delete(userIdentifier);
-      this.logger.debug(`Pending action for ${userIdentifier} expired`);
+    if (!data) {
       return null;
     }
 
     if (clear) {
-      this.pendingActions.delete(userIdentifier);
+      await this.redisClient.del(key);
     }
 
-    return action;
+    const parsed = JSON.parse(data);
+    return {
+      ...parsed,
+      createdAt: new Date(parsed.createdAt), // Rehydrate Date object
+    };
   }
 
   /**
-   * Update the data of a pending action (e.g., when user provides amount)
+   * Update the data of a pending action
    */
-  updatePendingAction(userIdentifier: string, newData: Record<string, any>, removeField?: string): void {
-    const action = this.getPendingAction(userIdentifier);
+  async updatePendingAction(userIdentifier: string, newData: Record<string, any>, removeField?: string): Promise<void> {
+    const action = await this.getPendingAction(userIdentifier);
     if (!action) return;
 
     action.data = { ...action.data, ...newData };
@@ -70,14 +80,16 @@ export class ConversationStateService {
       action.missing_fields = action.missing_fields.filter(f => f !== removeField);
     }
 
-    this.pendingActions.set(userIdentifier, action);
-    this.logger.debug(`Updated pending action for ${userIdentifier}: ${JSON.stringify(action)}`);
+    // TTL resets on update (active conversation)
+    await this.setPendingAction(userIdentifier, action);
   }
 
   /**
    * Clear pending action for a user
    */
-  clearPendingAction(userIdentifier: string): void {
-    this.pendingActions.delete(userIdentifier);
+  async clearPendingAction(userIdentifier: string): Promise<void> {
+    const key = `${this.REDIS_PREFIX}${userIdentifier}`;
+    await this.redisClient.del(key);
   }
 }
+

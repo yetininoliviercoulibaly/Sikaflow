@@ -42,6 +42,9 @@ export enum LLMIntent {
 
 export interface LLMAnalysisResult {
     actions: LLMAction[];
+    intent?: LLMIntent | string;
+    data?: Record<string, any>;
+    confidence?: number;
 }
 
 export interface LLMAction {

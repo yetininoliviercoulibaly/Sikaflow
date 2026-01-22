@@ -8,6 +8,10 @@ import { ActionExecutionService } from './application/services/action-execution.
 import { CommandIntentMapper } from './application/services/command-intent.mapper';
 import { ConversationalGuidanceService } from './application/services/conversational-guidance.service';
 import { ConversationStateService } from './application/services/conversation-state.service';
+import { MessageExtractionService } from './application/services/message-extraction.service';
+import { MediaStandardizationService } from './application/services/media-standardization.service';
+import { TelegramParserService } from './infrastructure/telegram/telegram-parser.service';
+import { WhatsAppParserService } from './infrastructure/whatsapp/whatsapp-parser.service';
 import { TextMessageStrategy } from './application/strategies/text-message.strategy';
 import { OrganizationModule } from '../organization/organization.module';
 import { UserModule } from '../user/user.module';
@@ -104,6 +108,10 @@ import { ContactModule } from '../contact/contact.module';
     CommandIntentMapper,
     ConversationalGuidanceService,
     ConversationStateService,
+    MessageExtractionService,
+    MediaStandardizationService,
+    TelegramParserService,
+    WhatsAppParserService,
     MessageProcessor,
     TelegramMessageProcessor,
     TextMessageStrategy,

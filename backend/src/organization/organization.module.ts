@@ -32,6 +32,6 @@ import { forwardRef } from '@nestjs/common';
     RemoveMemberUseCase,
     SwitchOrganizationUseCase,
   ],
-  exports: [I_ORGANIZATION_REPOSITORY, ResolveContextUseCase, RemoveMemberUseCase, SwitchOrganizationUseCase, CreateOrganizationUseCase],
+  exports: [I_ORGANIZATION_REPOSITORY, ResolveContextUseCase, RemoveMemberUseCase, SwitchOrganizationUseCase, CreateOrganizationUseCase, AddMemberUseCase],
 })
 export class OrganizationModule {}

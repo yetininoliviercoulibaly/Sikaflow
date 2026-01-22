@@ -21,6 +21,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AuthModule } from './auth/auth.module';
 import { ContactModule } from './contact/contact.module';
 import { HealthController } from './health.controller';
+import { AgentModule } from './agent/agent.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { HealthController } from './health.controller';
     ContactModule, // Added specific module
     EventEmitterModule.forRoot(),
     AuthModule,
+    AgentModule,
   ],
   controllers: [HealthController],
   providers: [],

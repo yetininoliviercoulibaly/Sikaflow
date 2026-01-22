@@ -11,5 +11,6 @@ module.exports = {
   moduleNameMapper: {
     '^uuid$': '<rootDir>/src/__mocks__/uuid.ts',
   },
+  transformIgnorePatterns: ['node_modules/(?!(@langchain|@google/generative-ai)/)'],
   testPathIgnorePatterns: ['<rootDir>/src/scripts/'],
 };

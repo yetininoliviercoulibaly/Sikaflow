@@ -4,6 +4,8 @@ import { Logger } from '@nestjs/common';
 import { ProcessMessageUseCase } from '../use-cases/process-message.use-case';
 import { WhatsAppPayloadDto } from '../dtos/whatsapp-payload.dto';
 import { MikroORM, RequestContext } from '@mikro-orm/core';
+import { WhatsAppParserService } from '../../infrastructure/whatsapp/whatsapp-parser.service';
+import { WhatsAppMessagingAdapter } from '../../../common/messaging/whatsapp-messaging.adapter';
 
 @Processor('whatsapp')
 export class MessageProcessor extends WorkerHost {
@@ -11,23 +13,28 @@ export class MessageProcessor extends WorkerHost {
 
   constructor(
     private readonly processMessageUseCase: ProcessMessageUseCase,
+    private readonly whatsAppParser: WhatsAppParserService,
+    private readonly whatsAppAdapter: WhatsAppMessagingAdapter,
     private readonly orm: MikroORM,
   ) {
     super();
   }
 
   async process(job: Job<WhatsAppPayloadDto, any, string>): Promise<any> {
-    this.logger.log(`[Queue] Processing job ${job.id} for message`);
+    this.logger.log(`[Queue] Processing WhatsApp job ${job.id}`);
     
-    // Wrap in RequestContext to get a fresh EntityManager for this job
     return RequestContext.create(this.orm.em, async () => {
       try {
-        await this.processMessageUseCase.execute(job.data);
-        this.logger.log(`[Queue] Job ${job.id} completed`);
+        const unifiedMessages = this.whatsAppParser.parse(job.data);
+        for (const msg of unifiedMessages) {
+          await this.processMessageUseCase.execute(msg, this.whatsAppAdapter);
+        }
+        this.logger.log(`[Queue] WhatsApp job ${job.id} completed`);
       } catch (error) {
-        this.logger.error(`[Queue] Job ${job.id} failed`, error);
+        this.logger.error(`[Queue] WhatsApp job ${job.id} failed`, error);
         throw error;
       }
     });
   }
 }
+
