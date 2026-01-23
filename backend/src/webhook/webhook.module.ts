@@ -13,7 +13,6 @@ import { MessageExtractionService } from './application/services/message-extract
 import { MediaStandardizationService } from './application/services/media-standardization.service';
 import { TelegramParserService } from './infrastructure/telegram/telegram-parser.service';
 import { WhatsAppParserService } from './infrastructure/whatsapp/whatsapp-parser.service';
-import { TextMessageStrategy } from './application/strategies/text-message.strategy';
 import { OrganizationModule } from '../organization/organization.module';
 import { UserModule } from '../user/user.module';
 import { TransactionModule } from '../transaction/transaction.module';
@@ -44,11 +43,6 @@ import { ClaimTicketHandler } from './application/handlers/claim-ticket.handler'
 import { CheckStockHandler } from './application/handlers/check-stock.handler';
 import { FeedbackHandler } from '../feedback/application/handlers/feedback.handler';
 import { FeedbackModule } from '../feedback/feedback.module';
-import { AudioMessageStrategy } from './application/strategies/audio-message.strategy';
-import { ImageMessageStrategy } from './application/strategies/image-message.strategy';
-import { DocumentMessageStrategy } from './application/strategies/document-message.strategy';
-import { MESSAGE_STRATEGY_TOKEN } from './application/strategies/message-strategy.interface';
-import { InteractiveMessageStrategy } from './application/strategies/interactive-message.strategy';
 
 import { CreateTransactionHandler } from './application/handlers/create-transaction.handler';
 import { AskDataHandler } from './application/handlers/ask-data.handler';
@@ -118,22 +112,6 @@ import { ContactModule } from '../contact/contact.module';
     WhatsAppParserService,
     WhatsappMessageProcessor,
     TelegramMessageProcessor,
-    TextMessageStrategy,
-    AudioMessageStrategy,
-    ImageMessageStrategy,
-    DocumentMessageStrategy,
-    InteractiveMessageStrategy,
-    {
-        provide: MESSAGE_STRATEGY_TOKEN,
-        useFactory: (...strategies) => strategies,
-        inject: [
-            TextMessageStrategy, 
-            AudioMessageStrategy, 
-            ImageMessageStrategy, 
-            DocumentMessageStrategy,
-            InteractiveMessageStrategy
-        ], 
-    },
     // Action Handlers
     CreateTransactionHandler,
     SwitchOrganizationHandler,

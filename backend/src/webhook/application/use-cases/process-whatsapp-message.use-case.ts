@@ -11,6 +11,7 @@ import { MessageExtractionService } from '../services/message-extraction.service
 import { MediaStandardizationService } from '../services/media-standardization.service';
 import { CommandIntentMapper } from '../services/command-intent.mapper';
 import { IntentResolverService } from '../services/intent-resolver.service';
+import { IMessagingService } from '../../../common/messaging/messaging.service.interface';
 
 @Injectable()
 export class ProcessWhatsappMessageUseCase {
@@ -29,7 +30,7 @@ export class ProcessWhatsappMessageUseCase {
     private readonly intentResolver: IntentResolverService,
   ) {}
 
-  async execute(message: MessageEntity, messagingService: any): Promise<void> {
+  async execute(message: MessageEntity, messagingService: IMessagingService): Promise<void> {
     const { senderId, platform, messageId, type } = message;
     let content = message.content || '';
 
