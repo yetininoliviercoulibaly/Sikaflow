@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ProcessWhatsappMessageUseCase } from '../application/use-cases/process-whatsapp-message.use-case';
+import { ProcessUnifiedMessageUseCase } from '../application/use-cases/process-unified-message.use-case';
 import { ConversationStateService } from '../application/services/conversation-state.service';
 import { I_USER_REPOSITORY } from '../../user/domain/ports/user.repository.interface';
 import { LLM_PROVIDER_TOKEN } from '../../common/llm/llm-provider.interface';
@@ -22,7 +22,7 @@ class MockConversationStateService {
 }
 
 describe('Context Switching Logic', () => {
-    let useCase: ProcessWhatsappMessageUseCase;
+    let useCase: ProcessUnifiedMessageUseCase;
     let conversationState: ConversationStateService;
     let llmProvider: any;
     let mockMessaging: any;
@@ -39,7 +39,7 @@ describe('Context Switching Logic', () => {
 
         const module: TestingModule = await Test.createTestingModule({
             providers: [
-                ProcessWhatsappMessageUseCase,
+                ProcessUnifiedMessageUseCase,
                 { provide: ConversationStateService, useClass: MockConversationStateService },
                 MessageExtractionService,
                 CommandIntentMapper,
@@ -73,7 +73,7 @@ describe('Context Switching Logic', () => {
             ],
         }).compile();
 
-        useCase = module.get<ProcessWhatsappMessageUseCase>(ProcessWhatsappMessageUseCase);
+        useCase = module.get<ProcessUnifiedMessageUseCase>(ProcessUnifiedMessageUseCase);
         conversationState = module.get<ConversationStateService>(ConversationStateService);
         llmProvider = module.get(LLM_PROVIDER_TOKEN);
     });

@@ -14,8 +14,8 @@ import { IntentResolverService } from '../services/intent-resolver.service';
 import { IMessagingService } from '../../../common/messaging/messaging.service.interface';
 
 @Injectable()
-export class ProcessWhatsappMessageUseCase {
-  private readonly logger = new Logger(ProcessWhatsappMessageUseCase.name);
+export class ProcessUnifiedMessageUseCase {
+  private readonly logger = new Logger(ProcessUnifiedMessageUseCase.name);
 
   constructor(
     @Inject(I_USER_REPOSITORY) private readonly userRepository: IUserRepository,

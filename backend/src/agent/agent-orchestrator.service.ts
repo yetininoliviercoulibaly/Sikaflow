@@ -1,5 +1,4 @@
 import { Injectable, Logger, OnModuleInit, Inject } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { CreateTransactionTool } from './tools/create-transaction.tool';
 import { CreateEventTool } from './tools/create-event.tool';
 import { CheckStockTool } from './tools/check-stock.tool';
@@ -22,16 +21,14 @@ import { UpdateCategoryTool } from './tools/update-category.tool';
 import { DeleteCategoryTool } from './tools/delete-category.tool';
 import { SubscribeTool } from './tools/subscribe.tool';
 import { RequestAccessTool } from './tools/request-access.tool';
-import { ILLMProvider, LLM_PROVIDER_TOKEN } from '../common/llm/llm-provider.interface';
+import { IAgentService, I_AGENT_SERVICE } from './domain/ports/agent-service.interface';
 
 @Injectable()
 export class AgentOrchestratorService implements OnModuleInit {
   private readonly logger = new Logger(AgentOrchestratorService.name);
-  private agent: any; 
 
   constructor(
-      private readonly configService: ConfigService,
-      @Inject(LLM_PROVIDER_TOKEN) private readonly llmProvider: ILLMProvider,
+      @Inject(I_AGENT_SERVICE) private readonly agentService: IAgentService,
       private readonly createTransactionTool: CreateTransactionTool,
       private readonly createEventTool: CreateEventTool,
       private readonly checkStockTool: CheckStockTool,
@@ -56,14 +53,7 @@ export class AgentOrchestratorService implements OnModuleInit {
       private readonly requestAccessTool: RequestAccessTool,
   ) {}
 
-  onModuleInit() {
-    // @ts-ignore
-    const { createReactAgent } = require('@langchain/langgraph/prebuilt');
-    // @ts-ignore
-    const { MemorySaver } = require('@langchain/langgraph');
-    
-    const model = this.llmProvider.getModel();
-
+  async onModuleInit() {
     const tools = [
         this.createTransactionTool,
         this.createEventTool,
@@ -88,15 +78,8 @@ export class AgentOrchestratorService implements OnModuleInit {
         this.subscribeTool,
         this.requestAccessTool,
     ];
-    
-    // Create the ReAct Agent Graph
-    const checkpointer = new MemorySaver();
-    
-    this.agent = createReactAgent({
-        llm: model,
-        tools: tools,
-        checkpointSaver: checkpointer,
-        messageModifier: `You are SikaFlow Assistant, a professional AI for event organizers. 
+
+    const messageModifier = `You are SikaFlow Assistant, a professional AI for event organizers. 
         Your goal is to help them manage ticketing, transactions (expenses/income), team members, and check event stocks.
         
         CRITICAL RULES:
@@ -106,47 +89,18 @@ export class AgentOrchestratorService implements OnModuleInit {
         4. Focus on being concise and helpful.
         5. You can handle multiple steps (e.g., check stock then create a transaction).
         6. For debt management, use the proper tool (add_debt, settle_debt, etc.).
-        7. If user asks for a report, use generate_report.`
-    });
+        7. If user asks for a report, use generate_report.`;
 
-    this.logger.log('AgentOrchestratorService initialized with LangGraph ReAct Agent');
+    if ((this.agentService as any).init) {
+      await (this.agentService as any).init(messageModifier, tools);
+    }
+
+    this.logger.log('AgentOrchestratorService initialized with IAgentService');
   }
 
   async run(input: string, threadId: string, context: { phoneNumber: string; organizationId?: string }): Promise<string> {
     this.logger.log(`Running Agent for thread ${threadId} (User: ${context.phoneNumber}): ${input}`);
-    
-    const enrichedInput = `User Context: [Phone: ${context.phoneNumber}, Org: ${context.organizationId || 'None'}].\nUser Message: ${input}`;
-    
-    const config = { configurable: { thread_id: threadId } };
-    
-    const { HumanMessage } = require('@langchain/core/messages');
-    
-    const stream = await this.agent.stream(
-        { messages: [new HumanMessage(enrichedInput)] },
-        config
-    );
-
-    let finalResponse = "";
-
-    for await (const chunk of stream) {
-        if (chunk.agent) {
-             if (chunk.agent.messages && chunk.agent.messages.length > 0) {
-                 const lastMsg = chunk.agent.messages[chunk.agent.messages.length - 1];
-                 if (lastMsg.content) {
-                     finalResponse = lastMsg.content;
-                 }
-             }
-        }
-    }
-
-    const state = await this.agent.getState(config);
-    const lastMessage = state.values.messages[state.values.messages.length - 1];
-    
-    if (lastMessage && lastMessage.content) {
-        return lastMessage.content as string;
-    }
-    
-    return finalResponse || "Je n'ai pas pu traiter votre demande.";
+    return this.agentService.run(input, threadId, context);
   }
 }
 

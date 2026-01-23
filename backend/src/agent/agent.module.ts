@@ -12,6 +12,8 @@ import { MessagingModule } from '../common/messaging/messaging.module';
 import { SubscriptionModule } from '../subscription/subscription.module';
 import { AuthModule } from '../auth/auth.module';
 import { BullModule } from '@nestjs/bullmq';
+import { LangchainAgentAdapter } from './infrastructure/langchain-agent.adapter';
+import { I_AGENT_SERVICE } from './domain/ports/agent-service.interface';
 
 // Tools
 import { CreateTransactionTool } from './tools/create-transaction.tool';
@@ -56,6 +58,10 @@ import { RequestAccessTool } from './tools/request-access.tool';
   ],
   providers: [
       AgentOrchestratorService, 
+      {
+          provide: I_AGENT_SERVICE,
+          useClass: LangchainAgentAdapter,
+      },
       CreateTransactionTool,
       CreateEventTool,
       CheckStockTool,

@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ProcessWhatsappMessageUseCase } from './process-whatsapp-message.use-case';
+import { ProcessUnifiedMessageUseCase } from './process-unified-message.use-case';
 import { I_USER_REPOSITORY } from '../../../user/domain/ports/user.repository.interface';
 import { LLM_PROVIDER_TOKEN } from '../../../common/llm/llm-provider.interface';
 import { I_PROMPT_REPOSITORY } from '../../../common/prompt/domain/ports/prompt.repository.interface';
@@ -14,8 +14,8 @@ import { MessagingPlatforms } from '../../../common/messaging/domain/constants/m
 import { LLMIntent } from '../../../common/llm/llm-types';
 import { IntentResolverService } from '../services/intent-resolver.service';
 
-describe('ProcessWhatsappMessageUseCase', () => {
-    let useCase: ProcessWhatsappMessageUseCase;
+describe('ProcessUnifiedMessageUseCase', () => {
+    let useCase: ProcessUnifiedMessageUseCase;
     let mockMessaging: any;
     let mockLLM: any;
     let mockUserRepo: any;
@@ -46,7 +46,7 @@ describe('ProcessWhatsappMessageUseCase', () => {
 
         const module: TestingModule = await Test.createTestingModule({
             providers: [
-                ProcessWhatsappMessageUseCase,
+                ProcessUnifiedMessageUseCase,
                 MessageExtractionService, // Use real service for integration logic
                 { provide: I_USER_REPOSITORY, useValue: mockUserRepo },
                 { provide: LLM_PROVIDER_TOKEN, useValue: mockLLM },
@@ -60,7 +60,7 @@ describe('ProcessWhatsappMessageUseCase', () => {
             ],
         }).compile();
 
-        useCase = module.get<ProcessWhatsappMessageUseCase>(ProcessWhatsappMessageUseCase);
+        useCase = module.get<ProcessUnifiedMessageUseCase>(ProcessUnifiedMessageUseCase);
         process.env.AGENT_ENABLED = 'false';
         
         mockUserRepo.findByPhoneNumber.mockResolvedValue({ id: 'default_user' });

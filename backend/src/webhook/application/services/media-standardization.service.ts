@@ -17,7 +17,7 @@ export class MediaStandardizationService {
   async transcribeAudio(
     fileId: string, 
     type: MessageType.VOICE | MessageType.AUDIO,
-    messagingService: any // Platform-specific messaging service for download
+    messagingService: IMessagingService // Platform-specific messaging service for download
   ): Promise<string | null> {
     try {
       // PROPOSED: Check file size or use streams if supported by adapter

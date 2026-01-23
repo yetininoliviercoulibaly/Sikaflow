@@ -2,8 +2,7 @@
 import { Module } from '@nestjs/common';
 import { WhatsAppController } from './application/controllers/whatsapp.controller';
 import { TelegramController } from './application/controllers/telegram.controller';
-import { ProcessWhatsappMessageUseCase } from './application/use-cases/process-whatsapp-message.use-case';
-import { ProcessTelegramMessageUseCase } from './application/use-cases/process-telegram-message.use-case';
+import { ProcessUnifiedMessageUseCase } from './application/use-cases/process-unified-message.use-case';
 import { IntentResolverService } from './application/services/intent-resolver.service';
 import { ActionExecutionService } from './application/services/action-execution.service';
 import { CommandIntentMapper } from './application/services/command-intent.mapper';
@@ -99,8 +98,7 @@ import { ContactModule } from '../contact/contact.module';
   ],
   controllers: [WhatsAppController, TelegramController],
   providers: [
-    ProcessWhatsappMessageUseCase,
-    ProcessTelegramMessageUseCase,
+    ProcessUnifiedMessageUseCase,
     IntentResolverService,
     ActionExecutionService,
     CommandIntentMapper,
