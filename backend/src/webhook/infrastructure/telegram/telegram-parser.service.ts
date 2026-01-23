@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { TelegramUpdateDto, TelegramMessageDto } from '../../application/dtos/telegram-payload.dto';
-import { UnifiedMessage, MessageType } from '../../domain/unified-message.interface';
+import { MessageEntity, MessageType } from '../../domain/message.entity';
 import { MessagingPlatforms } from '../../../common/messaging/domain/constants/messaging-platforms.enum';
 
 @Injectable()
@@ -10,7 +10,7 @@ export class TelegramParserService {
   /**
    * Transforms a Telegram Update into a UnifiedMessage
    */
-  parse(update: TelegramUpdateDto): UnifiedMessage | null {
+  parse(update: TelegramUpdateDto): MessageEntity | null {
     // 1. Handle Callback Queries
     if (update.callback_query) {
       const cb = update.callback_query;

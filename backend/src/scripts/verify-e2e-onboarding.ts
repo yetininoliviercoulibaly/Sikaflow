@@ -5,7 +5,7 @@ import { I_WHATSAPP_SERVICE } from '../common/whatsapp/whatsapp.service.interfac
 import { WhatsAppService } from '../common/whatsapp/whatsapp.service';
 import { MESSAGE_STRATEGY_TOKEN } from '../webhook/application/strategies/message-strategy.interface';
 import { FeatureGuard } from '../common/guards/feature.guard';
-import { ProcessMessageUseCase } from '../webhook/application/use-cases/process-message.use-case';
+import { ProcessWhatsappMessageUseCase } from '../webhook/application/use-cases/process-whatsapp-message.use-case';
 import { EntityManager, RequestContext } from '@mikro-orm/core';
 import { OnboardingProgress } from '../onboarding/domain/onboarding-progress.entity';
 import { User } from '../user/domain/user.entity';
@@ -81,7 +81,7 @@ async function run() {
   const app = moduleFixture.createNestApplication();
   await app.init();
 
-  const processMessage = app.get(ProcessMessageUseCase);
+  const processMessage = app.get(ProcessWhatsappMessageUseCase);
   const em = app.get(EntityManager);
   const phone = '22555555555'; // Unique Test Phone for E2E
 

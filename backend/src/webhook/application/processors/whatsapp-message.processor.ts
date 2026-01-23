@@ -1,18 +1,18 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
-import { ProcessMessageUseCase } from '../use-cases/process-message.use-case';
+import { ProcessWhatsappMessageUseCase } from '../use-cases/process-whatsapp-message.use-case';
 import { WhatsAppPayloadDto } from '../dtos/whatsapp-payload.dto';
 import { MikroORM, RequestContext } from '@mikro-orm/core';
 import { WhatsAppParserService } from '../../infrastructure/whatsapp/whatsapp-parser.service';
 import { WhatsAppMessagingAdapter } from '../../../common/messaging/whatsapp-messaging.adapter';
 
 @Processor('whatsapp')
-export class MessageProcessor extends WorkerHost {
-  private readonly logger = new Logger(MessageProcessor.name);
+export class WhatsappMessageProcessor extends WorkerHost {
+  private readonly logger = new Logger(WhatsappMessageProcessor.name);
 
   constructor(
-    private readonly processMessageUseCase: ProcessMessageUseCase,
+    private readonly processWhatsappMessageUseCase: ProcessWhatsappMessageUseCase,
     private readonly whatsAppParser: WhatsAppParserService,
     private readonly whatsAppAdapter: WhatsAppMessagingAdapter,
     private readonly orm: MikroORM,
@@ -25,9 +25,9 @@ export class MessageProcessor extends WorkerHost {
     
     return RequestContext.create(this.orm.em, async () => {
       try {
-        const unifiedMessages = this.whatsAppParser.parse(job.data);
-        for (const msg of unifiedMessages) {
-          await this.processMessageUseCase.execute(msg, this.whatsAppAdapter);
+        const messages = this.whatsAppParser.parse(job.data);
+        for (const msg of messages) {
+          await this.processWhatsappMessageUseCase.execute(msg, this.whatsAppAdapter);
         }
         this.logger.log(`[Queue] WhatsApp job ${job.id} completed`);
       } catch (error) {
@@ -37,4 +37,3 @@ export class MessageProcessor extends WorkerHost {
     });
   }
 }
-

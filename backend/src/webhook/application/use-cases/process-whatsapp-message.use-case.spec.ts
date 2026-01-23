@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ProcessMessageUseCase } from './process-message.use-case';
+import { ProcessWhatsappMessageUseCase } from './process-whatsapp-message.use-case';
 import { I_USER_REPOSITORY } from '../../../user/domain/ports/user.repository.interface';
 import { LLM_PROVIDER_TOKEN } from '../../../common/llm/llm-provider.interface';
 import { I_PROMPT_REPOSITORY } from '../../../common/prompt/domain/ports/prompt.repository.interface';
@@ -9,12 +9,13 @@ import { ConversationStateService } from '../services/conversation-state.service
 import { AgentOrchestratorService } from '../../../agent/agent-orchestrator.service';
 import { MessageExtractionService } from '../services/message-extraction.service';
 import { MediaStandardizationService } from '../services/media-standardization.service';
-import { UnifiedMessage, MessageType } from '../../domain/unified-message.interface';
+import { MessageEntity, MessageType } from '../../domain/message.entity';
 import { MessagingPlatforms } from '../../../common/messaging/domain/constants/messaging-platforms.enum';
 import { LLMIntent } from '../../../common/llm/llm-types';
+import { IntentResolverService } from '../services/intent-resolver.service';
 
-describe('ProcessMessageUseCase', () => {
-    let useCase: ProcessMessageUseCase;
+describe('ProcessWhatsappMessageUseCase', () => {
+    let useCase: ProcessWhatsappMessageUseCase;
     let mockMessaging: any;
     let mockLLM: any;
     let mockUserRepo: any;
@@ -45,7 +46,7 @@ describe('ProcessMessageUseCase', () => {
 
         const module: TestingModule = await Test.createTestingModule({
             providers: [
-                ProcessMessageUseCase,
+                ProcessWhatsappMessageUseCase,
                 MessageExtractionService, // Use real service for integration logic
                 { provide: I_USER_REPOSITORY, useValue: mockUserRepo },
                 { provide: LLM_PROVIDER_TOKEN, useValue: mockLLM },
@@ -55,16 +56,17 @@ describe('ProcessMessageUseCase', () => {
                 { provide: ConversationStateService, useValue: mockConversationState },
                 { provide: AgentOrchestratorService, useValue: { run: jest.fn() } },
                 { provide: MediaStandardizationService, useValue: { transcribeAudio: jest.fn() } },
+                IntentResolverService,
             ],
         }).compile();
 
-        useCase = module.get<ProcessMessageUseCase>(ProcessMessageUseCase);
+        useCase = module.get<ProcessWhatsappMessageUseCase>(ProcessWhatsappMessageUseCase);
         process.env.AGENT_ENABLED = 'false';
         
         mockUserRepo.findByPhoneNumber.mockResolvedValue({ id: 'default_user' });
     });
 
-    const createMessage = (content: string, type: MessageType = MessageType.TEXT, senderId = '123'): UnifiedMessage => ({
+    const createMessage = (content: string, type: MessageType = MessageType.TEXT, senderId = '123'): MessageEntity => ({
         platform: MessagingPlatforms.TELEGRAM,
         senderId,
         messageId: 'msg_123',

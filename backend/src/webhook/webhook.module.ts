@@ -2,8 +2,9 @@
 import { Module } from '@nestjs/common';
 import { WhatsAppController } from './application/controllers/whatsapp.controller';
 import { TelegramController } from './application/controllers/telegram.controller';
-import { ProcessMessageUseCase } from './application/use-cases/process-message.use-case';
+import { ProcessWhatsappMessageUseCase } from './application/use-cases/process-whatsapp-message.use-case';
 import { ProcessTelegramMessageUseCase } from './application/use-cases/process-telegram-message.use-case';
+import { IntentResolverService } from './application/services/intent-resolver.service';
 import { ActionExecutionService } from './application/services/action-execution.service';
 import { CommandIntentMapper } from './application/services/command-intent.mapper';
 import { ConversationalGuidanceService } from './application/services/conversational-guidance.service';
@@ -20,7 +21,7 @@ import { LLM_PROVIDER_TOKEN } from '../common/llm/llm-provider.interface';
 import { GeminiLLMProvider } from '../common/llm/gemini-llm.provider';
 import { PromptModule } from '../common/prompt/prompt.module';
 import { BullModule } from '@nestjs/bullmq';
-import { MessageProcessor } from './application/processors/message.processor';
+import { WhatsappMessageProcessor } from './application/processors/whatsapp-message.processor';
 import { TelegramMessageProcessor } from './application/processors/telegram-message.processor';
 import { ReportModule } from '../report/report.module'; 
 import { WhatsAppModule } from '../common/whatsapp/whatsapp.module';
@@ -33,6 +34,7 @@ import { PaymentModule } from '../payment/payment.module';
 import { OnboardingModule } from '../onboarding/onboarding.module';
 import { IncidentModule } from '../incident/incident.module';
 import { AuthModule } from '../auth/auth.module';
+import { AgentModule } from '../agent/agent.module';
 
 import { CreateEventHandler } from './application/handlers/create-event.handler';
 import { ScanTicketHandler } from './application/handlers/scan-ticket.handler';
@@ -99,11 +101,13 @@ import { ContactModule } from '../contact/contact.module';
     IncidentModule,
     AuthModule,
     ContactModule,
+    AgentModule,
   ],
   controllers: [WhatsAppController, TelegramController],
   providers: [
-    ProcessMessageUseCase,
+    ProcessWhatsappMessageUseCase,
     ProcessTelegramMessageUseCase,
+    IntentResolverService,
     ActionExecutionService,
     CommandIntentMapper,
     ConversationalGuidanceService,
@@ -112,7 +116,7 @@ import { ContactModule } from '../contact/contact.module';
     MediaStandardizationService,
     TelegramParserService,
     WhatsAppParserService,
-    MessageProcessor,
+    WhatsappMessageProcessor,
     TelegramMessageProcessor,
     TextMessageStrategy,
     AudioMessageStrategy,

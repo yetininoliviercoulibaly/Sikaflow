@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { WhatsAppPayloadDto, WhatsAppMessageDto } from '../../application/dtos/whatsapp-payload.dto';
-import { UnifiedMessage, MessageType } from '../../domain/unified-message.interface';
+import { MessageEntity, MessageType } from '../../domain/message.entity';
 import { MessagingPlatforms } from '../../../common/messaging/domain/constants/messaging-platforms.enum';
 
 @Injectable()
@@ -10,7 +10,7 @@ export class WhatsAppParserService {
   /**
    * Transforms a WhatsApp Payload into a UnifiedMessage array
    */
-  parse(payload: WhatsAppPayloadDto): UnifiedMessage[] {
+  parse(payload: WhatsAppPayloadDto): MessageEntity[] {
     const entry = payload.entry?.[0];
     const changes = entry?.changes?.[0];
     const value = changes?.value;
@@ -21,7 +21,7 @@ export class WhatsAppParserService {
     return messages.map(msg => this.mapMessage(msg));
   }
 
-  private mapMessage(msg: WhatsAppMessageDto): UnifiedMessage {
+  private mapMessage(msg: WhatsAppMessageDto): MessageEntity {
     const type = this.mapType(msg.type);
     let content = '';
 

@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ProcessMessageUseCase } from '../application/use-cases/process-message.use-case';
+import { ProcessWhatsappMessageUseCase } from '../application/use-cases/process-whatsapp-message.use-case';
 import { ConversationStateService } from '../application/services/conversation-state.service';
 import { I_USER_REPOSITORY } from '../../user/domain/ports/user.repository.interface';
 import { LLM_PROVIDER_TOKEN } from '../../common/llm/llm-provider.interface';
@@ -10,8 +10,9 @@ import { LLMIntent } from '../../common/llm/llm-types';
 import { AgentOrchestratorService } from '../../agent/agent-orchestrator.service';
 import { MessageExtractionService } from '../application/services/message-extraction.service';
 import { MediaStandardizationService } from '../application/services/media-standardization.service';
-import { UnifiedMessage, MessageType } from '../domain/unified-message.interface';
+import { MessageEntity, MessageType } from '../domain/message.entity';
 import { MessagingPlatforms } from '../../common/messaging/domain/constants/messaging-platforms.enum';
+import { IntentResolverService } from '../application/services/intent-resolver.service';
 
 class MockConversationStateService {
     private state = new Map<string, any>();
@@ -21,10 +22,11 @@ class MockConversationStateService {
 }
 
 describe('Context Switching Logic', () => {
-    let useCase: ProcessMessageUseCase;
+    let useCase: ProcessWhatsappMessageUseCase;
     let conversationState: ConversationStateService;
     let llmProvider: any;
     let mockMessaging: any;
+    let intentResolver: IntentResolverService;
 
     const mockUser = {
         id: 'user-123',
@@ -37,10 +39,11 @@ describe('Context Switching Logic', () => {
 
         const module: TestingModule = await Test.createTestingModule({
             providers: [
-                ProcessMessageUseCase,
+                ProcessWhatsappMessageUseCase,
                 { provide: ConversationStateService, useClass: MockConversationStateService },
                 MessageExtractionService,
                 CommandIntentMapper,
+                IntentResolverService,
                 {
                     provide: I_USER_REPOSITORY,
                     useValue: { findByPhoneNumber: jest.fn().mockResolvedValue(mockUser) }
@@ -70,12 +73,12 @@ describe('Context Switching Logic', () => {
             ],
         }).compile();
 
-        useCase = module.get<ProcessMessageUseCase>(ProcessMessageUseCase);
+        useCase = module.get<ProcessWhatsappMessageUseCase>(ProcessWhatsappMessageUseCase);
         conversationState = module.get<ConversationStateService>(ConversationStateService);
         llmProvider = module.get(LLM_PROVIDER_TOKEN);
     });
 
-    const createMessage = (text: string): UnifiedMessage => ({
+    const createMessage = (text: string): MessageEntity => ({
         platform: MessagingPlatforms.TELEGRAM,
         senderId: '123456789',
         messageId: 'msg-1',

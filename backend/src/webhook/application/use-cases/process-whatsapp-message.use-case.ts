@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { UnifiedMessage, MessageType } from '../../domain/unified-message.interface';
+import { MessageEntity, MessageType } from '../../domain/message.entity';
 import { LLMIntent, LLMAnalysisResult } from '../../../common/llm/llm-types';
 import { IUserRepository, I_USER_REPOSITORY } from '../../../user/domain/ports/user.repository.interface';
 import { IPromptRepository, I_PROMPT_REPOSITORY } from '../../../common/prompt/domain/ports/prompt.repository.interface';
@@ -10,10 +10,11 @@ import { AgentOrchestratorService } from '../../../agent/agent-orchestrator.serv
 import { MessageExtractionService } from '../services/message-extraction.service';
 import { MediaStandardizationService } from '../services/media-standardization.service';
 import { CommandIntentMapper } from '../services/command-intent.mapper';
+import { IntentResolverService } from '../services/intent-resolver.service';
 
 @Injectable()
-export class ProcessMessageUseCase {
-  private readonly logger = new Logger(ProcessMessageUseCase.name);
+export class ProcessWhatsappMessageUseCase {
+  private readonly logger = new Logger(ProcessWhatsappMessageUseCase.name);
 
   constructor(
     @Inject(I_USER_REPOSITORY) private readonly userRepository: IUserRepository,
@@ -25,9 +26,10 @@ export class ProcessMessageUseCase {
     private readonly extractionService: MessageExtractionService,
     private readonly mediaService: MediaStandardizationService,
     private readonly commandIntentMapper: CommandIntentMapper,
+    private readonly intentResolver: IntentResolverService,
   ) {}
 
-  async execute(message: UnifiedMessage, messagingService: any): Promise<void> {
+  async execute(message: MessageEntity, messagingService: any): Promise<void> {
     const { senderId, platform, messageId, type } = message;
     let content = message.content || '';
 
@@ -59,10 +61,9 @@ export class ProcessMessageUseCase {
       }
 
       // 4. LEGACY FLOW (LLM Analysis + Heuristics)
-      let analysisResult = await this.resolveAnalysis(content, message, user);
-      const analysis = analysisResult as any;
+      let analysis = await this.resolveAnalysis(content, message, user);
 
-      if (!analysis || (analysis.intent === LLMIntent.UNKNOWN && !analysis.data)) {
+      if (!analysis || (analysis.intent === LLMIntent.UNKNOWN && (!analysis.actions || analysis.actions.length === 0))) {
         return;
       }
 
@@ -88,60 +89,43 @@ export class ProcessMessageUseCase {
     }
   }
 
-  private async resolveAnalysis(content: string, message: UnifiedMessage, user: any): Promise<LLMAnalysisResult | null> {
+  private async resolveAnalysis(content: string, message: MessageEntity, user: any): Promise<LLMAnalysisResult | null> {
     const { senderId } = message;
     
-    // Check for callback data first
+    // 1. Resolve Heuristic/Magic Intent (STOP, CLAIM-, HELP)
+    const heuristicAnalysis = this.intentResolver.resolveHeuristicIntent(content);
+    if (heuristicAnalysis) {
+      if (heuristicAnalysis.intent === LLMIntent.UNKNOWN || heuristicAnalysis.intent === LLMIntent.HELP) {
+        await this.conversationState.clearPendingAction(senderId);
+      }
+      return heuristicAnalysis;
+    }
+
+    // 2. Check for callback data
     if (message.callbackData) {
         const mapped = this.commandIntentMapper.map(message.callbackData);
         if (mapped) {
-            // Context merge for callbacks
             const pending = await this.conversationState.getPendingAction(senderId);
             if (pending && mapped.intent === pending.intent) {
                 mapped.data = { ...pending.data, ...mapped.data };
-                // ... same logic as before for missing fields
             }
             return { intent: mapped.intent as LLMIntent, data: mapped.data, actions: [mapped] };
         }
     }
 
-    // Special CLAIM token regex
-    if (content.startsWith('CLAIM-')) {
-        return {
-            intent: LLMIntent.CLAIM_TICKET,
-            data: { token: content },
-            actions: [{ intent: LLMIntent.CLAIM_TICKET, data: { raw_message: content } }]
-        };
-    }
-
+    // 3. Normal LLM Analysis
     const pending = await this.conversationState.getPendingAction(senderId);
     let analysis = await this.analyzeText(content, senderId, pending);
 
     if (!pending) return analysis;
 
-    const upperContent = content.toUpperCase();
-    
-    // Cancellation
-    if (['STOP', 'ANNULER', 'CANCEL', 'EXIT', 'NON', 'RIEN'].includes(upperContent)) {
-        await this.conversationState.clearPendingAction(senderId);
-        return { intent: LLMIntent.UNKNOWN, data: {}, actions: [] };
+    // 4. Smart Break/Override logic delegated to intentResolver
+    if (this.intentResolver.shouldOverridePending(analysis, pending.intent)) {
+      await this.conversationState.clearPendingAction(senderId);
+      return analysis;
     }
 
-    // Help/Menu Break
-    if (['AIDE', 'HELP', 'MENU'].includes(upperContent) || (analysis.intent === LLMIntent.HELP && (analysis.confidence || 0) > 0.8)) {
-        await this.conversationState.clearPendingAction(senderId);
-        return { intent: LLMIntent.HELP, data: {}, actions: [] };
-    }
-
-    // Smart Break (New High Confidence Intent)
-    if (analysis.intent && analysis.intent !== LLMIntent.UNKNOWN && analysis.intent !== pending.intent) {
-        if ((analysis.confidence || 0) >= 0.85) {
-            await this.conversationState.clearPendingAction(senderId);
-            return analysis;
-        }
-    }
-
-    // Heuristics Merge
+    // 5. Heuristics Merge
     const mergedData = this.extractionService.applyHeuristics(content, pending, analysis.data || {});
     const remainingFields = (pending.missing_fields || []).filter(f => !mergedData[f]);
 

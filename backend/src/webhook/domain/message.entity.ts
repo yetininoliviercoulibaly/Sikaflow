@@ -10,9 +10,9 @@ export enum MessageType {
 }
 
 /**
- * Platform-agnostic message structure
+ * Platform-agnostic message structure (Domain Entity)
  */
-export interface UnifiedMessage {
+export interface MessageEntity {
   platform: MessagingPlatforms;
   senderId: string; // Phone number or UUID
   messageId: string;

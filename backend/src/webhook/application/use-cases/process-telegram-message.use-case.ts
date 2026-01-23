@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { TelegramUpdateDto } from '../dtos/telegram-payload.dto';
 import { TelegramMessagingAdapter } from '../../../common/messaging/telegram-messaging.adapter';
 import { TelegramParserService } from '../../infrastructure/telegram/telegram-parser.service';
-import { ProcessMessageUseCase } from './process-message.use-case';
+import { ProcessWhatsappMessageUseCase } from './process-whatsapp-message.use-case';
 
 /**
  * Use case for processing incoming Telegram messages
@@ -15,7 +15,7 @@ export class ProcessTelegramMessageUseCase {
   constructor(
     private readonly telegramMessagingAdapter: TelegramMessagingAdapter,
     private readonly telegramParser: TelegramParserService,
-    private readonly processMessageUseCase: ProcessMessageUseCase,
+    private readonly processWhatsappMessageUseCase: ProcessWhatsappMessageUseCase,
   ) {}
 
   async execute(update: TelegramUpdateDto): Promise<void> {
@@ -26,6 +26,6 @@ export class ProcessTelegramMessageUseCase {
        return;
     }
 
-    await this.processMessageUseCase.execute(unifiedMessage, this.telegramMessagingAdapter);
+    await this.processWhatsappMessageUseCase.execute(unifiedMessage, this.telegramMessagingAdapter);
   }
 }

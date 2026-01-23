@@ -2,9 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ProcessTelegramMessageUseCase } from './process-telegram-message.use-case';
 import { TelegramMessagingAdapter } from '../../../common/messaging/telegram-messaging.adapter';
 import { TelegramParserService } from '../../infrastructure/telegram/telegram-parser.service';
-import { ProcessMessageUseCase } from './process-message.use-case';
+import { ProcessWhatsappMessageUseCase } from './process-whatsapp-message.use-case';
 import { TelegramUpdateDto } from '../dtos/telegram-payload.dto';
-import { MessageType } from '../../domain/unified-message.interface';
+import { MessageEntity, MessageType } from '../../domain/message.entity';
 import { MessagingPlatforms } from '../../../common/messaging/domain/constants/messaging-platforms.enum';
 
 describe('ProcessTelegramMessageUseCase', () => {
@@ -22,7 +22,7 @@ describe('ProcessTelegramMessageUseCase', () => {
       providers: [
         ProcessTelegramMessageUseCase,
         { provide: TelegramParserService, useValue: mockParser },
-        { provide: ProcessMessageUseCase, useValue: mockProcessMessage },
+        { provide: ProcessWhatsappMessageUseCase, useValue: mockProcessMessage },
         { provide: TelegramMessagingAdapter, useValue: mockMessaging },
       ],
     }).compile();
