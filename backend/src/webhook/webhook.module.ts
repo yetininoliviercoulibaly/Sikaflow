@@ -10,6 +10,7 @@ import { ConversationalGuidanceService } from './application/services/conversati
 import { ConversationStateService } from './application/services/conversation-state.service';
 import { MessageExtractionService } from './application/services/message-extraction.service';
 import { MediaStandardizationService } from './application/services/media-standardization.service';
+import { AnalysisOrchestratorService } from './application/services/analysis-orchestrator.service';
 import { TelegramParserService } from './infrastructure/telegram/telegram-parser.service';
 import { WhatsAppParserService } from './infrastructure/whatsapp/whatsapp-parser.service';
 import { OrganizationModule } from '../organization/organization.module';
@@ -106,6 +107,7 @@ import { ContactModule } from '../contact/contact.module';
     ConversationStateService,
     MessageExtractionService,
     MediaStandardizationService,
+    AnalysisOrchestratorService,
     TelegramParserService,
     WhatsAppParserService,
     WhatsappMessageProcessor,

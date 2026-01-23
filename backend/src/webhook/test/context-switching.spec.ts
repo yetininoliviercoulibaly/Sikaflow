@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { ProcessUnifiedMessageUseCase } from '../application/use-cases/process-unified-message.use-case';
 import { ConversationStateService } from '../application/services/conversation-state.service';
 import { I_USER_REPOSITORY } from '../../user/domain/ports/user.repository.interface';
@@ -13,6 +14,7 @@ import { MediaStandardizationService } from '../application/services/media-stand
 import { MessageEntity, MessageType } from '../domain/message.entity';
 import { MessagingPlatforms } from '../../common/messaging/domain/constants/messaging-platforms.enum';
 import { IntentResolverService } from '../application/services/intent-resolver.service';
+import { AnalysisOrchestratorService } from '../application/services/analysis-orchestrator.service';
 
 class MockConversationStateService {
     private state = new Map<string, any>();
@@ -42,6 +44,7 @@ describe('Context Switching Logic', () => {
                 ProcessUnifiedMessageUseCase,
                 { provide: ConversationStateService, useClass: MockConversationStateService },
                 MessageExtractionService,
+                AnalysisOrchestratorService,
                 CommandIntentMapper,
                 IntentResolverService,
                 {
@@ -51,7 +54,7 @@ describe('Context Switching Logic', () => {
                 {
                     provide: LLM_PROVIDER_TOKEN,
                     useValue: {
-                        analyzeText: jest.fn() // Will be mocked per test
+                        analyzeText: jest.fn()
                     }
                 },
                 {
@@ -69,7 +72,11 @@ describe('Context Switching Logic', () => {
                 {
                     provide: MediaStandardizationService,
                     useValue: { transcribeAudio: jest.fn() }
-                }
+                },
+                {
+                    provide: ConfigService,
+                    useValue: { get: jest.fn().mockReturnValue('false') }
+                },
             ],
         }).compile();
 

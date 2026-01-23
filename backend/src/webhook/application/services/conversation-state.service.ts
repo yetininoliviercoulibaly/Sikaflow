@@ -1,8 +1,9 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import Redis from 'ioredis';
+import { LLMIntent } from '../../../common/llm/llm-types';
 
 export interface PendingAction {
-  intent: string;
+  intent: LLMIntent | string;
   data: Record<string, any>;
   missing_fields: string[];
   createdAt: Date;

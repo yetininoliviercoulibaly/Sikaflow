@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { ProcessUnifiedMessageUseCase } from './process-unified-message.use-case';
 import { I_USER_REPOSITORY } from '../../../user/domain/ports/user.repository.interface';
 import { LLM_PROVIDER_TOKEN } from '../../../common/llm/llm-provider.interface';
@@ -13,6 +14,7 @@ import { MessageEntity, MessageType } from '../../domain/message.entity';
 import { MessagingPlatforms } from '../../../common/messaging/domain/constants/messaging-platforms.enum';
 import { LLMIntent } from '../../../common/llm/llm-types';
 import { IntentResolverService } from '../services/intent-resolver.service';
+import { AnalysisOrchestratorService } from '../services/analysis-orchestrator.service';
 
 describe('ProcessUnifiedMessageUseCase', () => {
     let useCase: ProcessUnifiedMessageUseCase;
@@ -47,7 +49,8 @@ describe('ProcessUnifiedMessageUseCase', () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 ProcessUnifiedMessageUseCase,
-                MessageExtractionService, // Use real service for integration logic
+                MessageExtractionService,
+                AnalysisOrchestratorService,
                 { provide: I_USER_REPOSITORY, useValue: mockUserRepo },
                 { provide: LLM_PROVIDER_TOKEN, useValue: mockLLM },
                 { provide: I_PROMPT_REPOSITORY, useValue: { getTemplate: jest.fn() } },
@@ -56,12 +59,15 @@ describe('ProcessUnifiedMessageUseCase', () => {
                 { provide: ConversationStateService, useValue: mockConversationState },
                 { provide: AgentOrchestratorService, useValue: { run: jest.fn() } },
                 { provide: MediaStandardizationService, useValue: { transcribeAudio: jest.fn() } },
+                {
+                    provide: ConfigService,
+                    useValue: { get: jest.fn().mockReturnValue('false') }
+                },
                 IntentResolverService,
             ],
         }).compile();
 
         useCase = module.get<ProcessUnifiedMessageUseCase>(ProcessUnifiedMessageUseCase);
-        process.env.AGENT_ENABLED = 'false';
         
         mockUserRepo.findByPhoneNumber.mockResolvedValue({ id: 'default_user' });
     });
