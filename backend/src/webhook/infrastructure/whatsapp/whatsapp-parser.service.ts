@@ -8,7 +8,7 @@ export class WhatsAppParserService {
   private readonly logger = new Logger(WhatsAppParserService.name);
 
   /**
-   * Transforms a WhatsApp Payload into a UnifiedMessage array
+   * Transforms a WhatsApp Payload into a MessageEntity array
    */
   parse(payload: WhatsAppPayloadDto): MessageEntity[] {
     const entry = payload.entry?.[0];

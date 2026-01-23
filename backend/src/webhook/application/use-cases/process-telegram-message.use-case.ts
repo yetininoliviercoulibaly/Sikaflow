@@ -6,7 +6,7 @@ import { ProcessWhatsappMessageUseCase } from './process-whatsapp-message.use-ca
 
 /**
  * Use case for processing incoming Telegram messages
- * REFACTORED: Now a thin wrapper around ProcessMessageUseCase
+ * REFACTORED: Now a thin wrapper around ProcessWhatsappMessageUseCase
  */
 @Injectable()
 export class ProcessTelegramMessageUseCase {

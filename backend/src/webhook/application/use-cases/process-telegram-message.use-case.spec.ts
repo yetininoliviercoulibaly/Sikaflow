@@ -30,7 +30,7 @@ describe('ProcessTelegramMessageUseCase', () => {
     useCase = module.get<ProcessTelegramMessageUseCase>(ProcessTelegramMessageUseCase);
   });
 
-  it('should parse update and delegate to ProcessMessageUseCase', async () => {
+  it('should parse update and delegate to ProcessWhatsappMessageUseCase', async () => {
     const update = { update_id: 1 } as TelegramUpdateDto;
     const unifiedMsg = { 
         platform: MessagingPlatforms.TELEGRAM,

@@ -8,7 +8,7 @@ export class TelegramParserService {
   private readonly logger = new Logger(TelegramParserService.name);
 
   /**
-   * Transforms a Telegram Update into a UnifiedMessage
+   * Transforms a Telegram Update into a MessageEntity
    */
   parse(update: TelegramUpdateDto): MessageEntity | null {
     // 1. Handle Callback Queries
