@@ -33,9 +33,12 @@ export class ProcessUnifiedMessageUseCase {
       if (message.fileId && (type === MessageType.VOICE || type === MessageType.AUDIO)) {
         await messagingService.sendMessage(senderId, WEBHOOK_MESSAGES.PROCESSING_AUDIO);
         
+        // Download media FIRST
+        const media = await messagingService.downloadMedia(message.fileId);
+
         // Use proper enum types for transcription
         const mediaType = type === MessageType.VOICE ? MessageType.VOICE : MessageType.AUDIO;
-        const transcription = await this.mediaService.transcribeAudio(message.fileId, mediaType, messagingService);
+        const transcription = await this.mediaService.transcribeAudio(media.buffer, mediaType);
         
         if (!transcription) {
           await messagingService.sendMessage(senderId, WEBHOOK_MESSAGES.AUDIO_UNINTELLIGIBLE);

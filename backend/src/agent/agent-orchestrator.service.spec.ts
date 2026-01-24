@@ -24,6 +24,7 @@ import { DeleteCategoryTool } from './tools/delete-category.tool';
 import { SubscribeTool } from './tools/subscribe.tool';
 import { RequestAccessTool } from './tools/request-access.tool';
 import { LLM_PROVIDER_TOKEN } from '../common/llm/llm-provider.interface';
+import { I_AGENT_SERVICE } from './domain/ports/agent-service.interface';
 
 // Mock ConfigService
 const mockConfigService = {
@@ -52,6 +53,7 @@ const createMockTool = (name: string) => ({
 
 describe('AgentOrchestratorService', () => {
   let service: AgentOrchestratorService;
+  let agentService: TestAgentService; // Define interface for mock
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -59,6 +61,13 @@ describe('AgentOrchestratorService', () => {
         AgentOrchestratorService,
         { provide: ConfigService, useValue: mockConfigService },
         { provide: LLM_PROVIDER_TOKEN, useValue: mockLLMProvider },
+        { 
+            provide: I_AGENT_SERVICE, 
+            useValue: { 
+                init: jest.fn(), 
+                run: jest.fn() 
+            } 
+        },
         { provide: CreateTransactionTool, useValue: createMockTool('create_transaction') },
         { provide: CreateEventTool, useValue: createMockTool('create_event') },
         { provide: CheckStockTool, useValue: createMockTool('check_stock') },
@@ -85,16 +94,22 @@ describe('AgentOrchestratorService', () => {
     }).compile();
 
     service = module.get<AgentOrchestratorService>(AgentOrchestratorService);
+    agentService = module.get<TestAgentService>(I_AGENT_SERVICE);
   });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
 
-  it('should initialize the agent', () => {
-    service.onModuleInit();
-    expect(service['agent']).toBeDefined();
+  it('should initialize the agent', async () => {
+    await service.onModuleInit();
+    expect(agentService.init).toHaveBeenCalled();
   });
 });
+
+interface TestAgentService {
+    init: jest.Mock;
+    run: jest.Mock;
+}
 
 

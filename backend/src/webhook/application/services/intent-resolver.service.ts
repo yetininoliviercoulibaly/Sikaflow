@@ -1,11 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { LLMIntent, LLMAnalysisResult } from '../../../common/llm/llm-types';
+import { HELP_KEYWORDS, STOP_KEYWORDS } from '../../domain/constants/webhook.constants';
 
 @Injectable()
 export class IntentResolverService {
-  private readonly STOP_KEYWORDS = ['STOP', 'ANNULER', 'CANCEL', 'EXIT', 'NON', 'RIEN'];
-  private readonly HELP_KEYWORDS = ['AIDE', 'HELP', 'MENU'];
-
   /**
    * Resolves the intent based on keywords or special tokens
    */
@@ -22,12 +20,12 @@ export class IntentResolverService {
     }
 
     // 2. Cancellation Keywords
-    if (this.STOP_KEYWORDS.includes(upperContent)) {
+    if (STOP_KEYWORDS.includes(upperContent)) {
       return { intent: LLMIntent.UNKNOWN, data: {}, actions: [] };
     }
 
     // 3. Help Keywords
-    if (this.HELP_KEYWORDS.includes(upperContent)) {
+    if (HELP_KEYWORDS.includes(upperContent)) {
       return { intent: LLMIntent.HELP, data: {}, actions: [] };
     }
 
