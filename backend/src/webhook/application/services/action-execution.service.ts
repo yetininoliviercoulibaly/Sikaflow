@@ -2,12 +2,14 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IActionHandler, ACTION_HANDLER_TOKEN, ActionContext } from '../handlers/action-handler.interface';
 import { CheckSubscriptionUseCase } from '../../../subscription/application/use-cases/check-subscription.use-case';
+import { CheckFeatureUseCase } from '../../../subscription/application/use-cases/check-feature.use-case';
 import { IMessagingService } from '../../../common/messaging/messaging.service.interface';
 import { User } from '../../../user/domain/user.entity';
 import { ConversationalGuidanceService } from './conversational-guidance.service';
 import { ConversationStateService } from './conversation-state.service';
 import { LLMIntent } from '../../../common/llm/llm-types';
 import { MessagingPlatforms } from '../../../common/messaging/domain/constants/messaging-platforms.enum';
+import { FeatureFlag } from '../../../subscription/domain/feature-flag.enum';
 
 export interface ActionExecutionParams {
   actions: any[];
@@ -34,10 +36,26 @@ export class ActionExecutionService {
     LLMIntent.SUBSCRIBE_MONTHLY
   ];
 
+  // Mapping of Intents to required Feature Flags
+  private readonly INTENT_FEATURE_MAP: Partial<Record<LLMIntent, FeatureFlag>> = {
+    [LLMIntent.CREATE_EVENT]: FeatureFlag.STOCK_MANAGEMENT,
+    [LLMIntent.CHECK_STOCK]: FeatureFlag.STOCK_MANAGEMENT,
+    [LLMIntent.SCAN_TICKET]: FeatureFlag.STOCK_MANAGEMENT,
+    [LLMIntent.GENERATE_TICKETS_QR]: FeatureFlag.STOCK_MANAGEMENT,
+    [LLMIntent.CLAIM_TICKET]: FeatureFlag.STOCK_MANAGEMENT,
+    [LLMIntent.REPORT_INCIDENT]: FeatureFlag.INCIDENT_COMPLIANCE,
+    [LLMIntent.GENERATE_REPORT]: FeatureFlag.ADVANCED_ANALYTICS,
+    [LLMIntent.ADD_DEBT]: FeatureFlag.FINANCIAL_RECONCILIATION,
+    [LLMIntent.SETTLE_DEBT]: FeatureFlag.FINANCIAL_RECONCILIATION,
+    [LLMIntent.SEND_REMINDER]: FeatureFlag.FINANCIAL_RECONCILIATION,
+    [LLMIntent.LIST_DEBTS]: FeatureFlag.FINANCIAL_RECONCILIATION,
+  };
+
   constructor(
     @Inject(ACTION_HANDLER_TOKEN)
     private readonly actionHandlers: IActionHandler[],
     private readonly checkSubscriptionUseCase: CheckSubscriptionUseCase,
+    private readonly checkFeatureUseCase: CheckFeatureUseCase,
     private readonly configService: ConfigService,
     private readonly guidanceService: ConversationalGuidanceService,
     private readonly conversationState: ConversationStateService,
@@ -101,6 +119,19 @@ export class ActionExecutionService {
                     "⛔ Accès expiré. Activez un Pass Événement (48h) ou un Abonnement pour continuer.\n\n👉 Envoyez \"Activer pass\" pour débloquer l'accès."
                 );
                 continue;
+            }
+
+            // 1.5 Check Specific Feature Access (Premium Features)
+            const requiredFeature = this.INTENT_FEATURE_MAP[action.intent as LLMIntent];
+            if (requiredFeature) {
+                const featureAccess = await this.checkFeatureUseCase.execute({ organizationId, feature: requiredFeature });
+                if (!featureAccess.hasAccess) {
+                    await messagingService.sendMessage(
+                        senderPhoneNumber,
+                        `🔒 Fonctionnalité réservée.\nL'action demandée nécessite le module "${requiredFeature}".\nVotre plan actuel ne l'inclut pas.`
+                    );
+                    continue;
+                }
             }
         }
 
