@@ -7,6 +7,7 @@ import { LLMIntent } from '../../../common/llm/llm-types';
 import { GetOrganizationFeaturesUseCase } from '../../../subscription/application/use-cases/get-organization-features.use-case';
 import { FEATURE_DESCRIPTIONS } from '../../../subscription/domain/constants/feature-descriptions.constant';
 import { AgentOrchestratorService } from '../../../agent/agent-orchestrator.service';
+import { FeatureFlag } from '../../../subscription/domain/feature-flag.enum';
 
 @Injectable()
 export class HelpHandler implements IActionHandler {
@@ -53,9 +54,7 @@ export class HelpHandler implements IActionHandler {
             if (isManagerOrOwner) {
                 availableFeaturesList.push("Ajouter Membre");
                 availableFeaturesList.push("Gérer Abonnement");
-                if (!availableFeaturesList.includes("Créer Événement") && featureResult.features.includes("STOCK_MANAGEMENT" as any)) {
-                     availableFeaturesList.push("Créer Événement");
-                }
+                // Removed manual check for "Créer Événement" as it's covered by STOCK_MANAGEMENT ("Gestion Événements & Billetterie")
             }
         }
 
