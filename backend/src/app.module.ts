@@ -19,6 +19,9 @@ import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AuthModule } from './auth/auth.module';
+import { ContactModule } from './contact/contact.module';
+import { HealthController } from './health.controller';
+import { AgentModule } from './agent/agent.module';
 
 @Module({
   imports: [
@@ -43,10 +46,12 @@ import { AuthModule } from './auth/auth.module';
     PaymentModule,
     FeedbackModule,
     OnboardingModule,
+    ContactModule, // Added specific module
     EventEmitterModule.forRoot(),
     AuthModule,
+    AgentModule,
   ],
-  controllers: [],
+  controllers: [HealthController],
   providers: [],
 })
 export class AppModule {

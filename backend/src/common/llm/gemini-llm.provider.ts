@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
+import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
+import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { ILLMProvider } from './llm-provider.interface';
 import { LLMAnalysisResult, LLMIntent } from './llm-types';
 import { LLM_SYSTEM_PROMPTS } from './llm-prompts';
@@ -9,6 +11,7 @@ export class GeminiLLMProvider implements ILLMProvider {
   private readonly logger = new Logger(GeminiLLMProvider.name);
   private genAI: GoogleGenerativeAI;
   private model: GenerativeModel;
+  private chatModel: ChatGoogleGenerativeAI;
 
   constructor() {
     const apiKey = process.env.GOOGLE_API_KEY;
@@ -19,6 +22,17 @@ export class GeminiLLMProvider implements ILLMProvider {
     // Model name configurable via env, default to flash
     const modelName = process.env.GEMINI_MODEL_NAME || 'gemini-1.5-flash';
     this.model = this.genAI.getGenerativeModel({ model: modelName });
+
+    // Initialize LangChain Model
+    this.chatModel = new ChatGoogleGenerativeAI({
+        apiKey: apiKey,
+        model: modelName, // Use same model as raw SDK
+        temperature: 0,
+    });
+  }
+
+  getModel(): BaseChatModel {
+      return this.chatModel;
   }
 
   async analyzeText(text: string, options?: { context?: Record<string, any>; systemPrompt?: string }): Promise<LLMAnalysisResult> {

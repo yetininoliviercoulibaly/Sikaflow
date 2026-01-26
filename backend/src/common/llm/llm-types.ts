@@ -19,6 +19,13 @@ export enum LLMIntent {
   START_ONBOARDING = 'START_ONBOARDING',
   ONBOARDING_NEXT = 'ONBOARDING_NEXT',
   ADOPTION_REPORT = 'ADOPTION_REPORT',
+  // Debt Recovery intents
+  ADD_DEBT = 'ADD_DEBT',
+  ADD_CREDIT = 'ADD_CREDIT',
+  LIST_DEBTS = 'LIST_DEBTS',
+  LIST_CREDITS = 'LIST_CREDITS',
+  SETTLE_DEBT = 'SETTLE_DEBT',
+  SEND_REMINDER = 'SEND_REMINDER',
   UNKNOWN = 'UNKNOWN',
   SWITCH_ORGANIZATION = 'SWITCH_ORGANIZATION',
   SUBSCRIBE_MONTHLY = 'SUBSCRIBE_MONTHLY',
@@ -35,6 +42,9 @@ export enum LLMIntent {
 
 export interface LLMAnalysisResult {
     actions: LLMAction[];
+    intent?: LLMIntent | string;
+    data?: Record<string, any>;
+    confidence?: number;
 }
 
 export interface LLMAction {

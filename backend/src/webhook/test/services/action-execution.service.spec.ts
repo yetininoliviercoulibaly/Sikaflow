@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ActionExecutionService, ActionExecutionParams } from '../../application/services/action-execution.service';
 import { ACTION_HANDLER_TOKEN, IActionHandler } from '../../application/handlers/action-handler.interface';
 import { CheckSubscriptionUseCase } from '../../../subscription/application/use-cases/check-subscription.use-case';
+import { CheckFeatureUseCase } from '../../../subscription/application/use-cases/check-feature.use-case';
 import { IMessagingService } from '../../../common/messaging/messaging.service.interface';
 import { User } from '../../../user/domain/user.entity';
 import { MessagingPlatforms } from '../../../common/messaging/domain/constants/messaging-platforms.enum';
@@ -14,6 +15,7 @@ describe('ActionExecutionService', () => {
   let service: ActionExecutionService;
   let mockMessagingService: jest.Mocked<IMessagingService>;
   let mockCheckSubscriptionUseCase: jest.Mocked<CheckSubscriptionUseCase>;
+  let mockCheckFeatureUseCase: jest.Mocked<CheckFeatureUseCase>;
   let mockHandler: jest.Mocked<IActionHandler>;
   let mockGuidanceService: jest.Mocked<ConversationalGuidanceService>;
   let mockConversationStateService: jest.Mocked<ConversationStateService>;
@@ -29,6 +31,10 @@ describe('ActionExecutionService', () => {
 
     mockCheckSubscriptionUseCase = {
       execute: jest.fn(),
+    } as any;
+
+    mockCheckFeatureUseCase = {
+      execute: jest.fn().mockResolvedValue({ hasAccess: true }),
     } as any;
 
     mockHandler = {
@@ -57,6 +63,10 @@ describe('ActionExecutionService', () => {
         {
             provide: CheckSubscriptionUseCase,
             useValue: mockCheckSubscriptionUseCase,
+        },
+        {
+            provide: CheckFeatureUseCase,
+            useValue: mockCheckFeatureUseCase,
         },
         {
           provide: ConfigService,

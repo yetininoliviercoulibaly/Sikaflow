@@ -1,4 +1,6 @@
+import 'reflect-metadata';
 import { Options, PostgreSqlDriver } from '@mikro-orm/postgresql';
+import { join } from 'path';
 import { Migrator } from '@mikro-orm/migrations';
 import { SeedManager } from '@mikro-orm/seeder';
 import { OrganizationSchema } from './organization/infrastructure/persistence/organization.schema';
@@ -13,13 +15,14 @@ import { PaymentMethodSchema } from './payment/infrastructure/persistence/paymen
 import { SubscriptionPlanSchema } from './subscription/infrastructure/persistence/subscription-plan.schema';
 import { EventSchema } from './ticketing/infrastructure/persistence/event.schema';
 import { TicketSchema } from './ticketing/infrastructure/persistence/ticket.schema';
-import { Report } from './report/domain/report.entity';
 import { TicketClaimSchema } from './ticketing/infrastructure/persistence/ticket-claim.schema';
 import { EventFeedbackSchema } from './feedback/infrastructure/persistence/event-feedback.schema';
 import { OnboardingProgressSchema } from './onboarding/infrastructure/persistence/onboarding-progress.schema';
 import { OnboardingStepConfigSchema } from './onboarding/infrastructure/persistence/onboarding-step-config.schema';
+import { ReportSchema } from './report/infrastructure/persistence/report.schema';
 
 import { TicketCategorySchema } from './ticketing/infrastructure/persistence/ticket-category.schema';
+import { ContactSchema } from './contact/infrastructure/persistence/contact.schema';
 
 const config: Options = {
   driver: PostgreSqlDriver,
@@ -28,19 +31,26 @@ const config: Options = {
   password: process.env.DB_PASSWORD || 'postgres',
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '5432', 10),
-  entities: [OrganizationSchema, UserSchema, TransactionSchema, OrganizationMemberSchema, IncidentSchema, PromptTemplateSchema, EventPassSchema, SubscriptionSchema, PaymentMethodSchema, SubscriptionPlanSchema, EventSchema, TicketSchema, TicketCategorySchema, Report, TicketClaimSchema, EventFeedbackSchema, OnboardingProgressSchema, OnboardingStepConfigSchema],
+  entities: [OrganizationSchema, UserSchema, TransactionSchema, OrganizationMemberSchema, IncidentSchema, PromptTemplateSchema, EventPassSchema, SubscriptionSchema, PaymentMethodSchema, SubscriptionPlanSchema, EventSchema, TicketSchema, TicketCategorySchema, ReportSchema, TicketClaimSchema, EventFeedbackSchema, OnboardingProgressSchema, OnboardingStepConfigSchema, ContactSchema],
   debug: process.env.NODE_ENV !== 'production',
   allowGlobalContext: false, // For simple app usage, usually false in prod
   migrations: {
-    path: 'dist/database/migrations',
-    pathTs: 'src/database/migrations',
+    path: join(__dirname, 'database', 'migrations'),
+    pathTs: process.env.NODE_ENV === 'development' ? join(process.cwd(), 'src', 'database', 'migrations') : undefined,
     disableForeignKeys: false, // Recommended for PG
   },
   seeder: {
-    path: 'dist/database/seeders',
-    pathTs: 'src/database/seeders',
+    path: join(__dirname, 'database', 'seeders'),
+    pathTs: process.env.NODE_ENV === 'development' ? join(process.cwd(), 'src', 'database', 'seeders') : undefined,
   },
   extensions: [Migrator, SeedManager],
+  pool: {
+    min: 2,
+    max: 10,
+    idleTimeoutMillis: 30000,
+    acquireTimeoutMillis: 60000,
+  },
+  metadataCache: { enabled: false },
 };
 
 export default config;

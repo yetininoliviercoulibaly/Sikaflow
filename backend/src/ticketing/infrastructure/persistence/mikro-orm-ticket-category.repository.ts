@@ -35,4 +35,8 @@ export class MikroOrmTicketCategoryRepository implements ITicketCategoryReposito
       await this.em.flush();
     }
   }
+
+  async unsetDefaultForEvent(eventId: string): Promise<void> {
+    await this.em.nativeUpdate(TicketCategory, { eventId }, { isDefault: false });
+  }
 }

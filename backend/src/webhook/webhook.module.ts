@@ -2,13 +2,17 @@
 import { Module } from '@nestjs/common';
 import { WhatsAppController } from './application/controllers/whatsapp.controller';
 import { TelegramController } from './application/controllers/telegram.controller';
-import { ProcessMessageUseCase } from './application/use-cases/process-message.use-case';
-import { ProcessTelegramMessageUseCase } from './application/use-cases/process-telegram-message.use-case';
+import { ProcessUnifiedMessageUseCase } from './application/use-cases/process-unified-message.use-case';
+import { IntentResolverService } from './application/services/intent-resolver.service';
 import { ActionExecutionService } from './application/services/action-execution.service';
 import { CommandIntentMapper } from './application/services/command-intent.mapper';
 import { ConversationalGuidanceService } from './application/services/conversational-guidance.service';
 import { ConversationStateService } from './application/services/conversation-state.service';
-import { TextMessageStrategy } from './application/strategies/text-message.strategy';
+import { MessageExtractionService } from './application/services/message-extraction.service';
+import { MediaStandardizationService } from './application/services/media-standardization.service';
+import { AnalysisOrchestratorService } from './application/services/analysis-orchestrator.service';
+import { TelegramParserService } from './infrastructure/telegram/telegram-parser.service';
+import { WhatsAppParserService } from './infrastructure/whatsapp/whatsapp-parser.service';
 import { OrganizationModule } from '../organization/organization.module';
 import { UserModule } from '../user/user.module';
 import { TransactionModule } from '../transaction/transaction.module';
@@ -16,7 +20,7 @@ import { LLM_PROVIDER_TOKEN } from '../common/llm/llm-provider.interface';
 import { GeminiLLMProvider } from '../common/llm/gemini-llm.provider';
 import { PromptModule } from '../common/prompt/prompt.module';
 import { BullModule } from '@nestjs/bullmq';
-import { MessageProcessor } from './application/processors/message.processor';
+import { WhatsappMessageProcessor } from './application/processors/whatsapp-message.processor';
 import { TelegramMessageProcessor } from './application/processors/telegram-message.processor';
 import { ReportModule } from '../report/report.module'; 
 import { WhatsAppModule } from '../common/whatsapp/whatsapp.module';
@@ -29,6 +33,7 @@ import { PaymentModule } from '../payment/payment.module';
 import { OnboardingModule } from '../onboarding/onboarding.module';
 import { IncidentModule } from '../incident/incident.module';
 import { AuthModule } from '../auth/auth.module';
+import { AgentModule } from '../agent/agent.module';
 
 import { CreateEventHandler } from './application/handlers/create-event.handler';
 import { ScanTicketHandler } from './application/handlers/scan-ticket.handler';
@@ -38,11 +43,6 @@ import { ClaimTicketHandler } from './application/handlers/claim-ticket.handler'
 import { CheckStockHandler } from './application/handlers/check-stock.handler';
 import { FeedbackHandler } from '../feedback/application/handlers/feedback.handler';
 import { FeedbackModule } from '../feedback/feedback.module';
-import { AudioMessageStrategy } from './application/strategies/audio-message.strategy';
-import { ImageMessageStrategy } from './application/strategies/image-message.strategy';
-import { DocumentMessageStrategy } from './application/strategies/document-message.strategy';
-import { MESSAGE_STRATEGY_TOKEN } from './application/strategies/message-strategy.interface';
-import { InteractiveMessageStrategy } from './application/strategies/interactive-message.strategy';
 
 import { CreateTransactionHandler } from './application/handlers/create-transaction.handler';
 import { AskDataHandler } from './application/handlers/ask-data.handler';
@@ -67,6 +67,8 @@ import { GenerateTicketsQRHandler } from './application/handlers/generate-ticket
 import { CancelDeletionHandler } from './application/handlers/cancel-deletion.handler';
 import { RequestDashboardAccessHandler } from './application/handlers/request-dashboard-access.handler';
 import { RequestScannerAccessHandler } from './application/handlers/request-scanner-access.handler';
+import { DebtHandler } from './application/handlers/debt.handler';
+import { ContactModule } from '../contact/contact.module';
 
 @Module({
   imports: [
@@ -92,33 +94,24 @@ import { RequestScannerAccessHandler } from './application/handlers/request-scan
     OnboardingModule,
     IncidentModule,
     AuthModule,
+    ContactModule,
+    AgentModule,
   ],
   controllers: [WhatsAppController, TelegramController],
   providers: [
-    ProcessMessageUseCase,
-    ProcessTelegramMessageUseCase,
+    ProcessUnifiedMessageUseCase,
+    IntentResolverService,
     ActionExecutionService,
     CommandIntentMapper,
     ConversationalGuidanceService,
     ConversationStateService,
-    MessageProcessor,
+    MessageExtractionService,
+    MediaStandardizationService,
+    AnalysisOrchestratorService,
+    TelegramParserService,
+    WhatsAppParserService,
+    WhatsappMessageProcessor,
     TelegramMessageProcessor,
-    TextMessageStrategy,
-    AudioMessageStrategy,
-    ImageMessageStrategy,
-    DocumentMessageStrategy,
-    InteractiveMessageStrategy,
-    {
-        provide: MESSAGE_STRATEGY_TOKEN,
-        useFactory: (...strategies) => strategies,
-        inject: [
-            TextMessageStrategy, 
-            AudioMessageStrategy, 
-            ImageMessageStrategy, 
-            DocumentMessageStrategy,
-            InteractiveMessageStrategy
-        ], 
-    },
     // Action Handlers
     CreateTransactionHandler,
     SwitchOrganizationHandler,
@@ -147,6 +140,7 @@ import { RequestScannerAccessHandler } from './application/handlers/request-scan
     RequestDashboardAccessHandler,
     RequestScannerAccessHandler,
     SubscribeMonthlyHandler,
+    DebtHandler,
     {
       provide: ACTION_HANDLER_TOKEN,
       useFactory: (
@@ -175,6 +169,8 @@ import { RequestScannerAccessHandler } from './application/handlers/request-scan
         activatePass: ActivateEventPassHandler,
         execDel: ExecuteDeletionHandler,
         cancelDel: CancelDeletionHandler,
+        debt: DebtHandler,
+        feedback: FeedbackHandler,
       ) => [
         createOrg,
         addMember,
@@ -201,6 +197,8 @@ import { RequestScannerAccessHandler } from './application/handlers/request-scan
         activatePass,
         execDel,
         cancelDel,
+        debt,
+        feedback,
       ],
       inject: [
         CreateOrganizationHandler,
@@ -228,6 +226,8 @@ import { RequestScannerAccessHandler } from './application/handlers/request-scan
         ActivateEventPassHandler,
         ExecuteDeletionHandler,
         CancelDeletionHandler,
+        DebtHandler,
+        FeedbackHandler,
       ],
     }
   ],

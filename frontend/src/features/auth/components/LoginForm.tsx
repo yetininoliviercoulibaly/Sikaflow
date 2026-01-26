@@ -21,8 +21,15 @@ export const LoginForm = () => {
     try {
       await authService.requestMagicLink({ phoneNumber });
       setIsSent(true);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Une erreur est survenue lors de l\'envoi du lien.');
+    } catch (err: unknown) {
+      let message = 'Une erreur est survenue lors de l\'envoi du lien.';
+      if (err && typeof err === 'object' && 'response' in err) {
+         const axiosError = err as { response?: { data?: { message?: string } } };
+         if (axiosError.response?.data?.message) {
+            message = axiosError.response.data.message;
+         }
+      }
+      setError(message);
     } finally {
       setIsLoading(false);
     }

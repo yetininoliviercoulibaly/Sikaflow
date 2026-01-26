@@ -2,7 +2,7 @@ name: Build Docker Images
 
 on:
   push:
-    branches: [ "main", "develop" ]
+    branches: [ "main", "develop", "feat/*" ]
 
 env:
   REGISTRY: ghcr.io
@@ -66,6 +66,14 @@ jobs:
           tags: ${{ steps.meta-backend.outputs.tags }}
           labels: ${{ steps.meta-backend.outputs.labels }}
 
+      - name: Set API URLs based on branch
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "API_URL=https://api.sika-flow.com" >> $GITHUB_ENV
+          else
+            echo "API_URL=https://api-staging.sika-flow.com" >> $GITHUB_ENV
+          fi
+
       - name: Build and push Frontend image
         uses: docker/build-push-action@v5
         with:
@@ -73,14 +81,8 @@ jobs:
           push: true
           tags: ${{ steps.meta-frontend.outputs.tags }}
           labels: ${{ steps.meta-frontend.outputs.labels }}
-
-      - name: Set VITE_API_URL
-        run: |
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "VITE_API_URL=https://api.sika-flow.com" >> $GITHUB_ENV
-          else
-            echo "VITE_API_URL=https://api-staging.sika-flow.com" >> $GITHUB_ENV
-          fi
+          build-args: |
+             NEXT_PUBLIC_API_URL=${{ env.API_URL }}
 
       - name: Build and push Scanner image
         uses: docker/build-push-action@v5
@@ -90,4 +92,4 @@ jobs:
           tags: ${{ steps.meta-scanner.outputs.tags }}
           labels: ${{ steps.meta-scanner.outputs.labels }}
           build-args: |
-             VITE_API_URL=${{ env.VITE_API_URL }}
+             VITE_API_URL=${{ env.API_URL }}

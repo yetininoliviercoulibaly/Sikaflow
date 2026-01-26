@@ -11,6 +11,7 @@ import { CheckSubscriptionUseCase } from './application/use-cases/check-subscrip
 import { SubscribeMonthlyUseCase } from './application/use-cases/subscribe-monthly.use-case';
 import { SubscribeUseCase } from './application/use-cases/subscribe.use-case';
 import { CheckFeatureUseCase } from './application/use-cases/check-feature.use-case';
+import { GetOrganizationFeaturesUseCase } from './application/use-cases/get-organization-features.use-case';
 import { PaymentModule } from '../payment/payment.module';
 import { OrganizationModule } from '../organization/organization.module';
 import { FeatureGuard } from '../common/guards/feature.guard';
@@ -43,6 +44,7 @@ import { MikroOrmSubscriptionPlanRepository } from './infrastructure/persistence
     CheckSubscriptionUseCase,
     SubscribeUseCase,
     CheckFeatureUseCase,
+    GetOrganizationFeaturesUseCase,
     FeatureGuard,
     SubscribeMonthlyUseCase,
   ],
@@ -54,9 +56,9 @@ import { MikroOrmSubscriptionPlanRepository } from './infrastructure/persistence
     CheckSubscriptionUseCase,
     SubscribeUseCase,
     CheckFeatureUseCase,
+    GetOrganizationFeaturesUseCase,
     FeatureGuard,
     SubscribeMonthlyUseCase,
   ],
 })
 export class SubscriptionModule {}
-

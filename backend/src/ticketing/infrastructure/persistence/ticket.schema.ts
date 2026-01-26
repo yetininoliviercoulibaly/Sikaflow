@@ -9,7 +9,7 @@ export const TicketSchema = new EntitySchema<Ticket>({
     id: { type: 'uuid', primary: true },
     eventId: { type: 'uuid', fieldName: 'event_id' },
     categoryId: { type: 'uuid', fieldName: 'category_id', nullable: true },
-    attendeePhone: { type: 'varchar', fieldName: 'attendee_phone', length: 20, nullable: true },
+    attendeePhone: { type: 'varchar', fieldName: 'attendee_phone', length: 50, nullable: true },
     status: { type: 'enum', items: Object.values(TicketStatus), default: TicketStatus.VALID },
     secureHash: { type: 'text', fieldName: 'secure_hash' },
     createdAt: { type: 'timestamp', fieldName: 'created_at' },

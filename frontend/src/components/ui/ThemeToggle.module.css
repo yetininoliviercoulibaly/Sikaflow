@@ -1,0 +1,45 @@
+.toggleButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 9999px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  padding: 0;
+}
+
+.toggleButton:hover {
+  background-color: var(--color-bg);
+}
+
+.icon {
+  width: 1.2rem;
+  height: 1.2rem;
+  transition: all var(--transition-normal);
+  position: absolute;
+}
+
+.sun {
+  color: #f59e0b; /* amber-500 */
+  transform: rotate(0deg) scale(1);
+}
+
+.moon {
+  color: #818cf8; /* indigo-400 */
+  transform: rotate(90deg) scale(0);
+}
+
+/* Dark mode handling handled by parent class usually, but here we can check data-theme or :global(.dark) if NextThemes adds it to html */
+
+:global(.dark) .sun {
+  transform: rotate(-90deg) scale(0);
+}
+
+:global(.dark) .moon {
+  transform: rotate(0deg) scale(1);
+}

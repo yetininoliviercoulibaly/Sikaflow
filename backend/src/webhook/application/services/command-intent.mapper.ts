@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { LLMIntent } from '../../../common/llm/llm-types';
 
 export interface MappedAction {
-  intent: string;
+  intent: LLMIntent | string;
   data: Record<string, any>;
   missing_fields?: string[];
 }
@@ -29,6 +29,11 @@ export class CommandIntentMapper {
       'HELP': { intent: LLMIntent.HELP, data: {} },
       'CMD_SUBSCRIBE': { intent: LLMIntent.SUBSCRIBE, data: {} },
 
+      'CMD_ADD_DEBT': { intent: LLMIntent.ADD_DEBT, data: {} },
+      'CMD_LIST_DEBTS': { intent: LLMIntent.LIST_DEBTS, data: {} },
+      'CMD_LIST_CREDITS': { intent: LLMIntent.LIST_CREDITS, data: {} },
+      'CMD_SETTLE_DEBT': { intent: LLMIntent.SETTLE_DEBT, data: {}, missing_fields: ['contact_name', 'amount'] },
+      
       'CREATE_ORG_CMD': { intent: LLMIntent.CREATE_ORGANIZATION, data: {}, missing_fields: ['name'] },
       'ONBOARDING_NEXT': { intent: LLMIntent.ONBOARDING_NEXT, data: {} },
       'REJECT_TX': { intent: LLMIntent.CANCEL_LAST_ACTION, data: {} },
@@ -124,8 +129,8 @@ export class CommandIntentMapper {
     }
 
     // 3. Fallback: If it's a raw intent name, pass it through
-    if (Object.values(LLMIntent).includes(id as any)) {
-      return { intent: id, data: {} };
+    if (Object.values(LLMIntent).includes(id as unknown as LLMIntent)) {
+      return { intent: id as LLMIntent, data: {} };
     }
 
     return null;

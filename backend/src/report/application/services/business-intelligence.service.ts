@@ -3,6 +3,7 @@ import { EntityManager } from '@mikro-orm/core';
 import { Transaction, TransactionType } from '../../../transaction/domain/transaction.entity';
 import { UserRole } from '../../../organization/domain/organization-member.entity';
 import { Organization } from '../../../organization/domain/organization.entity';
+import { getCurrency } from '../../../common/utils/currency.util';
 
 // Metrics that require OWNER or MANAGER role
 const RESTRICTED_METRICS = ['MARGIN', 'PROFIT', 'NET_INCOME'];
@@ -12,13 +13,13 @@ export class BusinessIntelligenceService {
   constructor(private readonly em: EntityManager) {}
 
   private async getOrganizationCurrency(organizationId: string | undefined): Promise<string> {
-    if (!organizationId) return process.env.DEFAULT_CURRENCY || 'EUR';
+    if (!organizationId) return getCurrency();
     const result = await this.em.getConnection().execute(
       `SELECT settings FROM "organization" WHERE id = ?`,
       [organizationId]
     );
     const settings = result[0]?.settings;
-    return settings?.currency || process.env.DEFAULT_CURRENCY || 'EUR';
+    return settings?.currency || getCurrency();
   }
 
   async getMetric(organizationId: string | undefined, metric: string, period?: string, date?: string, userRole?: UserRole): Promise<string> {

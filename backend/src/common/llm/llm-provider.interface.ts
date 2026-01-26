@@ -1,3 +1,4 @@
+import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { LLMAnalysisResult } from './llm-types';
 
 export const LLM_PROVIDER_TOKEN = 'LLM_PROVIDER_TOKEN';
@@ -24,4 +25,9 @@ export interface ILLMProvider {
    * @param mimeType The type of media (e.g., audio/ogg; codecs=opus).
    */
   transcribeAudio(base64Data: string, mimeType: string): Promise<string>;
+
+  /**
+   * Returns the underlying LangChain Chat Model for agentic workflows.
+   */
+  getModel(): BaseChatModel;
 }

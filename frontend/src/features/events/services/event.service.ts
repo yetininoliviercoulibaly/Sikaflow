@@ -13,6 +13,11 @@ export const EventService = {
     return response.data;
   },
 
+  async getEvent(id: string): Promise<Event> {
+    const response = await api.get<Event>(`/events/${id}`);
+    return response.data;
+  },
+
   async getEventStats(eventId: string): Promise<EventStats> {
     const response = await api.get<EventStats>(`/events/${eventId}/stats`);
     return response.data;

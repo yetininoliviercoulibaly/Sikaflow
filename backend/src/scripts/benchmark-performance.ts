@@ -11,7 +11,7 @@
 
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../app.module';
-import { ProcessMessageUseCase } from '../webhook/application/use-cases/process-message.use-case';
+import { ProcessUnifiedMessageUseCase } from '../webhook/application/use-cases/process-unified-message.use-case';
 import { CheckSubscriptionUseCase } from '../subscription/application/use-cases/check-subscription.use-case';
 import { MikroORM } from '@mikro-orm/core';
 
