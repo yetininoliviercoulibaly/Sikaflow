@@ -3,7 +3,6 @@ import { UnknownIntentHandler } from './unknown-intent.handler';
 import { AgentOrchestratorService } from '../../../agent/agent-orchestrator.service';
 import { ActionContext } from './action-handler.interface';
 import { MessagingPlatforms } from '../../../common/messaging/domain/constants/messaging-platforms.enum';
-import { LLMIntent } from '../../../common/llm/llm-types';
 
 describe('UnknownIntentHandler', () => {
     let handler: UnknownIntentHandler;
@@ -33,19 +32,21 @@ describe('UnknownIntentHandler', () => {
         expect(handler).toBeDefined();
     });
 
-    it('should delegate to agent and send response', async () => {
+    // II. UnknownIntentHandler Functionality - Unknown Intent with User Message
+    it('should delegate to agent with original message', async () => {
+        const messageBody = "What is your favorite color?";
         const context: Partial<ActionContext> = {
             senderPhoneNumber: '123456789',
             organizationId: 'org1',
             messagingService: mockMessagingService,
-            messageBody: 'some weird query',
+            messageBody: messageBody,
             platform: MessagingPlatforms.WHATSAPP,
         };
 
         await handler.handle({}, context as ActionContext);
 
         expect(mockAgentOrchestrator.run).toHaveBeenCalledWith(
-            'some weird query',
+            messageBody,
             '123456789',
             expect.objectContaining({ phoneNumber: '123456789', organizationId: 'org1' })
         );
@@ -56,7 +57,8 @@ describe('UnknownIntentHandler', () => {
         );
     });
 
-    it('should handle empty message body fallback', async () => {
+    // II. UnknownIntentHandler Functionality - Unknown Intent with Empty Message Body (Fallback)
+    it('should handle empty message body fallback with "Bonjour"', async () => {
         const context: Partial<ActionContext> = {
             senderPhoneNumber: '123456789',
             messagingService: mockMessagingService,
