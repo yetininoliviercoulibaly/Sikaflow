@@ -50,7 +50,8 @@ describe('ActionExecutionService Feature Enforcement', () => {
         service = module.get<ActionExecutionService>(ActionExecutionService);
     });
 
-    it('should block access if feature is missing', async () => {
+    // III. ActionExecutionService Feature Gating - Access Denied for Premium Feature
+    it('should block access if feature is missing and send correct message', async () => {
         // Setup: User requests CREATE_EVENT (Requires STOCK_MANAGEMENT)
         mockCheckFeatureUseCase.execute.mockResolvedValue({ hasAccess: false });
 
@@ -70,12 +71,16 @@ describe('ActionExecutionService Feature Enforcement', () => {
             feature: FeatureFlag.STOCK_MANAGEMENT
         });
 
+        // "🔒 Fonctionnalité réservée.\nL'action demandée nécessite le module "STOCK_MANAGEMENT".\nVotre plan actuel ne l'inclut pas."
+        const expectedMessage = `🔒 Fonctionnalité réservée.\nL'action demandée nécessite le module "STOCK_MANAGEMENT".\nVotre plan actuel ne l'inclut pas.`;
+
         expect(mockMessagingService.sendMessage).toHaveBeenCalledWith(
             '123456789',
-            expect.stringContaining('Fonctionnalité réservée')
+            expectedMessage
         );
     });
 
+    // III. ActionExecutionService Feature Gating - Access Granted for Premium Feature
     it('should allow access if feature is enabled', async () => {
         mockCheckFeatureUseCase.execute.mockResolvedValue({ hasAccess: true });
 
@@ -94,5 +99,21 @@ describe('ActionExecutionService Feature Enforcement', () => {
             '123456789',
             expect.stringContaining('Fonctionnalité réservée')
         );
+    });
+
+    // III. ActionExecutionService Feature Gating - Access to Non-Premium Feature (No Gating)
+    it('should not check feature for non-premium actions', async () => {
+        const params: ActionExecutionParams = {
+            actions: [{ intent: LLMIntent.CREATE_TRANSACTION, data: {} }],
+            messagingService: mockMessagingService,
+            user: { lastActiveOrganizationId: 'org1', preferredLanguage: 'fr' } as any,
+            senderPhoneNumber: '123456789',
+            messageId: 'msg1',
+            platform: MessagingPlatforms.WHATSAPP,
+        };
+
+        await service.execute(params);
+
+        expect(mockCheckFeatureUseCase.execute).not.toHaveBeenCalled();
     });
 });

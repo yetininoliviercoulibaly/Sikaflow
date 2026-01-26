@@ -31,10 +31,7 @@ describe('HelpHandler', () => {
         };
 
         mockGetOrganizationFeaturesUseCase = {
-            execute: jest.fn().mockResolvedValue({
-                planName: 'Premium',
-                features: [FeatureFlag.TRANSACTIONS, FeatureFlag.STOCK_MANAGEMENT]
-            }),
+            execute: jest.fn(),
         };
 
         mockAgentOrchestrator = {
@@ -58,7 +55,8 @@ describe('HelpHandler', () => {
         expect(handler).toBeDefined();
     });
 
-    it('should call agent for new user (no plan)', async () => {
+    // I. HelpHandler Functionality - New User Help Request (No Organization)
+    it('should call agent for new user (no organization)', async () => {
         mockUserRepository.findByPhoneNumber.mockResolvedValue(null);
 
         const context: Partial<ActionContext> = {
@@ -69,18 +67,28 @@ describe('HelpHandler', () => {
 
         await handler.handle({}, context as ActionContext);
 
-        // Updated expectation to match structured JSON prompt
         expect(mockAgentOrchestrator.run).toHaveBeenCalledWith(
             expect.stringContaining('"user_role": "NEW_USER"'),
             '123456789',
             expect.objectContaining({ phoneNumber: '123456789' })
         );
+        expect(mockAgentOrchestrator.run).toHaveBeenCalledWith(
+            expect.stringContaining('Créer une Organisation (Club)'),
+            expect.any(String),
+            expect.any(Object)
+        );
     });
 
-    it('should call agent with features list for active member', async () => {
+    // I. HelpHandler Functionality - Existing User Help Request - Free Plan (Staff Role)
+    it('should call agent for staff user with free plan', async () => {
         const user = { id: 'user1', lastActiveOrganizationId: 'org1' } as User;
         mockUserRepository.findByPhoneNumber.mockResolvedValue(user);
-        mockOrganizationRepository.findMember.mockResolvedValue({ role: 'OWNER' });
+        mockOrganizationRepository.findMember.mockResolvedValue({ role: 'STAFF' });
+
+        mockGetOrganizationFeaturesUseCase.execute.mockResolvedValue({
+            planName: 'Aucun (Gratuit)',
+            features: [FeatureFlag.TRANSACTIONS, FeatureFlag.BASIC_REPORTS]
+        });
 
         const context: Partial<ActionContext> = {
             senderPhoneNumber: '123456789',
@@ -91,16 +99,79 @@ describe('HelpHandler', () => {
 
         await handler.handle({}, context as ActionContext);
 
-        // Verify that the retrieved features are translated and passed to the agent
         expect(mockAgentOrchestrator.run).toHaveBeenCalledWith(
-            expect.stringContaining('Gestion des Dépenses'), // From TRANSACTIONS mapping
+            expect.stringContaining('"user_role": "STAFF"'),
             '123456789',
             expect.objectContaining({ organizationId: 'org1' })
         );
         expect(mockAgentOrchestrator.run).toHaveBeenCalledWith(
-            expect.stringContaining('Billetterie'), // From STOCK_MANAGEMENT mapping
+            expect.stringContaining('"subscription_plan": "Aucun (Gratuit)"'),
+            expect.any(String),
+            expect.any(Object)
+        );
+        expect(mockAgentOrchestrator.run).toHaveBeenCalledWith(
+            expect.stringContaining('Gestion des Dépenses & Recettes'),
+            expect.any(String),
+            expect.any(Object)
+        );
+         expect(mockAgentOrchestrator.run).toHaveBeenCalledWith(
+            expect.stringContaining('Rapports de base'),
+            expect.any(String),
+            expect.any(Object)
+        );
+    });
+
+    // I. HelpHandler Functionality - Existing User Help Request - Premium Plan (Owner/Manager Role)
+    it('should call agent for owner/manager with premium plan', async () => {
+        const user = { id: 'user1', lastActiveOrganizationId: 'org1' } as User;
+        mockUserRepository.findByPhoneNumber.mockResolvedValue(user);
+        mockOrganizationRepository.findMember.mockResolvedValue({ role: 'OWNER' }); // or MANAGER
+
+        mockGetOrganizationFeaturesUseCase.execute.mockResolvedValue({
+            planName: 'Premium Plan',
+            features: [
+                FeatureFlag.TRANSACTIONS,
+                FeatureFlag.STOCK_MANAGEMENT,
+                FeatureFlag.ADVANCED_ANALYTICS,
+                FeatureFlag.INCIDENT_COMPLIANCE
+            ]
+        });
+
+        const context: Partial<ActionContext> = {
+            senderPhoneNumber: '123456789',
+            organizationId: 'org1',
+            messagingService: mockMessagingService,
+            platform: MessagingPlatforms.WHATSAPP,
+        };
+
+        await handler.handle({}, context as ActionContext);
+
+        expect(mockAgentOrchestrator.run).toHaveBeenCalledWith(
+            expect.stringContaining('"user_role": "OWNER"'),
             '123456789',
-            expect.anything()
+            expect.objectContaining({ organizationId: 'org1' })
+        );
+        expect(mockAgentOrchestrator.run).toHaveBeenCalledWith(
+            expect.stringContaining('"subscription_plan": "Premium Plan"'),
+            expect.any(String),
+            expect.any(Object)
+        );
+
+        // Verifying some of the features
+        expect(mockAgentOrchestrator.run).toHaveBeenCalledWith(
+            expect.stringContaining('Billetterie & Gestion de Stock'),
+            expect.any(String),
+            expect.any(Object)
+        );
+        expect(mockAgentOrchestrator.run).toHaveBeenCalledWith(
+            expect.stringContaining('Analyses Financières Avancées (Bilan Hebdo)'),
+            expect.any(String),
+            expect.any(Object)
+        );
+        expect(mockAgentOrchestrator.run).toHaveBeenCalledWith(
+            expect.stringContaining("Signalement d'Incidents & Sécurité"),
+            expect.any(String),
+            expect.any(Object)
         );
     });
 });
