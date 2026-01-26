@@ -137,8 +137,7 @@ export class ActionExecutionService {
 
         // 2. Check Missing Fields
         if (action.missing_fields && action.missing_fields.length > 0) {
-             const firstField = action.missing_fields[0];
-             const guidance = this.guidanceService.getGuidance(action.intent, firstField, platform, action.data);
+             const guidance = this.guidanceService.getGuidance(action.intent, action.missing_fields, platform, action.data);
              
              // Store pending action so we can merge context when user responds
              await this.conversationState.setPendingAction(senderPhoneNumber, {
