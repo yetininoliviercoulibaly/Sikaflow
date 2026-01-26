@@ -4,11 +4,13 @@ import { IActionHandler, ActionContext } from './action-handler.interface';
 import { SubscribeUseCase } from '../../../subscription/application/use-cases/subscribe.use-case';
 import { SubscriptionPlan } from '../../../subscription/domain/subscription-plan.entity';
 import { LLMIntent } from '../../../common/llm/llm-types';
+import { ConversationStateService } from '../services/conversation-state.service';
 
 @Injectable()
 export class SubscribeHandler implements IActionHandler {
   constructor(
     private readonly subscribeUseCase: SubscribeUseCase,
+    private readonly conversationStateService: ConversationStateService,
   ) {}
 
   canHandle(intent: string): boolean {
@@ -39,14 +41,27 @@ export class SubscribeHandler implements IActionHandler {
         
         // Try to fuzzy match duration
         if (durationArg) {
-            const targetMonths = 
+            let targetMonths =
                 typeof durationArg === 'number' ? durationArg :
                 durationArg === 'MONTHLY' ? 1 :
                 durationArg === 'QUARTERLY' ? 3 :
                 durationArg === 'YEARLY' ? 12 : null;
 
+            // Try to parse string number if not yet resolved
+            if (!targetMonths && !isNaN(Number(durationArg))) {
+                 targetMonths = Number(durationArg);
+            }
+
             if (targetMonths) {
+                // Priority 1: Match duration directly
                 selectedPlan = plans.find(p => p.durationMonths === targetMonths);
+
+                // Priority 2: Match index (1-based)
+                // If the user sends "1", it could mean "Option 1" or "1 Month".
+                // Since "Option 1" is explicitly presented to the user, we should consider it.
+                if (!selectedPlan && targetMonths > 0 && targetMonths <= plans.length) {
+                    selectedPlan = plans[targetMonths - 1];
+                }
             }
         }
 
@@ -55,6 +70,9 @@ export class SubscribeHandler implements IActionHandler {
              try {
                 const { paymentLink } = await this.subscribeUseCase.execute(selectedPlan.id, organizationId);
                 await messagingService.sendMessage(senderPhoneNumber, `💎 *Abonnement ${selectedPlan.name}*\n\nCliquez pour payer (${selectedPlan.price} ${selectedPlan.currency}) :\n${paymentLink}`);
+
+                // Clear any pending action since we are done
+                await this.conversationStateService.clearPendingAction(senderPhoneNumber);
             } catch (e) {
                 await messagingService.sendMessage(senderPhoneNumber, "❌ Erreur lors de la création du lien.");
             }
@@ -67,6 +85,14 @@ export class SubscribeHandler implements IActionHandler {
              });
              msg += `\nRépondez avec le numéro ou "3 mois".`;
              await messagingService.sendMessage(senderPhoneNumber, msg);
+
+             // Set Pending Action so the next message (e.g. "1") is interpreted in context
+             await this.conversationStateService.setPendingAction(senderPhoneNumber, {
+                 intent: LLMIntent.SUBSCRIBE,
+                 data: { provider: providerArg },
+                 missing_fields: ['duration'],
+                 createdAt: new Date()
+             });
              return;
         }
     }
@@ -81,5 +107,13 @@ export class SubscribeHandler implements IActionHandler {
     msg += `\nExemple : "Abonnement Wave" ou "Abonnement 3 mois Wave"`;
     
     await messagingService.sendMessage(senderPhoneNumber, msg);
+
+    // Set pending action for provider
+    await this.conversationStateService.setPendingAction(senderPhoneNumber, {
+         intent: LLMIntent.SUBSCRIBE,
+         data: {},
+         missing_fields: ['provider'],
+         createdAt: new Date()
+    });
   }
 }
