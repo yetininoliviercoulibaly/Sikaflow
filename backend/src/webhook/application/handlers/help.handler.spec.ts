@@ -69,8 +69,9 @@ describe('HelpHandler', () => {
 
         await handler.handle({}, context as ActionContext);
 
+        // Updated expectation to match structured JSON prompt
         expect(mockAgentOrchestrator.run).toHaveBeenCalledWith(
-            expect.stringContaining('NO active organization'),
+            expect.stringContaining('"user_role": "NEW_USER"'),
             '123456789',
             expect.objectContaining({ phoneNumber: '123456789' })
         );

@@ -26,25 +26,24 @@ export class HelpHandler implements IActionHandler {
 
         const user = await this.userRepository.findByPhoneNumber(senderPhoneNumber);
         const availableFeaturesList: string[] = [];
-        let userContextDescription = "";
+        let role = 'UNKNOWN';
+        let planName = 'Aucun';
 
         if (!user || !user.lastActiveOrganizationId) {
-            userContextDescription = "User has NO active organization.";
+            role = 'NEW_USER';
             availableFeaturesList.push("Créer une Organisation (Club)");
         } else {
             // Active Member Context
             const member = await this.organizationRepository.findMember(organizationId!, user.id);
-            const role = member?.role || UserRole.STAFF;
+            role = member?.role || UserRole.STAFF;
             const isManagerOrOwner = role === UserRole.OWNER || role === UserRole.MANAGER;
 
-            userContextDescription = `User is ${role} of organization ${organizationId}.`;
-
             // Dynamic Feature Retrieval
-            const { planName, features } = await this.getOrganizationFeaturesUseCase.execute(organizationId!);
-            userContextDescription += ` Plan: ${planName}.`;
+            const featureResult = await this.getOrganizationFeaturesUseCase.execute(organizationId!);
+            planName = featureResult.planName;
 
             // Map features to readable strings
-            features.forEach(flag => {
+            featureResult.features.forEach(flag => {
                 if (FEATURE_DESCRIPTIONS[flag]) {
                     availableFeaturesList.push(FEATURE_DESCRIPTIONS[flag]);
                 }
@@ -54,19 +53,30 @@ export class HelpHandler implements IActionHandler {
             if (isManagerOrOwner) {
                 availableFeaturesList.push("Ajouter Membre");
                 availableFeaturesList.push("Gérer Abonnement");
-                if (!availableFeaturesList.includes("Créer Événement") && features.includes("STOCK_MANAGEMENT" as any)) {
+                if (!availableFeaturesList.includes("Créer Événement") && featureResult.features.includes("STOCK_MANAGEMENT" as any)) {
                      availableFeaturesList.push("Créer Événement");
                 }
             }
         }
 
-        // Construct the Agent Prompt
-        const agentPrompt = `L'utilisateur demande de l'aide (commande 'Aide').
-        CONTEXTE UTILISATEUR: ${userContextDescription}
-        FONCTIONNALITÉS ACTIVÉES POUR LUI: ${availableFeaturesList.join(', ')}.
+        // Construct structured context for the Agent
+        const structuredContext = {
+            user_role: role,
+            subscription_plan: planName,
+            available_features: availableFeaturesList,
+            user_intent: "DEMANDE_AIDE"
+        };
 
-        Tâche : Explique à l'utilisateur ce qu'il peut faire. Sois accueillant. Rappelle-lui qu'il peut utiliser des notes vocales.
-        Ne liste pas les fonctionnalités sous forme de puces ennuyeuses, fais une phrase naturelle si possible, ou une liste engageante.`;
+        const agentPrompt = `
+        CONTEXTE STRICT (JSON):
+        ${JSON.stringify(structuredContext, null, 2)}
+
+        INSTRUCTIONS:
+        Agis comme un guide expert SikaFlow.
+        1. Accueille l'utilisateur selon son rôle (${role}).
+        2. Présente les fonctionnalités DISPONIBLES (${availableFeaturesList.join(', ')}) de manière naturelle et fluide (pas de liste à puces robotique).
+        3. Mentionne qu'il peut utiliser des notes vocales.
+        `;
 
         // Delegate to Agent
         const response = await this.agentOrchestrator.run(
