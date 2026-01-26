@@ -2,12 +2,14 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IActionHandler, ACTION_HANDLER_TOKEN, ActionContext } from '../handlers/action-handler.interface';
 import { CheckSubscriptionUseCase } from '../../../subscription/application/use-cases/check-subscription.use-case';
+import { CheckFeatureUseCase } from '../../../subscription/application/use-cases/check-feature.use-case';
 import { IMessagingService } from '../../../common/messaging/messaging.service.interface';
 import { User } from '../../../user/domain/user.entity';
 import { ConversationalGuidanceService } from './conversational-guidance.service';
 import { ConversationStateService } from './conversation-state.service';
 import { LLMIntent } from '../../../common/llm/llm-types';
 import { MessagingPlatforms } from '../../../common/messaging/domain/constants/messaging-platforms.enum';
+import { FeatureFlag } from '../../../subscription/domain/feature-flag.enum';
 
 export interface ActionExecutionParams {
   actions: any[];
@@ -34,10 +36,26 @@ export class ActionExecutionService {
     LLMIntent.SUBSCRIBE_MONTHLY
   ];
 
+  // Mapping of Intents to required Feature Flags
+  private readonly INTENT_FEATURE_MAP: Partial<Record<LLMIntent, FeatureFlag>> = {
+    [LLMIntent.CREATE_EVENT]: FeatureFlag.STOCK_MANAGEMENT,
+    [LLMIntent.CHECK_STOCK]: FeatureFlag.STOCK_MANAGEMENT,
+    [LLMIntent.SCAN_TICKET]: FeatureFlag.STOCK_MANAGEMENT,
+    [LLMIntent.GENERATE_TICKETS_QR]: FeatureFlag.STOCK_MANAGEMENT,
+    [LLMIntent.CLAIM_TICKET]: FeatureFlag.STOCK_MANAGEMENT,
+    [LLMIntent.REPORT_INCIDENT]: FeatureFlag.INCIDENT_COMPLIANCE,
+    [LLMIntent.GENERATE_REPORT]: FeatureFlag.ADVANCED_ANALYTICS,
+    [LLMIntent.ADD_DEBT]: FeatureFlag.FINANCIAL_RECONCILIATION,
+    [LLMIntent.SETTLE_DEBT]: FeatureFlag.FINANCIAL_RECONCILIATION,
+    [LLMIntent.SEND_REMINDER]: FeatureFlag.FINANCIAL_RECONCILIATION,
+    [LLMIntent.LIST_DEBTS]: FeatureFlag.FINANCIAL_RECONCILIATION,
+  };
+
   constructor(
     @Inject(ACTION_HANDLER_TOKEN)
     private readonly actionHandlers: IActionHandler[],
     private readonly checkSubscriptionUseCase: CheckSubscriptionUseCase,
+    private readonly checkFeatureUseCase: CheckFeatureUseCase,
     private readonly configService: ConfigService,
     private readonly guidanceService: ConversationalGuidanceService,
     private readonly conversationState: ConversationStateService,
@@ -80,14 +98,14 @@ export class ActionExecutionService {
         // [BLOCKER] 0. Check User Existence for protected intents
         if (!user && !PUBLIC_INTENTS.includes(action.intent as LLMIntent)) {
              await messagingService.sendMessage(senderPhoneNumber, "⚠️ Vous n'êtes pas reconnu. Veuillez créer une organisation pour commencer : tapez 'Créer organisation'.");
-             this.conversationState.clearPendingAction(senderPhoneNumber);
+             await this.conversationState.clearPendingAction(senderPhoneNumber);
              continue;
         }
 
         // [BLOCKER] 0.5 Check Organization Selection for organization-bound intents
         if (user && !organizationId && REQUIRES_ORG_INTENTS.includes(action.intent as LLMIntent)) {
             await messagingService.sendMessage(senderPhoneNumber, "❌ Aucune organisation active. Veuillez en créer une ou en sélectionner une.");
-            this.conversationState.clearPendingAction(senderPhoneNumber);
+            await this.conversationState.clearPendingAction(senderPhoneNumber);
             continue;
         }
 
@@ -102,6 +120,19 @@ export class ActionExecutionService {
                 );
                 continue;
             }
+
+            // 1.5 Check Specific Feature Access (Premium Features)
+            const requiredFeature = this.INTENT_FEATURE_MAP[action.intent as LLMIntent];
+            if (requiredFeature) {
+                const featureAccess = await this.checkFeatureUseCase.execute({ organizationId, feature: requiredFeature });
+                if (!featureAccess.hasAccess) {
+                    await messagingService.sendMessage(
+                        senderPhoneNumber,
+                        `🔒 Fonctionnalité réservée.\nL'action demandée nécessite le module "${requiredFeature}".\nVotre plan actuel ne l'inclut pas.`
+                    );
+                    continue;
+                }
+            }
         }
 
         // 2. Check Missing Fields
@@ -110,7 +141,7 @@ export class ActionExecutionService {
              const guidance = this.guidanceService.getGuidance(action.intent, firstField, platform, action.data);
              
              // Store pending action so we can merge context when user responds
-             this.conversationState.setPendingAction(senderPhoneNumber, {
+             await this.conversationState.setPendingAction(senderPhoneNumber, {
                intent: action.intent,
                data: action.data || {},
                missing_fields: action.missing_fields,
@@ -155,7 +186,7 @@ export class ActionExecutionService {
             await handler.handle(handlerData, actionContext);
             // Proactively clear pending action if handled successfully
             if (!action.missing_fields || action.missing_fields.length === 0) {
-                this.conversationState.clearPendingAction(senderPhoneNumber);
+                await this.conversationState.clearPendingAction(senderPhoneNumber);
             }
         } else {
             this.logger.warn(`No handler found for intent: ${action.intent}`);
