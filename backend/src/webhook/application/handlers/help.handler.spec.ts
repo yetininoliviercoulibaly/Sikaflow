@@ -7,6 +7,7 @@ import { CheckFeatureUseCase } from '../../../subscription/application/use-cases
 import { ActionContext } from './action-handler.interface';
 import { MessagingPlatforms } from '../../../common/messaging/domain/constants/messaging-platforms.enum';
 import { User } from '../../../user/domain/user.entity';
+import { AgentOrchestratorService } from '../../../agent/agent-orchestrator.service';
 
 describe('HelpHandler', () => {
     let handler: HelpHandler;
@@ -15,6 +16,7 @@ describe('HelpHandler', () => {
     let mockMessagingService: any;
     let mockConfigService: any;
     let mockCheckFeatureUseCase: any;
+    let mockAgentOrchestrator: any;
 
     beforeEach(async () => {
         mockUserRepository = {
@@ -39,6 +41,10 @@ describe('HelpHandler', () => {
             execute: jest.fn().mockResolvedValue({ hasAccess: true }),
         };
 
+        mockAgentOrchestrator = {
+            run: jest.fn().mockResolvedValue("Agent Response Here"),
+        };
+
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 HelpHandler,
@@ -46,6 +52,7 @@ describe('HelpHandler', () => {
                 { provide: I_ORGANIZATION_REPOSITORY, useValue: mockOrganizationRepository },
                 { provide: ConfigService, useValue: mockConfigService },
                 { provide: CheckFeatureUseCase, useValue: mockCheckFeatureUseCase },
+                { provide: AgentOrchestratorService, useValue: mockAgentOrchestrator },
             ],
         }).compile();
 
@@ -56,7 +63,7 @@ describe('HelpHandler', () => {
         expect(handler).toBeDefined();
     });
 
-    it('should send interactive buttons for new user on WhatsApp', async () => {
+    it('should call agent for new user', async () => {
         mockUserRepository.findByPhoneNumber.mockResolvedValue(null);
 
         const context: Partial<ActionContext> = {
@@ -67,17 +74,18 @@ describe('HelpHandler', () => {
 
         await handler.handle({}, context as ActionContext);
 
-        expect(mockMessagingService.sendInteractiveButtons).toHaveBeenCalledWith(
+        expect(mockAgentOrchestrator.run).toHaveBeenCalledWith(
+            expect.stringContaining('NO active organization'),
             '123456789',
-            expect.stringContaining('Bienvenue'),
-            expect.arrayContaining([
-                expect.objectContaining({ id: 'CREATE_ORG_CMD' }),
-                expect.objectContaining({ id: 'HELP_CMD' })
-            ])
+            expect.objectContaining({ phoneNumber: '123456789' })
+        );
+        expect(mockMessagingService.sendMessage).toHaveBeenCalledWith(
+            '123456789',
+            "Agent Response Here"
         );
     });
 
-    it('should send interactive list for active member on WhatsApp', async () => {
+    it('should call agent with features list for active member', async () => {
         const user = { id: 'user1', lastActiveOrganizationId: 'org1' } as User;
         mockUserRepository.findByPhoneNumber.mockResolvedValue(user);
         mockOrganizationRepository.findMember.mockResolvedValue({ role: 'OWNER' });
@@ -91,16 +99,14 @@ describe('HelpHandler', () => {
 
         await handler.handle({}, context as ActionContext);
 
-        expect(mockMessagingService.sendInteractiveList).toHaveBeenCalledWith(
+        expect(mockAgentOrchestrator.run).toHaveBeenCalledWith(
+            expect.stringContaining('Nouvelle Dépense'),
             '123456789',
-            expect.stringContaining('SikaFlow Aide'),
-            expect.any(String),
-            expect.any(String),
-            expect.arrayContaining([
-                expect.objectContaining({ title: 'Opérations' }),
-                expect.objectContaining({ title: 'Gestion & Rapports' }),
-                expect.objectContaining({ title: 'Billetterie' })
-            ])
+            expect.objectContaining({ organizationId: 'org1' })
+        );
+        expect(mockMessagingService.sendMessage).toHaveBeenCalledWith(
+            '123456789',
+            "Agent Response Here"
         );
     });
 });
