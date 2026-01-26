@@ -1,12 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { DATE_KEYWORDS, METRIC_KEYWORDS, NAME_PREFIXES, PERIOD_KEYWORDS } from '../../domain/constants/webhook.constants';
+import { IExtractedData } from '../../domain/interfaces/extracted-data.interface';
 
 @Injectable()
 export class MessageExtractionService {
   private readonly logger = new Logger(MessageExtractionService.name);
 
   // Static compiled regex patterns
-  private static readonly DATE_PATTERN = /(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})|(\d{1,2}\s+(janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre))/i;
+  // Dynamic construction from constants for I18n support
+  private static readonly DATE_PATTERN = new RegExp(
+    `(\\d{1,2}[/-]\\d{1,2}[/-]\\d{2,4})|(\\d{1,2}\\s+(${DATE_KEYWORDS.MONTHS.join('|')}))`,
+    'i'
+  );
   private static readonly AMOUNT_PATTERN = /(\d+([.,]\d+)?)/;
   private static readonly DIGITS_ONLY_PATTERN = /^\d+$/;
 
@@ -15,58 +20,58 @@ export class MessageExtractionService {
    */
   applyHeuristics(
     content: string, 
-    pending: { intent: string, missing_fields?: string[], data: Record<string, unknown> }, 
-    llmData: Record<string, unknown>
-  ): Record<string, unknown> {
-      const mergedData = { ...pending.data, ...llmData };
+    pending: { intent: string, missing_fields?: string[], data: Partial<IExtractedData> }, 
+    llmData: Partial<IExtractedData>
+  ): IExtractedData {
+      const mergedData: IExtractedData = { ...pending.data, ...llmData };
       const missingFields = pending.missing_fields || [];
       const lowerContent = content.toLowerCase();
 
       // Date heuristic
       let isDate = false;
-      if (!mergedData['date'] && missingFields.includes('date')) {
+      if (!mergedData.date && missingFields.includes('date')) {
           const dateResult = this.extractDate(content, lowerContent);
           if (dateResult) {
-              mergedData['date'] = dateResult;
+              mergedData.date = dateResult;
               isDate = true;
           }
       }
 
       // Amount heuristic
       let amountExtracted = false;
-      if (!mergedData['amount'] && missingFields.includes('amount') && !isDate) {
+      if (!mergedData.amount && missingFields.includes('amount') && !isDate) {
            const extracted = this.extractAmountFromText(content);
            if (extracted !== null) {
-                mergedData['amount'] = extracted;
+                mergedData.amount = extracted;
                 amountExtracted = true;
            }
       }
       
       // Period heuristic
-      if (!mergedData['period'] && missingFields.includes('period')) {
+      if (!mergedData.period && missingFields.includes('period')) {
            const extracted = this.extractPeriodFromText(lowerContent);
-           if (extracted) mergedData['period'] = extracted;
+           if (extracted) mergedData.period = extracted;
       }
       
       // Metric heuristic
-      if (!mergedData['metric'] && missingFields.includes('metric')) {
+      if (!mergedData.metric && missingFields.includes('metric')) {
            const extracted = this.extractMetricFromText(lowerContent);
-           if (extracted) mergedData['metric'] = extracted;
+           if (extracted) mergedData.metric = extracted;
       }
 
       // Capacity heuristic
-      if (!mergedData['capacity'] && missingFields.includes('capacity') && !isDate) {
+      if (!mergedData.capacity && missingFields.includes('capacity') && !isDate) {
           const extracted = this.extractAmountFromText(content);
           if (extracted !== null) {
-              mergedData['capacity'] = String(extracted);
+              mergedData.capacity = String(extracted);
               amountExtracted = true; // Re-use amount extraction flag logic
           }
       }
 
       // Price heuristic
-      if (!mergedData['price'] && missingFields.includes('price') && !isDate && !amountExtracted) {
+      if (!mergedData.price && missingFields.includes('price') && !isDate && !amountExtracted) {
           const extracted = this.extractAmountFromText(content);
-          if (extracted !== null) mergedData['price'] = String(extracted);
+          if (extracted !== null) mergedData.price = String(extracted);
       }
 
       // Name heuristics
@@ -93,7 +98,7 @@ export class MessageExtractionService {
       content: string, 
       pending: { intent: string }, 
       missingFields: string[], 
-      mergedData: Record<string, unknown>
+      mergedData: IExtractedData
   ): void {
       const nameField = missingFields.includes('event_name') ? 'event_name' : (missingFields.includes('name') ? 'name' : (missingFields.includes('contact_name') ? 'contact_name' : null));
       
@@ -118,20 +123,15 @@ export class MessageExtractionService {
       const lower = text.toLowerCase();
       const now = new Date();
       
-      if (lower.includes("aujourd'hui") || lower.includes("ce jour") || lower.includes("ce soir")) {
-          return now.toISOString();
-      }
-      
-      if (lower.includes("après-demain")) {
-          const target = new Date(now);
-          target.setDate(now.getDate() + 2);
-          return target.toISOString();
-      }
+      // Sort keys by length descending to ensure "après-demain" matches before "demain"
+      const sortedEntries = Object.entries(DATE_KEYWORDS.OFFSETS).sort((a, b) => b[0].length - a[0].length);
 
-      if (lower.includes("demain")) {
-          const target = new Date(now);
-          target.setDate(now.getDate() + 1);
-          return target.toISOString();
+      for (const [key, offset] of sortedEntries) {
+        if (lower.includes(key)) {
+            const target = new Date(now);
+            target.setDate(now.getDate() + offset);
+            return target.toISOString();
+        }
       }
 
       return null;

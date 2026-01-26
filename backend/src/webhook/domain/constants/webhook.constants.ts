@@ -9,6 +9,13 @@ export const DATE_KEYWORDS = {
   RELATIVE: ["aujourd'hui", "demain", "après-demain", "ce soir", "ce jour"],
   PREFIXES: ["le ", "la date est ", "c'est le ", "pour le "],
   MONTHS: ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"],
+  OFFSETS: {
+    "aujourd'hui": 0,
+    "ce jour": 0,
+    "ce soir": 0,
+    "demain": 1,
+    "après-demain": 2
+  } as Record<string, number>
 };
 
 export const PERIOD_KEYWORDS: [string[], string][] = [

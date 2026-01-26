@@ -45,4 +45,32 @@ describe('MessageExtractionService', () => {
             expect(service.cleanupName("Super Fête")).toBe('Super Fête');
         });
     });
+
+    describe('Heuristics I18n & Regex', () => {
+        it('should extract date using dynamic month regex (e.g., 5 janvier)', () => {
+             const result = service.applyHeuristics('le 5 janvier', {
+                 intent: 'CREATE_EVENT',
+                 missing_fields: ['date'],
+                 data: {}
+             }, {});
+             
+             // 5 janvier should be parsed. 
+             expect(result.date).toContain('janvier'); 
+        });
+
+        it('should parse "après-demain" with correct offset', () => {
+             // Mock Date to ensure stability
+             const mockDate = new Date('2024-01-01T12:00:00Z');
+             jest.useFakeTimers().setSystemTime(mockDate);
+
+             const result = service.parseRelativeDateToIso('après-demain');
+             
+             const expected = new Date(mockDate);
+             expected.setDate(mockDate.getDate() + 2);
+
+             expect(result).toBe(expected.toISOString());
+
+             jest.useRealTimers();
+        });
+    });
 });
