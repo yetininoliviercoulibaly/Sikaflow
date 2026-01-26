@@ -51,5 +51,8 @@ export const NAME_PREFIXES = [
   "le nom c'est "
 ];
 
-export const STOP_KEYWORDS = ['STOP', 'ANNULER', 'CANCEL', 'EXIT', 'NON', 'RIEN'];
+export const STOP_KEYWORDS = [
+    'STOP', 'ANNULER', 'CANCEL', 'EXIT', 'NON', 'RIEN',
+    "J'AI CHANGÉ D'AVIS", "JE CHANGE D'AVIS", "LAISSE TOMBER", "ABANDONNER"
+];
 export const HELP_KEYWORDS = ['AIDE', 'HELP', 'MENU'];

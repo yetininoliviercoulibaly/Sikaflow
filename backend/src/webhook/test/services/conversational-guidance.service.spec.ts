@@ -90,5 +90,16 @@ describe('ConversationalGuidanceService', () => {
         );
         expect(result.message).toContain("Pour qui et quel est le montant");
     });
+
+    it('should translate event fields in fallback', () => {
+      const result = service.getGuidance(
+        'UNKNOWN_INTENT',
+        ['event_name', 'capacity', 'price'],
+        MessagingPlatforms.WHATSAPP
+      );
+      expect(result.message).toContain("nom de l'événement");
+      expect(result.message).toContain("capacité");
+      expect(result.message).toContain("prix");
+    });
   });
 });
