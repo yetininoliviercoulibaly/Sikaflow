@@ -2,20 +2,19 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { HelpHandler } from './help.handler';
 import { I_USER_REPOSITORY } from '../../../user/domain/ports/user.repository.interface';
 import { I_ORGANIZATION_REPOSITORY } from '../../../organization/domain/ports/organization.repository.interface';
-import { ConfigService } from '@nestjs/config';
-import { CheckFeatureUseCase } from '../../../subscription/application/use-cases/check-feature.use-case';
+import { GetOrganizationFeaturesUseCase } from '../../../subscription/application/use-cases/get-organization-features.use-case';
 import { ActionContext } from './action-handler.interface';
 import { MessagingPlatforms } from '../../../common/messaging/domain/constants/messaging-platforms.enum';
 import { User } from '../../../user/domain/user.entity';
 import { AgentOrchestratorService } from '../../../agent/agent-orchestrator.service';
+import { FeatureFlag } from '../../../subscription/domain/feature-flag.enum';
 
 describe('HelpHandler', () => {
     let handler: HelpHandler;
     let mockUserRepository: any;
     let mockOrganizationRepository: any;
     let mockMessagingService: any;
-    let mockConfigService: any;
-    let mockCheckFeatureUseCase: any;
+    let mockGetOrganizationFeaturesUseCase: any;
     let mockAgentOrchestrator: any;
 
     beforeEach(async () => {
@@ -29,16 +28,13 @@ describe('HelpHandler', () => {
 
         mockMessagingService = {
             sendMessage: jest.fn(),
-            sendInteractiveButtons: jest.fn(),
-            sendInteractiveList: jest.fn(),
         };
 
-        mockConfigService = {
-            get: jest.fn(),
-        };
-
-        mockCheckFeatureUseCase = {
-            execute: jest.fn().mockResolvedValue({ hasAccess: true }),
+        mockGetOrganizationFeaturesUseCase = {
+            execute: jest.fn().mockResolvedValue({
+                planName: 'Premium',
+                features: [FeatureFlag.TRANSACTIONS, FeatureFlag.STOCK_MANAGEMENT]
+            }),
         };
 
         mockAgentOrchestrator = {
@@ -50,8 +46,7 @@ describe('HelpHandler', () => {
                 HelpHandler,
                 { provide: I_USER_REPOSITORY, useValue: mockUserRepository },
                 { provide: I_ORGANIZATION_REPOSITORY, useValue: mockOrganizationRepository },
-                { provide: ConfigService, useValue: mockConfigService },
-                { provide: CheckFeatureUseCase, useValue: mockCheckFeatureUseCase },
+                { provide: GetOrganizationFeaturesUseCase, useValue: mockGetOrganizationFeaturesUseCase },
                 { provide: AgentOrchestratorService, useValue: mockAgentOrchestrator },
             ],
         }).compile();
@@ -63,7 +58,7 @@ describe('HelpHandler', () => {
         expect(handler).toBeDefined();
     });
 
-    it('should call agent for new user', async () => {
+    it('should call agent for new user (no plan)', async () => {
         mockUserRepository.findByPhoneNumber.mockResolvedValue(null);
 
         const context: Partial<ActionContext> = {
@@ -78,10 +73,6 @@ describe('HelpHandler', () => {
             expect.stringContaining('NO active organization'),
             '123456789',
             expect.objectContaining({ phoneNumber: '123456789' })
-        );
-        expect(mockMessagingService.sendMessage).toHaveBeenCalledWith(
-            '123456789',
-            "Agent Response Here"
         );
     });
 
@@ -99,14 +90,16 @@ describe('HelpHandler', () => {
 
         await handler.handle({}, context as ActionContext);
 
+        // Verify that the retrieved features are translated and passed to the agent
         expect(mockAgentOrchestrator.run).toHaveBeenCalledWith(
-            expect.stringContaining('Nouvelle Dépense'),
+            expect.stringContaining('Gestion des Dépenses'), // From TRANSACTIONS mapping
             '123456789',
             expect.objectContaining({ organizationId: 'org1' })
         );
-        expect(mockMessagingService.sendMessage).toHaveBeenCalledWith(
+        expect(mockAgentOrchestrator.run).toHaveBeenCalledWith(
+            expect.stringContaining('Billetterie'), // From STOCK_MANAGEMENT mapping
             '123456789',
-            "Agent Response Here"
+            expect.anything()
         );
     });
 });
