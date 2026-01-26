@@ -32,7 +32,10 @@ export class ConversationalGuidanceService {
             'duration': 'durée',
             'contactName': 'contact',
             'contact_name': 'contact',
-            'debtor': 'débiteur'
+            'debtor': 'débiteur',
+            'event_name': 'nom de l\'événement',
+            'capacity': 'capacité',
+            'price': 'prix'
         };
         return map[field] || field;
     };

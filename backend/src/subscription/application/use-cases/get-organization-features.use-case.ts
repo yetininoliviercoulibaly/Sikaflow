@@ -23,7 +23,12 @@ export class GetOrganizationFeaturesUseCase {
     // Default / Fallback if no plan
     const defaultOutput: GetOrganizationFeaturesOutput = {
         planName: 'Aucun (Gratuit)',
-        features: [FeatureFlag.TRANSACTIONS, FeatureFlag.BASIC_REPORTS] // Core features always active
+        features: [
+            FeatureFlag.TRANSACTIONS,
+            FeatureFlag.BASIC_REPORTS,
+            FeatureFlag.STOCK_MANAGEMENT,
+            FeatureFlag.FINANCIAL_RECONCILIATION
+        ]
     };
 
     if (!organization || !organization.currentPlanId) {

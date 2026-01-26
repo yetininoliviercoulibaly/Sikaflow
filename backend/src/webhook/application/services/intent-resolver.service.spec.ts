@@ -17,6 +17,7 @@ describe('IntentResolverService', () => {
   it('should resolve STOP keyword', () => {
     expect(service.resolveHeuristicIntent('STOP')?.intent).toBe(LLMIntent.UNKNOWN);
     expect(service.resolveHeuristicIntent('ANNULER')?.intent).toBe(LLMIntent.UNKNOWN);
+    expect(service.resolveHeuristicIntent("J'AI CHANGÉ D'AVIS")?.intent).toBe(LLMIntent.UNKNOWN);
   });
 
   it('should resolve HELP keyword', () => {
