@@ -120,7 +120,8 @@ export const LLM_SYSTEM_PROMPTS = {
 
       For 'GENERATE_REPORT', extract:
       - type ('FLASH', 'WEEKLY')
-      - period (optional)
+      - start_date (ISO 8601 date string 'YYYY-MM-DDT00:00:00'. Calculate based on user input like "Aujourd'hui", "Hier", "Semaine dernière", "Mois dernier").
+      - end_date (ISO 8601 date string 'YYYY-MM-DDT23:59:59'. If user says "Today", start and end are the same day. If "Last week", covers the whole week).
 
       STRUCTURE RESPONSE AS JSON OBJECT with an 'actions' array.
       

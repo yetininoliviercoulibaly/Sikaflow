@@ -19,10 +19,20 @@ describe('ConversationalGuidanceService', () => {
   });
 
   describe('getGuidance', () => {
+    it('should return combined prompt when both amount and category are missing', () => {
+        const result = service.getGuidance(
+          LLMIntent.CREATE_TRANSACTION,
+          ['amount', 'category'],
+          MessagingPlatforms.WHATSAPP,
+          { type: 'EXPENSE' }
+        );
+        expect(result.message).toContain("Quel est le montant et la catégorie");
+    });
+
     it('should return guided prompt for missing amount in transactions', () => {
       const result = service.getGuidance(
         LLMIntent.CREATE_TRANSACTION,
-        'amount',
+        ['amount'],
         MessagingPlatforms.WHATSAPP,
         { type: 'EXPENSE' }
       );
@@ -32,7 +42,7 @@ describe('ConversationalGuidanceService', () => {
     it('should return interactive buttons for missing category in transactions with encoded context', () => {
       const result = service.getGuidance(
         LLMIntent.CREATE_TRANSACTION,
-        'category',
+        ['category'],
         MessagingPlatforms.TELEGRAM,
         { type: 'EXPENSE', amount: 50, currency: 'EUR' }
       );
@@ -46,7 +56,7 @@ describe('ConversationalGuidanceService', () => {
     it('should limit buttons to 3 for WhatsApp categories with encoded context', () => {
         const result = service.getGuidance(
           LLMIntent.CREATE_TRANSACTION,
-          'category',
+          ['category'],
           MessagingPlatforms.WHATSAPP,
           { type: 'INCOME', amount: 100, currency: 'XOF' }
         );
@@ -57,19 +67,39 @@ describe('ConversationalGuidanceService', () => {
     it('should return friendly prompt for organization name', () => {
       const result = service.getGuidance(
         LLMIntent.CREATE_ORGANIZATION,
-        'name',
+        ['name'],
         MessagingPlatforms.WHATSAPP
       );
       expect(result.message).toContain("Comment s'appelle votre organisation");
     });
 
-    it('should fallback to generic prompt for unknown fields', () => {
+    it('should translate fields in fallback', () => {
       const result = service.getGuidance(
         'UNKNOWN_INTENT',
-        'unknown_field',
+        ['amount', 'provider'],
         MessagingPlatforms.WHATSAPP
       );
-      expect(result.message).toContain("Il manque une information (unknown_field)");
+      expect(result.message).toContain("montant et moyen de paiement");
+    });
+
+    it('should handle debt missing info', () => {
+        const result = service.getGuidance(
+          LLMIntent.ADD_DEBT,
+          ['amount', 'contactName'],
+          MessagingPlatforms.WHATSAPP
+        );
+        expect(result.message).toContain("Pour qui et quel est le montant");
+    });
+
+    it('should translate event fields in fallback', () => {
+      const result = service.getGuidance(
+        'UNKNOWN_INTENT',
+        ['event_name', 'capacity', 'price'],
+        MessagingPlatforms.WHATSAPP
+      );
+      expect(result.message).toContain("nom de l'événement");
+      expect(result.message).toContain("capacité");
+      expect(result.message).toContain("prix");
     });
   });
 });

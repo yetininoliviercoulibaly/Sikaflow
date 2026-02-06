@@ -9,6 +9,7 @@ import { GetNextStepUseCase } from '../../../onboarding/application/use-cases/ge
 import { GetAdoptionReportUseCase } from '../../../onboarding/application/use-cases/get-adoption-report.use-case';
 import { LLMIntent } from '../../../common/llm/llm-types';
 import { IMessagingService } from '../../../common/messaging/messaging.service.interface';
+import { User } from '../../../user/domain/user.entity';
 
 @Injectable()
 export class OnboardingHandler implements IActionHandler {
@@ -32,7 +33,7 @@ export class OnboardingHandler implements IActionHandler {
   }
 
   async handle(data: any, context: ActionContext): Promise<void> {
-    const { senderPhoneNumber, organizationId, messagingService } = context;
+    const { senderPhoneNumber, organizationId, messagingService, user } = context;
 
     // Check if feature is enabled for this organization
     if (organizationId) {
@@ -57,22 +58,22 @@ export class OnboardingHandler implements IActionHandler {
     switch (intent) {
       case LLMIntent.START_ONBOARDING:
       case LLMIntent.ONBOARDING_NEXT:
-        await this.handleOnboardingFlow(senderPhoneNumber, organizationId, messagingService);
+        await this.handleOnboardingFlow(user || null, senderPhoneNumber, organizationId, messagingService);
         break;
       case LLMIntent.ADOPTION_REPORT:
         await this.handleAdoptionReport(senderPhoneNumber, organizationId, messagingService);
         break;
       default:
-        await this.handleOnboardingFlow(senderPhoneNumber, organizationId, messagingService);
+        await this.handleOnboardingFlow(user || null, senderPhoneNumber, organizationId, messagingService);
     }
   }
 
   private async handleOnboardingFlow(
+    user: User | null,
     senderPhoneNumber: string,
     organizationId: string | null,
     messagingService: IMessagingService,
   ): Promise<void> {
-    const user = await this.userRepository.findByPhoneNumber(senderPhoneNumber);
     
     if (!user || !organizationId) {
       await messagingService.sendMessage(

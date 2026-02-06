@@ -46,10 +46,11 @@ export class GreetingHandler implements IActionHandler {
                     role,
                 });
 
-                // Get next step
+                // Get next step (pass progress to avoid re-fetch)
                 const nextStep = await this.getNextStepUseCase.execute({
                     userId: user.id,
                     organizationId: user.lastActiveOrganizationId,
+                    progress: startResult.progress,
                 });
 
                 if (nextStep.step && !nextStep.isCompleted) {
@@ -83,4 +84,3 @@ export class GreetingHandler implements IActionHandler {
         }
     }
 }
-

@@ -159,7 +159,7 @@ describe('HelpHandler', () => {
 
         // Verifying some of the features
         expect(mockAgentOrchestrator.run).toHaveBeenCalledWith(
-            expect.stringContaining('Billetterie & Gestion de Stock'),
+            expect.stringContaining('Gestion Événements & Billetterie'),
             expect.any(String),
             expect.any(Object)
         );
