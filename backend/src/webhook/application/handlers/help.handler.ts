@@ -54,7 +54,6 @@ export class HelpHandler implements IActionHandler {
             if (isManagerOrOwner) {
                 availableFeaturesList.push("Ajouter Membre");
                 availableFeaturesList.push("Gérer Abonnement");
-                // Removed manual check for "Créer Événement" as it's covered by STOCK_MANAGEMENT ("Gestion Événements & Billetterie")
             }
         }
 

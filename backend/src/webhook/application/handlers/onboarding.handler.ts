@@ -89,12 +89,13 @@ export class OnboardingHandler implements IActionHandler {
     const role = member?.role || 'STAFF';
 
     // Simplified Onboarding Flow: Just show the cheat sheet / welcome message again
-    const welcomeMessage = 
+    const welcomeMessage =
       `🚀 *Tutoriel Rapide*\n\n` +
       `🎤 *Envoyer une note vocale* (ex: "Vente de 5000 pour 2 tickets")\n` +
       `💬 *Ou écrire simplement :*\n` +
       `• "Vente 50 euros pour 2 Plats" (Enregistrez une vente)\n` +
       `• "Achat 1000 euros de Boissons" (Stock ou dépense)\n` +
+      `• "Bakary me doit 5000" (Recouvrement de créances)\n` +
       `• "Ajouter membre 0707070707 comme Staff" (Inviter votre équipe)\n\n` +
       `ℹ️ Tapez "Menu" ou "Aide" à tout moment.`;
 

@@ -69,6 +69,7 @@ describe('OnboardingHandler', () => {
             senderPhoneNumber: mockUser.phoneNumber,
             organizationId: mockOrgId,
             messagingService,
+            user: mockUser,
         };
 
         await handler.handle({ intent: LLMIntent.START_ONBOARDING }, context);
@@ -91,6 +92,10 @@ describe('OnboardingHandler', () => {
         expect(messagingService.sendMessage).toHaveBeenCalledWith(
             mockUser.phoneNumber,
             expect.stringContaining('🎤 *Envoyer une note vocale*')
+        );
+        expect(messagingService.sendMessage).toHaveBeenCalledWith(
+            mockUser.phoneNumber,
+            expect.stringContaining('Bakary me doit 5000')
         );
         expect(messagingService.sendMessage).toHaveBeenCalledWith(
             mockUser.phoneNumber,

@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { AnimatedCard } from '@/components/ui/AnimatedCard';
-import { Wallet, Users, QrCode, AlertCircle, TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
+import { Wallet, Users, HandCoins, AlertCircle, TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
 import styles from './DashboardPage.module.css';
@@ -10,7 +10,7 @@ import styles from './DashboardPage.module.css';
 // Mock Data
 const STATS = [
   { title: "Chiffre d'Affaires", value: "24,500 €", description: "+12.5% vs mois dernier", icon: Wallet, trend: "+12.5%", trendUp: true },
-  { title: "Billets Vendus", value: "1,284", description: "34 aujourd'hui", icon: QrCode, trend: "+5%", trendUp: true },
+  { title: "Créances en cours", value: "8", description: "3 nouvelles cette semaine", icon: HandCoins, trend: "+2", trendUp: false },
   { title: "Dépenses", value: "12,300 €", description: "-2.4% vs mois dernier", icon: TrendingDown, trend: "-2.4%", trendUp: true, trendLabel: "Baisse" },
   { title: "Membres Actifs", value: "14", description: "2 nouveaux cette semaine", icon: Users }
 ];
@@ -18,7 +18,7 @@ const STATS = [
 const RECENT_ACTIVITY = [
     { id: 1, type: 'INCOME', desc: 'Réservation VIP - Table 5', amount: '+500 €', time: 'Il y a 10 min' },
     { id: 2, type: 'EXPENSE', desc: 'Achat Boissons - Fournisseur A', amount: '-1,200 €', time: 'Il y a 2h' },
-    { id: 3, type: 'SCAN', desc: 'Entrée scannée - John Doe', amount: 'Valide', time: 'Il y a 3h' },
+    { id: 3, type: 'DEBT', desc: 'Créance - Bakary doit 5,000 F', amount: '+5,000 F', time: 'Il y a 3h' },
     { id: 4, type: 'INCOME', desc: 'Entrée Standard x2', amount: '+40 €', time: 'Hier' }
 ];
 
@@ -45,8 +45,8 @@ export default function DashboardPage() {
             <Button variant="outline" startIcon={<AlertCircle size={16} />}>
                  Rapport
             </Button>
-            <Button variant="primary" startIcon={<QrCode size={16} />}>
-                 Scanner
+            <Button variant="primary" startIcon={<HandCoins size={16} />}>
+                 Nouvelle Créance
             </Button>
         </div>
       </div>
@@ -91,11 +91,11 @@ export default function DashboardPage() {
                             <div className={`${styles.iconWrapper} ${
                                 act.type === 'INCOME' ? styles.incomeIcon :
                                 act.type === 'EXPENSE' ? styles.expenseIcon :
-                                styles.scanIcon
+                                styles.debtIcon
                             }`}>
                                 {act.type === 'INCOME' && <TrendingUp size={18} />}
                                 {act.type === 'EXPENSE' && <TrendingDown size={18} />}
-                                {act.type === 'SCAN' && <QrCode size={18} />}
+                                {act.type === 'DEBT' && <HandCoins size={18} />}
                             </div>
                             <div className={styles.activityText}>
                                 <p>{act.desc}</p>

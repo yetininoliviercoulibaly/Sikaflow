@@ -81,6 +81,9 @@ export class IssueTicketUseCase {
       const qrBuffers: Buffer[] = [];
       const categoryName = category?.name || 'Standard';
 
+      const savePromises: Promise<void>[] = [];
+      const qrPromises: Promise<Buffer>[] = [];
+
       for (let i = 0; i < quantity; i++) {
           const ticketId = uuidv4();
           const signedPayload = this.qrCodeService.generateSignedPayload(ticketId);
@@ -97,11 +100,15 @@ export class IssueTicketUseCase {
           );
           tickets.push(ticket);
           
-          await this.ticketRepository.save(ticket);
-          
-          const qrBuffer = await this.qrCodeService.generateQRCode(signedPayload);
-          qrBuffers.push(qrBuffer);
+          savePromises.push(this.ticketRepository.save(ticket));
+          qrPromises.push(this.qrCodeService.generateQRCode(signedPayload));
       }
+
+      const [_, generatedQrBuffers] = await Promise.all([
+        Promise.all(savePromises),
+        Promise.all(qrPromises)
+      ]);
+      qrBuffers.push(...generatedQrBuffers);
 
       // 5. Send via platform-agnostic messaging
       const currencyDisplay = getCurrency();
