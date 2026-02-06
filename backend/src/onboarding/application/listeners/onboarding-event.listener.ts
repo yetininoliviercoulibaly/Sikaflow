@@ -21,6 +21,7 @@ export interface OnboardingEvent {
  * @deprecated Use OnboardingEvent instead
  */
 export interface TransactionCreatedEvent extends OnboardingEvent {}
+export interface DebtCreatedEvent extends OnboardingEvent {}
 export interface MemberAddedEvent extends OnboardingEvent {}
 export interface ReportGeneratedEvent extends OnboardingEvent {}
 
@@ -52,6 +53,19 @@ export class OnboardingEventListener {
       payload.userId,
       payload.organizationId,
       OnboardingStepId.CREATE_FIRST_TRANSACTION,
+      payload.senderPhoneNumber,
+      payload.platform,
+    );
+  }
+
+  @OnEvent('debt.created')
+  async handleDebtCreated(payload: OnboardingEvent): Promise<void> {
+    this.logger.log(`[Onboarding] Debt created by user ${payload.userId}`);
+
+    await this.completeStep(
+      payload.userId,
+      payload.organizationId,
+      OnboardingStepId.TRACK_FIRST_DEBT,
       payload.senderPhoneNumber,
       payload.platform,
     );

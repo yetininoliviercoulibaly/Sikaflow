@@ -69,73 +69,46 @@ export class HelpHandler implements IActionHandler {
         // Build Sections for Interactive List
         const sections: IMessageSection[] = [];
 
-        // Section 1: Opérations Courantes
+        // Section 1: Caisse
         sections.push({
-            title: "Opérations",
+            title: "Caisse",
             rows: [
                 { id: 'CMD_TX_EXPENSE', title: 'Nouvelle Dépense', description: 'Enregistrer un achat' },
                 { id: 'CMD_TX_INCOME', title: 'Nouvelle Recette', description: 'Enregistrer une entrée' },
-
             ]
         });
 
-        // 1.1 Check Incident Feature
-        const { hasAccess: hasIncident } = await this.checkFeatureUseCase.execute({ 
-            organizationId: organizationId!, feature: FeatureFlag.INCIDENT_COMPLIANCE 
+        // Section 2: Recouvrement
+        sections.push({
+            title: "Recouvrement",
+            rows: [
+                { id: 'CMD_ADD_DEBT', title: 'Ajouter Créance', description: 'Quelqu\'un me doit' },
+                { id: 'CMD_LIST_DEBTS', title: 'Mes Créances', description: 'Qui me doit ?' },
+                { id: 'CMD_LIST_CREDITS', title: 'Mes Dettes', description: 'Je dois combien ?' },
+                { id: 'CMD_SETTLE_DEBT', title: 'Encaisser Paiement', description: 'Marquer un paiement' },
+            ]
         });
-        if (hasIncident) {
-            sections[0].rows.push({ id: 'CMD_INCIDENT', title: 'Signaler Incident', description: 'Sécurité / Problème' });
-        }
 
-        // 1.2 Add Subscribe Button directly to Operations (or separate?) - Putting it in 'Gestion' or 'Opérations'
-        // User requested "Abonnement" to be visible. Let's add it to "Opérations" if not Premium? Or always?
-        // Let's add it to a "Compte" section or append to Operations for visibility in MVP.
-        // Actually, let's look at where it best fits. Often "Compte" or "Abonnement".
-        // Let's put it in "Opérations" for MVP visibility or a new "Mon Compte" Section.
-        // Given constraints, I'll add it to "Gestion & Rapports" or start a new section if Manager.
-        const subscriptionRow = { id: 'CMD_SUBSCRIBE', title: 'Abonnement', description: 'Gérer mon plan' };
-
-        // Section 2: Management (Conditional)
+        // Section 3: Gestion & Rapports (Manager/Owner)
         if (isManagerOrOwner) {
             const managementRows = [
                 { id: 'CMD_REPORT_FLASH', title: 'Rapport Flash', description: 'Bilan immédiat' },
             ];
 
             // Check Advanced Reports
-            const { hasAccess: hasAdvanced } = await this.checkFeatureUseCase.execute({ 
-                organizationId: organizationId!, feature: FeatureFlag.ADVANCED_ANALYTICS 
+            const { hasAccess: hasAdvanced } = await this.checkFeatureUseCase.execute({
+                organizationId: organizationId!, feature: FeatureFlag.ADVANCED_ANALYTICS
             });
             if (hasAdvanced) {
                 managementRows.push({ id: 'CMD_REPORT_WEEK', title: 'Bilan Hebdo', description: 'Semaine écoulée' });
             }
 
             managementRows.push({ id: 'CMD_ADD_MEMBER', title: 'Ajouter Membre', description: 'Inviter du staff' });
-            managementRows.push(subscriptionRow); // Add Subscribe here
+            managementRows.push({ id: 'CMD_SUBSCRIBE', title: 'Abonnement', description: 'Gérer mon plan' });
 
             sections.push({
                 title: "Gestion & Rapports",
                 rows: managementRows
-            });
-        }
-
-        // Section 3: Ticketing (Stock)
-        const { hasAccess: hasStock } = await this.checkFeatureUseCase.execute({ 
-            organizationId: organizationId!, feature: FeatureFlag.STOCK_MANAGEMENT 
-        });
-
-        if (hasStock) {
-            const ticketingRows = [
-                { id: 'CMD_SCAN', title: 'Scanner Billet', description: 'Valider une entrée' },
-                { id: 'CMD_STOCK', title: 'Voir Stock', description: 'Places restantes' }
-            ];
-
-            if (isManagerOrOwner) {
-                ticketingRows.push({ id: 'CMD_CREATE_EVENT', title: 'Créer Événement', description: 'Nouvelle billetterie' });
-            }
-
-            sections.push({
-                title: "Billetterie",
-                rows: ticketingRows
             });
         }
 

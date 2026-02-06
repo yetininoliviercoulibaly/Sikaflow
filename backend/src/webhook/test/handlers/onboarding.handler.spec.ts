@@ -94,6 +94,10 @@ describe('OnboardingHandler', () => {
         );
         expect(messagingService.sendMessage).toHaveBeenCalledWith(
             mockUser.phoneNumber,
+            expect.stringContaining('Bakary me doit 5000')
+        );
+        expect(messagingService.sendMessage).toHaveBeenCalledWith(
+            mockUser.phoneNumber,
             expect.stringContaining('Ajouter membre 0707070707 comme Staff')
         );
     });

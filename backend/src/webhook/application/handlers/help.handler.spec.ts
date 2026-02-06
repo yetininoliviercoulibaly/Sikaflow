@@ -97,9 +97,9 @@ describe('HelpHandler', () => {
             expect.any(String),
             expect.any(String),
             expect.arrayContaining([
-                expect.objectContaining({ title: 'Opérations' }),
-                expect.objectContaining({ title: 'Gestion & Rapports' }),
-                expect.objectContaining({ title: 'Billetterie' })
+                expect.objectContaining({ title: 'Caisse' }),
+                expect.objectContaining({ title: 'Recouvrement' }),
+                expect.objectContaining({ title: 'Gestion & Rapports' })
             ])
         );
     });

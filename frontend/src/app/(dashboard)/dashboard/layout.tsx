@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Spinner from '@/components/ui/Spinner';
 import Link from 'next/link';
-import { LayoutDashboard, Calendar, Building2, FileText, LogOut, Menu } from 'lucide-react';
+import { LayoutDashboard, HandCoins, Building2, FileText, LogOut, Menu } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { cn } from '@/lib/utils';
 import styles from './DashboardLayout.module.css';
@@ -36,9 +36,9 @@ export default function DashboardLayout({
 
   const navItems = [
     { name: 'Tableau de bord', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Événements', href: '/dashboard/events', icon: Calendar },
-    { name: 'Organisations', href: '/dashboard/organizations', icon: Building2 },
+    { name: 'Recouvrement', href: '/dashboard/recovery', icon: HandCoins },
     { name: 'Rapports', href: '/dashboard/reports', icon: FileText },
+    { name: 'Organisations', href: '/dashboard/organizations', icon: Building2 },
   ];
 
   return (

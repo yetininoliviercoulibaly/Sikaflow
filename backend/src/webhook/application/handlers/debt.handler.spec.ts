@@ -1,5 +1,6 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { DebtHandler } from './debt.handler';
 import { I_CONTACT_REPOSITORY } from '../../../contact/domain/ports/contact.repository.interface';
 import { ContactService } from '../../../contact/application/services/contact.service';
@@ -13,6 +14,7 @@ describe('DebtHandler', () => {
   let mockContactRepo: any;
   let mockContactService: any;
   let mockPaymentProvider: any;
+  let mockEventEmitter: any;
   let mockMessaging: any;
 
   beforeEach(async () => {
@@ -29,6 +31,9 @@ describe('DebtHandler', () => {
     mockPaymentProvider = {
       createPaymentLink: jest.fn(),
     };
+    mockEventEmitter = {
+      emit: jest.fn(),
+    };
     mockMessaging = {
       sendMessage: jest.fn(),
     };
@@ -39,6 +44,7 @@ describe('DebtHandler', () => {
         { provide: I_CONTACT_REPOSITORY, useValue: mockContactRepo },
         { provide: ContactService, useValue: mockContactService },
         { provide: PAYMENT_PROVIDER_TOKEN, useValue: mockPaymentProvider },
+        { provide: EventEmitter2, useValue: mockEventEmitter },
       ],
     }).compile();
 
