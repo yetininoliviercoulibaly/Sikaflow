@@ -5,6 +5,7 @@ import { DebtHandler } from '../src/webhook/application/handlers/debt.handler';
 import { I_CONTACT_REPOSITORY } from '../src/contact/domain/ports/contact.repository.interface';
 import { I_TRANSACTION_REPOSITORY } from '../src/transaction/domain/ports/transaction.repository.interface';
 import { I_USER_REPOSITORY } from '../src/user/domain/ports/user.repository.interface';
+import { MikroORM, EntityManager } from '@mikro-orm/core';
 import { I_MESSAGING_SERVICE } from '../src/common/messaging/messaging.service.interface';
 import { Contact } from '../src/contact/domain/contact.entity';
 import { ActionContext } from '../src/webhook/application/handlers/action-handler.interface';
@@ -53,6 +54,13 @@ describe('Recovery Feature Flow (Relance Impayés)', () => {
         createPaymentLink: jest.fn().mockResolvedValue('https://pay.me/link-123'),
     };
 
+    const mockEm = Object.create(EntityManager.prototype);
+    mockEm.name = 'default';
+    mockEm.fork = jest.fn().mockReturnValue(mockEm);
+
+    const mockOrm = Object.create(MikroORM.prototype);
+    mockOrm.em = mockEm;
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ContactService,
@@ -63,6 +71,10 @@ describe('Recovery Feature Flow (Relance Impayés)', () => {
         { provide: I_USER_REPOSITORY, useValue: userRepositoryMock },
         { provide: I_MESSAGING_SERVICE, useValue: messagingServiceMock },
         { provide: PAYMENT_PROVIDER_TOKEN, useValue: paymentProviderMock },
+        {
+          provide: MikroORM,
+          useValue: mockOrm,
+        },
       ],
     }).compile();
 

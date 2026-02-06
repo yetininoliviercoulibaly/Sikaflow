@@ -1,5 +1,6 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { MikroORM, CreateRequestContext } from '@mikro-orm/core';
 import { I_CONTACT_REPOSITORY, IContactRepository } from '../../domain/ports/contact.repository.interface';
 import { I_USER_REPOSITORY, IUserRepository } from '../../../user/domain/ports/user.repository.interface';
 import { I_MESSAGING_SERVICE, IMessagingService } from '../../../common/messaging/messaging.service.interface';
@@ -13,6 +14,7 @@ export class DebtReminderJob {
   private readonly logger = new Logger(DebtReminderJob.name);
 
   constructor(
+    private readonly orm: MikroORM,
     @Inject(I_CONTACT_REPOSITORY)
     private readonly contactRepository: IContactRepository,
     @Inject(I_USER_REPOSITORY)
@@ -25,6 +27,7 @@ export class DebtReminderJob {
    * Run every day at 9:00 AM
    */
   @Cron(CronExpression.EVERY_DAY_AT_9AM)
+  @CreateRequestContext()
   async handleDebtReminders(): Promise<void> {
     this.logger.log('🔔 Starting Debt Reminder Job...');
 
