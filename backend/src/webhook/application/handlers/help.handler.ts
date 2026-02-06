@@ -53,9 +53,6 @@ export class HelpHandler implements IActionHandler {
             if (isManagerOrOwner) {
                 availableFeaturesList.push("Ajouter Membre");
                 availableFeaturesList.push("Gérer Abonnement");
-                if (!availableFeaturesList.includes("Créer Événement") && featureResult.features.includes("STOCK_MANAGEMENT" as any)) {
-                     availableFeaturesList.push("Créer Événement");
-                }
             }
         }
 

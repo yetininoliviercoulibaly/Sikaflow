@@ -1,4 +1,5 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { IActionHandler, ActionContext } from './action-handler.interface';
 import { I_CONTACT_REPOSITORY, IContactRepository } from '../../../contact/domain/ports/contact.repository.interface';
 import { ContactService } from '../../../contact/application/services/contact.service';
@@ -26,6 +27,7 @@ export class DebtHandler implements IActionHandler {
     private readonly contactRepository: IContactRepository,
     private readonly contactService: ContactService,
     @Inject(PAYMENT_PROVIDER_TOKEN) private readonly paymentProvider: IPaymentProvider,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   canHandle(intent: string): boolean {
@@ -126,6 +128,14 @@ export class DebtHandler implements IActionHandler {
       senderPhoneNumber,
       `✅ *Créance enregistrée !*\n\n👤 ${contact.displayName}${contact.context ? ` (${contact.context})` : ''}\n💰 +${numericAmount.toLocaleString('fr-FR')} ${currency}\n📊 Total dû : *${contact.totalOwed.toLocaleString('fr-FR')} ${currency}*\n🏷️ Code: #${contact.shortId}`,
     );
+
+    // Emit Event for Onboarding
+    this.eventEmitter.emit('debt.created', {
+      userId: user!.id,
+      organizationId: context.organizationId,
+      senderPhoneNumber,
+      platform: context.platform,
+    });
   }
 
   /**
@@ -174,6 +184,14 @@ export class DebtHandler implements IActionHandler {
       senderPhoneNumber,
       `✅ *Dette enregistrée !*\n\n👤 ${contact.displayName}\n💸 Vous devez : *${contact.totalOwing.toLocaleString('fr-FR')} ${currency}*\n🏷️ Code: #${contact.shortId}`,
     );
+
+    // Emit Event for Onboarding
+    this.eventEmitter.emit('debt.created', {
+      userId: user!.id,
+      organizationId: context.organizationId,
+      senderPhoneNumber,
+      platform: context.platform,
+    });
   }
 
   /**
