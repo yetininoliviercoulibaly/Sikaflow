@@ -76,8 +76,8 @@ describe('CompleteStepUseCase', () => {
   });
 
   it('should skip already completed steps when advancing', async () => {
-    // Scenario: User at step 1. Step 2 is already completed. 
-    // Completing step 1 should skip step 2 and go to step 3.
+    // Scenario: User at step 1 (WELCOME). Step 2 (CREATE_FIRST_TRANSACTION) is already completed.
+    // Completing step 1 should skip step 2 and go to step 3 (TRACK_FIRST_DEBT).
     const progress = {
       userId: 'user1',
       organizationId: 'org1',
@@ -96,6 +96,7 @@ describe('CompleteStepUseCase', () => {
     });
 
     expect(result.success).toBe(true);
-    expect(progress.currentStep).toBe(OnboardingStepId.ADD_TEAM_MEMBER);
+    // Step 2 is already done, so the next uncompleted step is step 3 (TRACK_FIRST_DEBT)
+    expect(progress.currentStep).toBe(OnboardingStepId.TRACK_FIRST_DEBT);
   });
 });

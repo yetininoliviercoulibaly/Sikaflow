@@ -51,7 +51,7 @@ describe('CreateOrganizationUseCase', () => {
     const phoneNumber = '+1234567890';
     userRepository.findById.mockResolvedValue(null);
     userRepository.findByPhoneNumber.mockResolvedValue(null);
-    userRepository.create.mockImplementation((u) => Promise.resolve({ ...u, id: 'new-user-id' }));
+    userRepository.create.mockImplementation((u: Partial<User>) => Promise.resolve({ ...u, id: 'new-user-id' }));
 
     const result = await useCase.execute({ name: 'Auto Org', userPhoneNumber: phoneNumber });
 

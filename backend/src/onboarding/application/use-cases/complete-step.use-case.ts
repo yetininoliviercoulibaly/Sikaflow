@@ -74,7 +74,12 @@ export class CompleteStepUseCase {
     const nextStep = steps.find(s => !progress.completedSteps.includes(s.id)) || null;
 
     if (nextStep) {
-      progress.currentStep = nextStep.id;
+      // Only advance currentStep — never backtrack it
+      const currentIndex = steps.findIndex(s => s.id === progress.currentStep);
+      const nextIndex = steps.findIndex(s => s.id === nextStep.id);
+      if (nextIndex > currentIndex) {
+        progress.currentStep = nextStep.id;
+      }
     } else {
       // All steps completed
       progress.currentStep = null;

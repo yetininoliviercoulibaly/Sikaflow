@@ -6,10 +6,11 @@ export class Migration20260121000000 extends Migration {
   async up(): Promise<void> {
     const promptContent = LLM_SYSTEM_PROMPTS.DEFAULT_ANALYSIS;
 
-    // Use parameterized query to prevent SQL injection
+    // Escape single quotes in the prompt content to prevent SQL issues
+    const escapedPrompt = promptContent.replace(/'/g, "''");
+
     this.addSql(
-      `UPDATE "prompt_template" SET "template" = ?, "version" = "version" + 1, "updated_at" = CURRENT_TIMESTAMP WHERE "code" = 'analyze_message';`,
-      [promptContent],
+      `UPDATE "prompt_template" SET "template" = '${escapedPrompt}', "version" = "version" + 1, "updated_at" = CURRENT_TIMESTAMP WHERE "code" = 'analyze_message';`,
     );
   }
 
