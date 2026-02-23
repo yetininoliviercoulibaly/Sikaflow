@@ -37,7 +37,12 @@ describe('GetOrganizationFeaturesUseCase', () => {
 
         expect(result).toEqual({
             planName: 'Aucun (Gratuit)',
-            features: [FeatureFlag.TRANSACTIONS, FeatureFlag.BASIC_REPORTS],
+            features: [
+                FeatureFlag.TRANSACTIONS,
+                FeatureFlag.BASIC_REPORTS,
+                FeatureFlag.STOCK_MANAGEMENT,
+                FeatureFlag.FINANCIAL_RECONCILIATION
+            ],
         });
     });
 
@@ -50,7 +55,12 @@ describe('GetOrganizationFeaturesUseCase', () => {
 
         expect(result).toEqual({
             planName: 'Aucun (Gratuit)',
-            features: [FeatureFlag.TRANSACTIONS, FeatureFlag.BASIC_REPORTS],
+            features: [
+                FeatureFlag.TRANSACTIONS,
+                FeatureFlag.BASIC_REPORTS,
+                FeatureFlag.STOCK_MANAGEMENT,
+                FeatureFlag.FINANCIAL_RECONCILIATION
+            ],
         });
     });
 

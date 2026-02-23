@@ -13,20 +13,52 @@ export class ConversationalGuidanceService {
   /**
    * Generates a friendly, guided prompt when information is missing for an action.
    */
-  getGuidance(intent: string, missingField: string, platform: MessagingPlatforms, currentData: any = {}): GuidanceResponse {
+  getGuidance(intent: string, missingFields: string[], platform: MessagingPlatforms, currentData: any = {}): GuidanceResponse {
     const isExpense = currentData.type === 'EXPENSE';
     const isIncome = currentData.type === 'INCOME';
+    // Helper to check if a specific field is missing
+    const isMissing = (field: string) => missingFields.includes(field);
+
+    // Helper to translate field names for fallback
+    const translateField = (field: string) => {
+        const map: Record<string, string> = {
+            'amount': 'montant',
+            'category': 'catégorie',
+            'description': 'description',
+            'name': 'nom',
+            'date': 'date',
+            'location': 'lieu',
+            'provider': 'moyen de paiement',
+            'duration': 'durée',
+            'contactName': 'contact',
+            'contact_name': 'contact',
+            'debtor': 'débiteur',
+            'event_name': 'nom de l\'événement',
+            'capacity': 'capacité',
+            'price': 'prix'
+        };
+        return map[field] || field;
+    };
 
     // 1. Transaction Guided Flow
     if (intent === LLMIntent.CREATE_TRANSACTION) {
-      if (missingField === 'amount') {
+
+      // OPTIMIZATION: If both Amount and Category are missing, ask for both together
+      if (isMissing('amount') && isMissing('category')) {
+          const actionLabel = isExpense ? 'cette dépense' : isIncome ? 'cette recette' : 'cette transaction';
+          return {
+              message: `D'accord ! 📝 **Quel est le montant et la catégorie de ${actionLabel} ?** (ex: "50€ pour le taxi")`
+          };
+      }
+
+      if (isMissing('amount')) {
         const actionLabel = isExpense ? 'cette dépense' : isIncome ? 'cette recette' : 'cette transaction';
         return {
           message: `D'accord ! 📝 **Quel est le montant de ${actionLabel} ?** (ex: 50)`,
         };
       }
 
-      if (missingField === 'category') {
+      if (isMissing('category')) {
         const type = currentData.type || 'EXPENSE';
         const amount = currentData.amount || 0;
         const currency = currentData.currency || 'EUR';
@@ -50,7 +82,7 @@ export class ConversationalGuidanceService {
     }
 
     // 2. Organization Creation
-    if (intent === LLMIntent.CREATE_ORGANIZATION && missingField === 'name') {
+    if (intent === LLMIntent.CREATE_ORGANIZATION && isMissing('name')) {
         return {
             message: `Super ! 🏢 **Comment s'appelle votre organisation ou votre événement ?**`
         };
@@ -58,7 +90,7 @@ export class ConversationalGuidanceService {
 
     // 3. Subscription Flow
     if (intent === LLMIntent.SUBSCRIBE) {
-      if (missingField === 'provider') {
+      if (isMissing('provider')) {
         return {
           message: `💳 **Quel moyen de paiement préférez-vous ?**`,
           buttons: [
@@ -67,7 +99,7 @@ export class ConversationalGuidanceService {
           ]
         };
       }
-      if (missingField === 'duration') {
+      if (isMissing('duration')) {
         return {
           message: `⏱️ **Quelle durée d'abonnement souhaitez-vous ?**`,
           buttons: [
@@ -78,9 +110,26 @@ export class ConversationalGuidanceService {
       }
     }
 
-    // 3. Fallback (Robotic but slightly better)
+    // 4. Debt Management
+    if (intent === LLMIntent.ADD_DEBT || intent === LLMIntent.ADD_CREDIT) {
+        if (isMissing('amount') && (isMissing('contactName') || isMissing('contact_name'))) {
+            return {
+                message: `D'accord. 📒 **Pour qui et quel est le montant ?** (ex: "Jean me doit 5000")`
+            };
+        }
+    }
+
+    // 5. Event Creation
+    if (intent === LLMIntent.CREATE_EVENT) {
+         if (isMissing('name') && isMissing('date')) {
+              return { message: `C'est parti ! 🎉 **Quel est le nom de l'événement et sa date ?**` };
+         }
+    }
+
+    // Fallback (Improved)
+    const missingNames = missingFields.map(translateField).join(' et ');
     return {
-      message: `Il manque une information (${missingField}) pour terminer cette action. Pouvez-vous préciser ?`,
+      message: `Il me manque des informations pour continuer : **${missingNames}**. Pouvez-vous préciser ?`,
     };
   }
 }

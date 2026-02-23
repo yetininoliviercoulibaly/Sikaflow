@@ -12,14 +12,18 @@ async function bootstrap() {
   app.use(helmet());
 
   // Enable CORS
+  const isProduction = process.env.NODE_ENV === 'production';
   const allowedOrigins = [
     process.env.FRONTEND_URL,
     process.env.SCANNER_URL,
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'http://localhost:3002',
-    'http://localhost:5173',
-  ].filter(origin => !!origin);
+    // Only include localhost origins in non-production environments
+    ...(!isProduction ? [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:3002',
+      'http://localhost:5173',
+    ] : []),
+  ].filter((origin): origin is string => !!origin);
 
   app.enableCors({
     origin: allowedOrigins,
@@ -32,17 +36,19 @@ async function bootstrap() {
     transform: true,
   }));
 
-  // Swagger Configuration
-  const config = new DocumentBuilder()
-    .setTitle('SikaFlow API')
-    .setDescription('The SikaFlow API documentation')
-    .setVersion('2.0')
-    .addBearerAuth()
-    .addApiKey({ type: 'apiKey', name: 'x-api-key', in: 'header' }, 'api-key')
-    .build();
-  
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  // Swagger Configuration - only expose in non-production environments
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('SikaFlow API')
+      .setDescription('The SikaFlow API documentation')
+      .setVersion('2.0')
+      .addBearerAuth()
+      .addApiKey({ type: 'apiKey', name: 'x-api-key', in: 'header' }, 'api-key')
+      .build();
+
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api', app, document);
+  }
 
   await app.listen(3000);
   console.log('Application is running on: http://localhost:3000');

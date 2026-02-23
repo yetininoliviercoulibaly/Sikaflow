@@ -35,7 +35,7 @@ export class SendReminderTool extends BaseTool<any> {
         if (contact.totalOwed <= 0) return `${contact.displayName} does not owe anything.`;
         if (!contact.phone) return `No phone number found for ${contact.displayName}.`;
 
-        // Generate payment link (optional but good)
+        // Generate payment link (optional, log errors)
         let paymentLink = '';
         try {
             paymentLink = await this.paymentProvider.createPaymentLink(contact.totalOwed, 'XOF', {
@@ -43,7 +43,10 @@ export class SendReminderTool extends BaseTool<any> {
                 reason: 'Debt Reminder',
                 senderId: input.userId
             });
-        } catch (e) {}
+        } catch (e) {
+            // Payment link generation is optional; continue with reminder without link
+            console.warn(`Failed to generate payment link for contact ${contact.id}:`, e);
+        }
 
         const message = `👋 Hello ${contact.displayName}, this is a reminder regarding your debt of ${contact.totalOwed} XOF. Please settle it soon. 🙏` + 
             (paymentLink ? `\n\nPay here: ${paymentLink}` : '');

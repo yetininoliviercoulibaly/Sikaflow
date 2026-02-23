@@ -30,7 +30,9 @@ export class ConversationStateService implements OnModuleInit, OnModuleDestroy {
   }
 
   onModuleDestroy() {
-    this.redisClient.disconnect();
+    if (this.redisClient) {
+      this.redisClient.disconnect();
+    }
   }
 
   /**
@@ -61,11 +63,17 @@ export class ConversationStateService implements OnModuleInit, OnModuleDestroy {
       await this.redisClient.del(key);
     }
 
-    const parsed = JSON.parse(data);
-    return {
-      ...parsed,
-      createdAt: new Date(parsed.createdAt), // Rehydrate Date object
-    };
+    try {
+      const parsed = JSON.parse(data);
+      return {
+        ...parsed,
+        createdAt: new Date(parsed.createdAt), // Rehydrate Date object
+      };
+    } catch (error) {
+      this.logger.error(`Failed to parse pending action for ${userIdentifier}, clearing corrupted data`, error);
+      await this.redisClient.del(key);
+      return null;
+    }
   }
 
   /**

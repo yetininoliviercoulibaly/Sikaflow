@@ -40,7 +40,7 @@ export class ReportProcessor extends WorkerHost {
 
   async handleGenerateReport(job: Job): Promise<void> {
       this.logger.log(`[Job:${job.id}] Generating report for ${job.data.phoneNumber}`);
-      const { phoneNumber, organizationId, platform } = job.data;
+      const { phoneNumber, organizationId, platform, start_date, end_date } = job.data;
       
       try {
           // Select the correct messaging service based on platform
@@ -53,8 +53,39 @@ export class ReportProcessor extends WorkerHost {
           }
 
           this.logger.debug(`[Job:${job.id}] Fetching transactions/incidents for Org:${orgId}...`);
-          const transactions = await this.orm.em.find(Transaction, { organizationId: orgId }, { limit: 10, orderBy: { transactionDate: 'DESC' } });
-          const incidents = await this.orm.em.find(Incident, { organizationId: orgId }, { limit: 5, orderBy: { occurredAt: 'DESC' } });
+
+          // Build Query Filters
+          const txFilter: any = { organizationId: orgId };
+          const incidentFilter: any = { organizationId: orgId };
+          let limit = 10;
+          let incidentLimit = 5;
+          let reportTitle = `Flash Report - ${new Date().toLocaleDateString('fr-FR')}`;
+
+          if (start_date && end_date) {
+             const startDateObj = new Date(start_date);
+             const endDateObj = new Date(end_date);
+
+             txFilter.transactionDate = {
+                 $gte: startDateObj,
+                 $lte: endDateObj
+             };
+             incidentFilter.occurredAt = {
+                 $gte: startDateObj,
+                 $lte: endDateObj
+             };
+             // Increase limit for explicit date ranges to capture full history
+             limit = 1000;
+             incidentLimit = 100;
+
+             if (startDateObj.toDateString() === endDateObj.toDateString()) {
+                 reportTitle = `Rapport du ${startDateObj.toLocaleDateString('fr-FR')}`;
+             } else {
+                 reportTitle = `Rapport du ${startDateObj.toLocaleDateString('fr-FR')} au ${endDateObj.toLocaleDateString('fr-FR')}`;
+             }
+          }
+
+          const transactions = await this.orm.em.find(Transaction, txFilter, { limit, orderBy: { transactionDate: 'DESC' } });
+          const incidents = await this.orm.em.find(Incident, incidentFilter, { limit: incidentLimit, orderBy: { occurredAt: 'DESC' } });
 
           // 1b. Calculate Totals & Translate
           const totalIncome = transactions
@@ -84,7 +115,7 @@ export class ReportProcessor extends WorkerHost {
           // 2. Generate PDF
           this.logger.debug(`[Job:${job.id}] Generating PDF...`);
           const pdfBuffer = await this.pdfGenerator.generateReportPdf({
-              title: `Flash Report - ${new Date().toLocaleDateString('fr-FR')}`,
+              title: reportTitle,
               summary: {
                   totalIncome,
                   totalExpense,

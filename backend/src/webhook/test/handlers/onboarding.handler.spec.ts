@@ -69,6 +69,7 @@ describe('OnboardingHandler', () => {
             senderPhoneNumber: mockUser.phoneNumber,
             organizationId: mockOrgId,
             messagingService,
+            user: mockUser,
         };
 
         await handler.handle({ intent: LLMIntent.START_ONBOARDING }, context);

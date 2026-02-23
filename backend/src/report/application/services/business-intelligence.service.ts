@@ -55,12 +55,11 @@ export class BusinessIntelligenceService {
         endOfDay(endDate);
         periodLabel = 'hier';
     } else if (period === 'this_week') {
-        const day = now.getDay() || 7; 
-        if (day !== 1) {             
-            startDate.setHours(-24 * (day - 1)); 
-        } else {
-             startDate.setHours(0,0,0,0);
+        const day = now.getDay() || 7; // Sunday=7, Monday=1
+        if (day !== 1) {
+            startDate.setDate(now.getDate() - (day - 1));
         }
+        startOfDay(startDate);
         periodLabel = 'cette semaine';
     } else if (period === 'last_month') {
         startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);

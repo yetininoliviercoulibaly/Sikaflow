@@ -7,6 +7,7 @@ import { LLMIntent } from '../../../common/llm/llm-types';
 import { GetOrganizationFeaturesUseCase } from '../../../subscription/application/use-cases/get-organization-features.use-case';
 import { FEATURE_DESCRIPTIONS } from '../../../subscription/domain/constants/feature-descriptions.constant';
 import { AgentOrchestratorService } from '../../../agent/agent-orchestrator.service';
+import { FeatureFlag } from '../../../subscription/domain/feature-flag.enum';
 
 @Injectable()
 export class HelpHandler implements IActionHandler {
@@ -34,7 +35,7 @@ export class HelpHandler implements IActionHandler {
             availableFeaturesList.push("Créer une Organisation (Club)");
         } else {
             // Active Member Context
-            const member = await this.organizationRepository.findMember(organizationId!, user.id);
+            const member = organizationId ? await this.organizationRepository.findMember(organizationId, user.id) : null;
             role = member?.role || UserRole.STAFF;
             const isManagerOrOwner = role === UserRole.OWNER || role === UserRole.MANAGER;
 
@@ -69,10 +70,11 @@ export class HelpHandler implements IActionHandler {
         ${JSON.stringify(structuredContext, null, 2)}
 
         INSTRUCTIONS:
-        Agis comme un guide expert SikaFlow.
-        1. Accueille l'utilisateur selon son rôle (${role}).
-        2. Présente les fonctionnalités DISPONIBLES (${availableFeaturesList.join(', ')}) de manière naturelle et fluide (pas de liste à puces robotique).
-        3. Mentionne qu'il peut utiliser des notes vocales.
+        Agis comme un assistant SikaFlow concis et efficace.
+        1. Fais un accueil très court (1 phrase max).
+        2. Liste les fonctionnalités DISPONIBLES (${availableFeaturesList.join(', ')}) simplement.
+        3. Mentionne brièvement les notes vocales.
+        4. Ton message doit être COURT, ÉPURÉ et aller à l'essentiel.
         `;
 
         // Delegate to Agent

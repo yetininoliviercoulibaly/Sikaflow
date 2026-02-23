@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { OnboardingStepId } from '../../domain/onboarding-progress.entity';
+import { OnboardingStepId, OnboardingProgress } from '../../domain/onboarding-progress.entity';
 import { 
   IOnboardingRepository, 
   I_ONBOARDING_REPOSITORY 
@@ -19,6 +19,7 @@ export interface GetNextStepInput {
   userId: string;
   organizationId: string;
   planId?: string | null;
+  progress?: OnboardingProgress;
 }
 
 export interface GetNextStepOutput {
@@ -46,7 +47,7 @@ export class GetNextStepUseCase {
   async execute(input: GetNextStepInput): Promise<GetNextStepOutput> {
     const { userId, organizationId, planId } = input;
 
-    const progress = await this.onboardingRepository.findByUserAndOrganization(
+    const progress = input.progress || await this.onboardingRepository.findByUserAndOrganization(
       userId,
       organizationId,
     );
@@ -117,4 +118,3 @@ export class GetNextStepUseCase {
     };
   }
 }
-

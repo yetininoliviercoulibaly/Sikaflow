@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(npx jest:*)",
+      "Bash(npm run build:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: refocus menu and onboarding on caisse, recouvrement, rapports and team management\n\nAlign the WhatsApp/Telegram menu, onboarding flow and frontend dashboard\nwith the core SikaFlow offering: cash register \\(caisse\\), debt recovery\n\\(recouvrement\\), reports and organization management.\n\nBackend:\n- Restructure help menu into 3 sections: Caisse, Recouvrement, Gestion & Rapports\n- Remove Billetterie section and INCIDENT_COMPLIANCE feature check\n- Add TRACK_FIRST_DEBT onboarding step \\(enum, value-object, seeder, event listener\\)\n- Emit debt.created event from DebtHandler on successful add debt/credit\n- Update onboarding welcome message with debt recovery example\n\nFrontend:\n- Replace Evenements nav with Recouvrement \\(HandCoins icon\\)\n- Replace Billets Vendus stat with Creances en cours\n- Replace Scanner button with Nouvelle Creance\n- Replace SCAN activity with DEBT activity\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "Bash(git fetch:*)",
+      "Bash(git merge:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nmerge: resolve conflicts with main \\(agent orchestrator pattern\\)\n\nTake main''s HelpHandler refactor using AgentOrchestratorService and\nGetOrganizationFeaturesUseCase instead of interactive list menus.\nThe menu refocusing \\(caisse/recouvrement\\) is now driven by\nFEATURE_DESCRIPTIONS and dynamic subscription features.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit:*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "Bash(npx bmad-method:*)",
+      "Bash(echo:*)",
+      "Bash(printf:*)",
+      "Bash(npm pack:*)",
+      "Bash(node:*)"
+    ]
+  }
+}
