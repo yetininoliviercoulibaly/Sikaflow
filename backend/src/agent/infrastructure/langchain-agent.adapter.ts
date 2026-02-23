@@ -32,37 +32,49 @@ export class LangchainAgentAdapter implements IAgentService {
   }
 
   async run(input: string, threadId: string, context: AgentRunContext): Promise<string> {
+    if (!this.agent) {
+      this.logger.error('Agent not initialized. Call init() before run().');
+      return "Je n'ai pas pu traiter votre demande (agent non initialisé).";
+    }
+
     const enrichedInput = `User Context: [Phone: ${context.phoneNumber}, Org: ${context.organizationId || 'None'}].\nUser Message: ${input}`;
     const config = { configurable: { thread_id: threadId } };
-    
+
     // @ts-ignore
     const { HumanMessage } = require('@langchain/core/messages');
-    
-    const stream = await this.agent.stream(
-      { messages: [new HumanMessage(enrichedInput)] },
-      config
-    );
 
     let finalResponse = "";
 
-    for await (const chunk of stream) {
-      if (chunk.agent) {
-        if (chunk.agent.messages && chunk.agent.messages.length > 0) {
-          const lastMsg = chunk.agent.messages[chunk.agent.messages.length - 1];
-          if (lastMsg.content) {
-            finalResponse = lastMsg.content;
+    try {
+      const stream = await this.agent.stream(
+        { messages: [new HumanMessage(enrichedInput)] },
+        config
+      );
+
+      for await (const chunk of stream) {
+        if (chunk.agent) {
+          if (chunk.agent.messages && chunk.agent.messages.length > 0) {
+            const lastMsg = chunk.agent.messages[chunk.agent.messages.length - 1];
+            if (lastMsg.content) {
+              finalResponse = lastMsg.content;
+            }
           }
         }
       }
+
+      const state = await this.agent.getState(config);
+      const messages = state?.values?.messages;
+      if (messages && messages.length > 0) {
+        const lastMessage = messages[messages.length - 1];
+        if (lastMessage && lastMessage.content) {
+          return lastMessage.content as string;
+        }
+      }
+    } catch (error) {
+      this.logger.error(`Agent run failed for thread ${threadId}`, error);
+      return finalResponse || "Une erreur s'est produite lors du traitement de votre demande.";
     }
 
-    const state = await this.agent.getState(config);
-    const lastMessage = state.values.messages[state.values.messages.length - 1];
-    
-    if (lastMessage && lastMessage.content) {
-      return lastMessage.content as string;
-    }
-    
     return finalResponse || "Je n'ai pas pu traiter votre demande.";
   }
 }

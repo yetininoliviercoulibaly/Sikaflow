@@ -75,8 +75,11 @@ export class MikroOrmContactRepository implements IContactRepository {
   }
 
   async update(contact: Contact): Promise<Contact> {
-    // With EntitySchema mapping to Domain Entity, updating the managed entity instance and flushing is sufficient.
-    // However, if the contact passed here is not managed (e.g. from a DTO), we merge it.
+    // Merge if entity is not managed by EntityManager, then flush
+    const managed = this.em.getUnitOfWork().getById<Contact>(Contact.name, contact.id);
+    if (!managed) {
+      this.em.merge(contact);
+    }
     await this.em.flush();
     return contact;
   }
