@@ -7,6 +7,7 @@ import { CreateTransactionUseCase } from './application/use-cases/create-transac
 import { GetLastTransactionUseCase } from './application/use-cases/get-last-transaction.use-case';
 import { DeleteTransactionUseCase } from './application/use-cases/delete-transaction.use-case';
 import { GetTransactionsSummaryUseCase } from './application/use-cases/get-transactions-summary.use-case';
+import { GetTransactionsListUseCase } from './application/use-cases/get-transactions-list.use-case';
 import { UpdateTransactionCategoryUseCase } from './application/use-cases/update-transaction-category.use-case';
 import { TransactionController } from './application/controllers/transaction.controller';
 import { OrganizationModule } from '../organization/organization.module';
@@ -24,6 +25,7 @@ import { UserModule } from '../user/user.module';
     GetLastTransactionUseCase,
     DeleteTransactionUseCase,
     GetTransactionsSummaryUseCase,
+    GetTransactionsListUseCase,
     UpdateTransactionCategoryUseCase,
     MikroOrmTransactionRepository,
     {
@@ -31,6 +33,6 @@ import { UserModule } from '../user/user.module';
       useExisting: MikroOrmTransactionRepository,
     },
   ],
-  exports: [I_TRANSACTION_REPOSITORY, CreateTransactionUseCase, GetLastTransactionUseCase, DeleteTransactionUseCase, GetTransactionsSummaryUseCase, UpdateTransactionCategoryUseCase],
+  exports: [I_TRANSACTION_REPOSITORY, CreateTransactionUseCase, GetLastTransactionUseCase, DeleteTransactionUseCase, GetTransactionsSummaryUseCase, GetTransactionsListUseCase, UpdateTransactionCategoryUseCase],
 })
 export class TransactionModule {}
