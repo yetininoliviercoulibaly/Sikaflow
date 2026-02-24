@@ -2,7 +2,7 @@ import { EntityManager } from '@mikro-orm/postgresql'; // or core
 import { Injectable } from '@nestjs/common';
 import { Organization } from '../../domain/organization.entity';
 import { OrganizationMember, UserRole } from '../../domain/organization-member.entity';
-import { IOrganizationRepository } from '../../domain/ports/organization.repository.interface';
+import { IOrganizationRepository, OrganizationWithRole } from '../../domain/ports/organization.repository.interface';
 import { OrganizationSchema } from './organization.schema';
 import { OrganizationMemberSchema } from './organization-member.schema';
 
@@ -55,6 +55,21 @@ export class MikroOrmOrganizationRepository implements IOrganizationRepository {
       row.subscription_expires_at,
       row.current_plan_id
     ));
+  }
+
+  async findByPhoneNumber(phoneNumber: string): Promise<OrganizationWithRole[]> {
+    const knex = this.em.getKnex();
+    const rows = await knex('organization as o')
+      .select('o.id', 'o.name', 'om.role')
+      .innerJoin('organization_member as om', 'o.id', 'om.organization_id')
+      .innerJoin('users as u', 'om.user_id', 'u.id')
+      .where('u.phone_number', phoneNumber);
+
+    return rows.map((row: any) => ({
+      id: row.id,
+      name: row.name,
+      role: row.role,
+    }));
   }
 
   async removeMember(organizationId: string, userId: string): Promise<void> {
