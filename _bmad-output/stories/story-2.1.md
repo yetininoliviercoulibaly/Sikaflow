@@ -19,24 +19,24 @@ Pour 2.1, la catégorie est extraite par IA depuis le message — pas de confirm
 
 ## Acceptance Criteria
 
-1. **Given** un message "Dépense 5000 pour les boissons",
+1. **Given** un message sans ambiguïté "Dépense 5000 pour les boissons",
    **When** ZeroClaw reçoit le message d'un utilisateur identifié,
    **Then** l'agent extrait `{ amount: 5000, type: "EXPENSE", description: "boissons", category: "Boissons" }`
-   **And** demande confirmation : "J'enregistre une dépense de 5 000 FCFA pour les boissons. Correct ?"
+   **And** appelle `POST /transactions` **immédiatement**
+   **And** confirme : "✅ Dépense de 5 000 FCFA pour les boissons enregistrée"
 
-2. **Given** l'utilisateur confirme ("oui", "ok", "c'est bon"),
-   **When** ZeroClaw appelle `POST /transactions`,
-   **Then** la transaction est créée en base
-   **And** ZeroClaw répond : "✅ Dépense de 5 000 FCFA enregistrée"
+2. **Given** un message ambigu (interprétation incertaine),
+   **When** ZeroClaw ne peut pas extraire avec certitude montant ET description,
+   **Then** il résume l'interprétation et demande confirmation avant d'appeler l'API
 
-3. **Given** l'utilisateur infirme ("non", "annule"),
+3. **Given** l'utilisateur infirme ("non", "annule") après une demande de confirmation,
    **When** ZeroClaw reçoit la réponse négative,
    **Then** aucune transaction n'est créée
-   **And** ZeroClaw répond : "D'accord, on annule. Dis-moi si tu veux modifier."
+   **And** ZeroClaw répond : "D'accord, dis-moi ce que tu veux corriger."
 
-4. **Given** un message ambigu comme "5000 boissons" ou "boissons 5k",
-   **When** ZeroClaw peut extraire le montant et la description,
-   **Then** il demande quand même confirmation avant d'enregistrer
+4. **Given** un message clair sans le mot "dépense" comme "5000 boissons",
+   **When** montant ET description sont identifiables sans ambiguïté,
+   **Then** ZeroClaw enregistre directement (pas de confirmation)
 
 5. **Given** un montant illisible ou absent,
    **When** ZeroClaw ne peut pas extraire le montant,

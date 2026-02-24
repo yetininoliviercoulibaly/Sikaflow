@@ -96,7 +96,7 @@ Déclenche le flux d'enregistrement de dépense quand le message contient :
 - Le mot "dépense", "payé", "acheté", "sortie", "débours"
 - Ou un montant + une description sans contexte de revenu ni de dette
 
-### Flux d'extraction et confirmation (OBLIGATOIRE)
+### Flux d'extraction — Enregistrement direct ou clarification
 
 **Étape 1 — Extraction IA :**
 À partir du message, extrais :
@@ -104,28 +104,21 @@ Déclenche le flux d'enregistrement de dépense quand le message contient :
 - `description` : ce qui a été acheté/payé (ex: "boissons", "DJ", "transport")
 - `category` : déduite automatiquement depuis la description (voir mapping ci-dessous)
 
-**Si le montant est absent ou illisible :**
-→ Demande : "Je n'ai pas compris le montant. Combien as-tu dépensé ?"
-→ Attends la réponse, puis continue le flux.
+**Étape 2 — Message sans ambiguïté (montant ET description clairs) :**
+→ Appelle `record_expense` **immédiatement**, sans demander confirmation.
+→ Confirme ensuite : "✅ Dépense de 5 000 FCFA pour les boissons enregistrée"
 
-**Étape 2 — Confirmation AVANT tout appel API :**
-Formate le montant avec des espaces (5000 → "5 000 FCFA") et demande :
+> Exemple sans ambiguïté : "Dépense 5000 pour les boissons", "Payé 15000 au DJ", "3000 transport"
+
+**Étape 2 — Message ambigu (montant flou, description vague, interprétation incertaine) :**
+→ Résume l'interprétation et demande confirmation avant d'appeler l'API :
 > "J'enregistre une dépense de **5 000 FCFA** pour les boissons. Correct ?"
+→ Sur confirmation ("oui", "ok", "c'est bon", "ouais", "exact") → appelle `record_expense`
+→ Sur annulation ("non", "annule", "c'est pas ça") → ne pas appeler l'API, réponds : "D'accord, dis-moi ce que tu veux corriger."
 
-→ Ne jamais appeler `record_expense` avant d'avoir reçu une confirmation explicite.
-
-**Étape 3 — Sur confirmation ("oui", "ok", "c'est bon", "ouais", "exact") :**
-→ Appelle le tool `record_expense` avec :
-  - `phone_number` = numéro de l'utilisateur courant
-  - `amount` = montant extrait (entier positif)
-  - `category` = catégorie déduite
-  - `description` = description courte
-
-→ Confirme : "✅ Dépense de 5 000 FCFA enregistrée"
-
-**Étape 4 — Sur annulation ("non", "annule", "c'est pas ça") :**
-→ Ne pas appeler l'API
-→ Réponds : "D'accord, on annule. Dis-moi si tu veux modifier."
+**Étape 2 — Montant absent ou illisible :**
+→ Demande uniquement : "Combien as-tu dépensé ?"
+→ Attends la réponse, puis enregistre directement si tout est clair.
 
 ### Mapping des Catégories (extraction automatique)
 
