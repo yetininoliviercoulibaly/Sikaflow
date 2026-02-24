@@ -1,6 +1,6 @@
 # Story 3.1: Enregistrement d'une Dette par Message
 
-Status: dev
+Status: done
 
 ## Story
 
@@ -116,5 +116,20 @@ claude-sonnet-4-6
 
 ### Completion Notes List
 
+- Wrapper mince : toute la logique métier reste dans `ContactService.addDebt()` — use case ne fait que résoudre le contexte
+- `ResolveContextUseCase` appelle aussi `userRepository.findByPhoneNumber` en interne — double appel DB acceptable MVP (cohérent avec GetTransactionsListUseCase)
+- Warning Jest "worker force exited" dans contact.service.spec.ts — pré-existant, non introduit par 3.1
+- `OrganizationModule` ajouté au ContactModule pour exposer `ResolveContextUseCase`
+
 ### File List
+
+- `backend/src/contact/application/use-cases/add-debt.use-case.ts` (créé)
+- `backend/src/contact/application/use-cases/add-debt.use-case.spec.ts` (créé)
+- `backend/src/contact/application/controllers/debt.controller.ts` (créé)
+- `backend/src/contact/contact.module.ts` (modifié)
+- `zeroclaw/tools/record-debt.tool.yaml` (créé)
+- `zeroclaw/system-prompt.md` (modifié)
+- `_bmad-output/stories/story-3.1.md` (créé)
+- `_bmad-output/stories/story-3.1-atdd.md` (créé)
+- `_bmad-output/stories/story-3.1-trace.md` (créé)
 
