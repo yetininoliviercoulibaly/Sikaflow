@@ -1,6 +1,6 @@
 # Story 3.3: Règlement d'une Dette
 
-Status: dev
+Status: done
 
 ## Story
 
@@ -117,5 +117,19 @@ claude-sonnet-4-6
 
 ### Completion Notes List
 
+- `ContactService.settleDebt()` gère nativement le cap (amount > totalOwed) et le règlement total (amount absent) — aucune logique supplémentaire nécessaire dans le use case
+- `null` retourné par `settleDebt` = contact non trouvé → NotFoundException (pas d'erreur silencieuse)
+- ZeroClaw résout le shortId depuis la mémoire session ou via `get_debts` si absent
+
 ### File List
+
+- `backend/src/contact/application/use-cases/settle-debt.use-case.ts` (créé)
+- `backend/src/contact/application/use-cases/settle-debt.use-case.spec.ts` (créé)
+- `backend/src/contact/application/controllers/debt.controller.ts` (modifié)
+- `backend/src/contact/contact.module.ts` (modifié)
+- `zeroclaw/tools/settle-debt.tool.yaml` (créé)
+- `zeroclaw/system-prompt.md` (modifié)
+- `_bmad-output/stories/story-3.3.md` (créé)
+- `_bmad-output/stories/story-3.3-atdd.md` (créé)
+- `_bmad-output/stories/story-3.3-trace.md` (créé)
 
