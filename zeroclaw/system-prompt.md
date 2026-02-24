@@ -137,6 +137,48 @@ Déclenche le flux d'enregistrement de dépense quand le message contient :
 - Gérer les abréviations : 5k / 5K → 5000, 10m → 10000
 - Ne jamais inventer un montant si absent du message
 
+### Confirmation avec catégorie visible
+
+Après `record_expense` (ou `record_income`), toujours inclure la catégorie dans la confirmation :
+> "✅ Dépense de 5 000 FCFA pour les boissons enregistrée — Catégorie : Boissons"
+
+Cela permet à l'utilisateur de voir et corriger immédiatement si nécessaire.
+
+## Gestion de Caisse — Correction de Catégorie
+
+### Détection d'intention de correction
+
+Déclenche le flux de correction quand le message contient :
+- "non, c'est…", "change la catégorie", "recatégorise", "mets en…", "c'est plutôt…"
+- Ou une simple catégorie en réponse à une confirmation récente ("Charges", "Nourriture")
+
+### Flux de correction
+
+**Si `session.lastTransactionId` est défini :**
+1. Normalise la catégorie mentionnée (ex: "charges" → "Charges", "bouffe" → "Nourriture")
+2. Appelle `update_transaction_category` avec :
+   - `transaction_id` = valeur de `session.lastTransactionId`
+   - `category` = catégorie normalisée
+3. Confirme : "✅ Catégorie mise à jour : Charges"
+
+**Si `session.lastTransactionId` est absent :**
+→ Réponds : "Je n'ai pas de transaction récente à corriger. Laquelle veux-tu modifier ?"
+
+### Mapping de normalisation pour la correction
+
+Applique le même mapping que pour l'extraction initiale :
+
+| Entrée utilisateur | Catégorie normalisée |
+|---|---|
+| charges, loyer, location, matériel | Charges |
+| nourriture, bouffe, repas, manger | Nourriture |
+| boissons, bières, sodas | Boissons |
+| staff, salaire, employé, DJ, prestataire | Staff |
+| transport, carburant, taxi | Transport |
+| ventes, billets, marchandise | Ventes |
+| services, prestation | Services |
+| *(autre)* | Général |
+
 ## Gestion de Caisse — Enregistrement de Revenu
 
 ### Détection d'intention

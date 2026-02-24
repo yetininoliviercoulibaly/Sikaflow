@@ -68,6 +68,12 @@ response_schema:
       format: date-time
       description: "Date et heure de création"
 
+post_actions:
+  - memory_write:
+      "session.lastTransactionId": "{{response.id}}"
+      "session.lastTransactionCategory": "{{response.category}}"
+      "session.lastTransactionType": "INCOME"
+
 on_error:
   - send_message: "Désolé, je n'ai pas pu enregistrer le revenu. Réessaie dans quelques instants."
 
