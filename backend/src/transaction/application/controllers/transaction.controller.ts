@@ -40,9 +40,15 @@ export class TransactionController {
   ) {}
 
   @Get()
-  async getSummary(@Query('phoneNumber') phoneNumber: string) {
+  async getSummary(
+    @Query('phoneNumber') phoneNumber: string,
+    @Query('startDate') startDateStr?: string,
+    @Query('endDate') endDateStr?: string,
+  ) {
     if (!phoneNumber) throw new BadRequestException('phoneNumber query param is required');
-    return this.getTransactionsSummaryUseCase.execute({ phoneNumber });
+    const startDate = startDateStr ? new Date(startDateStr) : undefined;
+    const endDate = endDateStr ? new Date(endDateStr) : undefined;
+    return this.getTransactionsSummaryUseCase.execute({ phoneNumber, startDate, endDate });
   }
 
   @Post()

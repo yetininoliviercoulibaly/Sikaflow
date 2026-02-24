@@ -6,6 +6,8 @@ import { TransactionType } from '../../domain/transaction.entity';
 
 export interface GetTransactionsSummaryCommand {
   phoneNumber: string;
+  startDate?: Date;
+  endDate?: Date;
 }
 
 export interface RecentTransaction {
@@ -35,7 +37,7 @@ export class GetTransactionsSummaryUseCase {
   ) {}
 
   async execute(command: GetTransactionsSummaryCommand): Promise<TransactionsSummary> {
-    const { phoneNumber } = command;
+    const { phoneNumber, startDate, endDate } = command;
 
     const user = await this.userRepository.findByPhoneNumber(phoneNumber);
     if (!user) {
@@ -44,7 +46,11 @@ export class GetTransactionsSummaryUseCase {
 
     const organization = await this.resolveContextUseCase.execute({ phoneNumber });
 
-    const transactions = await this.transactionRepository.findByOrganization(organization.id, { limit: 50 });
+    const transactions = await this.transactionRepository.findByOrganization(organization.id, {
+      limit: 50,
+      startDate,
+      endDate,
+    });
 
     const income = transactions.filter(t => t.type === TransactionType.INCOME);
     const expenses = transactions.filter(t => t.type === TransactionType.EXPENSE);

@@ -14,12 +14,30 @@ config:
   query_params:
     phoneNumber: "{{phone_number}}"
     summary: "true"
+    startDate: "{{start_date}}"
+    endDate: "{{end_date}}"
 
 parameters:
   - name: phone_number
     description: "Numéro de téléphone de l'utilisateur au format E.164 (ex: +22507000000)"
     type: string
     required: true
+
+  - name: start_date
+    description: >
+      Date de début au format ISO 8601 (ex: 2026-02-23T00:00:00Z).
+      Calculée par ZeroClaw selon la demande de l'utilisateur (hier, cette semaine, date précise).
+      Omis pour un résumé global sans filtre de date.
+    type: string
+    required: false
+
+  - name: end_date
+    description: >
+      Date de fin au format ISO 8601 (ex: 2026-02-23T23:59:59Z).
+      Calculée par ZeroClaw selon la demande de l'utilisateur.
+      Omis pour un résumé global sans filtre de date.
+    type: string
+    required: false
 
 response_schema:
   type: object
@@ -80,6 +98,23 @@ examples:
           category: "Boissons"
           description: "boissons"
           transactionDate: "2026-02-24T12:00:00Z"
+
+  - description: "Résumé d'hier seulement"
+    request:
+      phone_number: "+22507000000"
+      start_date: "2026-02-23T00:00:00Z"
+      end_date: "2026-02-23T23:59:59Z"
+    response:
+      totalIncome: 25000
+      totalExpenses: 5000
+      balance: 20000
+      recentTransactions:
+        - id: "tx-uuid-1"
+          type: "INCOME"
+          amount: 25000
+          category: "Ventes"
+          description: "vente de billets"
+          transactionDate: "2026-02-23T20:00:00Z"
 
   - description: "Caisse vide"
     request:

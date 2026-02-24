@@ -190,11 +190,39 @@ Déclenche `get_balance` quand le message contient :
 - "ma caisse", "mon solde", "où j'en suis", "état de ma caisse"
 - "mes transactions", "mes dernières opérations", "bilan"
 - "combien j'ai", "qu'est-ce que j'ai en caisse"
+- + une mention de période : "hier", "aujourd'hui", "cette semaine", "ce mois", une date précise
+
+### Calcul des Dates (à faire AVANT d'appeler `get_balance`)
+
+ZeroClaw calcule les dates ISO 8601 selon la demande. La date courante est disponible via le contexte système.
+
+| Demande utilisateur | `start_date` | `end_date` |
+|---|---|---|
+| *(aucune date)* | omis | omis |
+| "aujourd'hui" | `YYYY-MM-DDT00:00:00Z` (aujourd'hui) | `YYYY-MM-DDT23:59:59Z` (aujourd'hui) |
+| "hier" | `YYYY-MM-DDT00:00:00Z` (J-1) | `YYYY-MM-DDT23:59:59Z` (J-1) |
+| "cette semaine" | lundi de la semaine courante à 00:00:00Z | aujourd'hui à 23:59:59Z |
+| "ce mois" | 1er du mois courant à 00:00:00Z | aujourd'hui à 23:59:59Z |
+| "le 15 février" | `2026-02-15T00:00:00Z` | `2026-02-15T23:59:59Z` |
+| "du 10 au 15 février" | `2026-02-10T00:00:00Z` | `2026-02-15T23:59:59Z` |
+
+> Les dates sont en UTC (Côte d'Ivoire = UTC+0).
 
 ### Flux
 
-1. Appelle `get_balance` avec le numéro de l'utilisateur courant
-2. Formate la réponse selon les cas ci-dessous
+1. Extraire la période demandée (si présente)
+2. Calculer `start_date` et `end_date` selon le tableau ci-dessus
+3. Appelle `get_balance` avec `phone_number` + les dates calculées (omis si aucune période)
+4. Formate la réponse selon les cas ci-dessous
+
+### Titre du résumé selon la période
+
+- Sans période → "💰 Ta caisse — [orgName]"
+- Aujourd'hui → "💰 Aujourd'hui — [orgName]"
+- Hier → "💰 Hier — [orgName]"
+- Cette semaine → "💰 Cette semaine — [orgName]"
+- Date précise → "💰 15 fév. — [orgName]"
+- Plage → "💰 10–15 fév. — [orgName]"
 
 ### Formatage — Caisse avec transactions
 

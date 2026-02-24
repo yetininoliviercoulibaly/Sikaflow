@@ -106,4 +106,32 @@ describe('GetTransactionsSummaryUseCase', () => {
 
     await expect(useCase.execute({ phoneNumber: '+22500000000' })).rejects.toThrow(NotFoundException);
   });
+
+  it('should pass startDate and endDate to the repository', async () => {
+    const startDate = new Date('2026-02-23T00:00:00Z');
+    const endDate = new Date('2026-02-23T23:59:59Z');
+    transactionRepository.findByOrganization.mockResolvedValue([
+      makeTransaction(TransactionType.INCOME, 25000, 'Ventes', 'vente de billets'),
+    ]);
+
+    await useCase.execute({ phoneNumber: '+22507000000', startDate, endDate });
+
+    expect(transactionRepository.findByOrganization).toHaveBeenCalledWith('org-1', {
+      limit: 50,
+      startDate,
+      endDate,
+    });
+  });
+
+  it('should pass no dates when not provided', async () => {
+    transactionRepository.findByOrganization.mockResolvedValue([]);
+
+    await useCase.execute({ phoneNumber: '+22507000000' });
+
+    expect(transactionRepository.findByOrganization).toHaveBeenCalledWith('org-1', {
+      limit: 50,
+      startDate: undefined,
+      endDate: undefined,
+    });
+  });
 });
