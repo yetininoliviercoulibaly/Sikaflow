@@ -33,22 +33,22 @@ describe('GetOrganizationsByPhoneUseCase', () => {
     expect(organizationRepository.findByPhoneNumber).toHaveBeenCalledWith('+22507000000');
   });
 
-  it('should return organizations with roles when phone is known', async () => {
+  it('should return organizations with roles and type when phone is known', async () => {
     const orgs: OrganizationWithRole[] = [
-      { id: 'org-1', name: 'Maquis Chez Omar', role: 'OWNER' },
+      { id: 'org-1', name: 'Maquis Chez Omar', type: 'maquis', role: 'OWNER' },
     ];
     organizationRepository.findByPhoneNumber.mockResolvedValue(orgs);
 
     const result = await useCase.execute({ phoneNumber: '+22507111111' });
 
     expect(result).toHaveLength(1);
-    expect(result[0]).toEqual({ id: 'org-1', name: 'Maquis Chez Omar', role: 'OWNER' });
+    expect(result[0]).toEqual({ id: 'org-1', name: 'Maquis Chez Omar', type: 'maquis', role: 'OWNER' });
   });
 
   it('should return all organizations when user belongs to multiple', async () => {
     const orgs: OrganizationWithRole[] = [
-      { id: 'org-1', name: 'Maquis Chez Omar', role: 'OWNER' },
-      { id: 'org-2', name: 'Festival Abidjan', role: 'MANAGER' },
+      { id: 'org-1', name: 'Maquis Chez Omar', type: 'maquis', role: 'OWNER' },
+      { id: 'org-2', name: 'Festival Abidjan', type: 'evenementiel', role: 'MANAGER' },
     ];
     organizationRepository.findByPhoneNumber.mockResolvedValue(orgs);
 
@@ -56,5 +56,16 @@ describe('GetOrganizationsByPhoneUseCase', () => {
 
     expect(result).toHaveLength(2);
     expect(result[1].role).toBe('MANAGER');
+  });
+
+  it('should return null type when businessType is absent from organization settings', async () => {
+    const orgs: OrganizationWithRole[] = [
+      { id: 'org-1', name: 'Mon Business', type: null, role: 'OWNER' },
+    ];
+    organizationRepository.findByPhoneNumber.mockResolvedValue(orgs);
+
+    const result = await useCase.execute({ phoneNumber: '+22507333333' });
+
+    expect(result[0].type).toBeNull();
   });
 });

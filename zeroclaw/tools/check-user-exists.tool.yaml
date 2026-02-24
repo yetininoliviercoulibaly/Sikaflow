@@ -33,6 +33,11 @@ response_schema:
       name:
         type: string
         description: "Nom de l'organisation"
+      type:
+        type: string
+        nullable: true
+        enum: [maquis, restaurant, bar, evenementiel, commerce, null]
+        description: "Type d'activité (null si non défini)"
       role:
         type: string
         enum: [OWNER, MANAGER, STAFF]
@@ -45,12 +50,15 @@ examples:
     response:
       - id: "550e8400-e29b-41d4-a716-446655440000"
         name: "Maquis Chez Omar"
+        type: "maquis"
         role: "OWNER"
   - description: "Utilisateur multi-organisations"
     response:
       - id: "550e8400-e29b-41d4-a716-446655440000"
         name: "Maquis Chez Omar"
+        type: "maquis"
         role: "OWNER"
       - id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
         name: "Festival Abidjan"
+        type: "evenementiel"
         role: "MANAGER"

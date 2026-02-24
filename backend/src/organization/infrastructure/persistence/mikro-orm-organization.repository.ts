@@ -60,7 +60,7 @@ export class MikroOrmOrganizationRepository implements IOrganizationRepository {
   async findByPhoneNumber(phoneNumber: string): Promise<OrganizationWithRole[]> {
     const knex = this.em.getKnex();
     const rows = await knex('organization as o')
-      .select('o.id', 'o.name', 'om.role')
+      .select('o.id', 'o.name', 'om.role', knex.raw("o.settings->>'businessType' as type"))
       .innerJoin('organization_member as om', 'o.id', 'om.organization_id')
       .innerJoin('users as u', 'om.user_id', 'u.id')
       .where('u.phone_number', phoneNumber);
@@ -68,6 +68,7 @@ export class MikroOrmOrganizationRepository implements IOrganizationRepository {
     return rows.map((row: any) => ({
       id: row.id,
       name: row.name,
+      type: row.type ?? null,
       role: row.role,
     }));
   }
