@@ -67,6 +67,12 @@ response_schema:
       format: date-time
       description: "Date et heure de création"
 
+post_actions:
+  - memory_write:
+      "session.lastTransactionId": "{{response.id}}"
+      "session.lastTransactionCategory": "{{response.category}}"
+      "session.lastTransactionType": "EXPENSE"
+
 on_error:
   - send_message: "Désolé, je n'ai pas pu enregistrer la dépense. Réessaie dans quelques instants."
 

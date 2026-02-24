@@ -17,6 +17,14 @@ export class MikroOrmTransactionRepository implements ITransactionRepository {
     return newTx;
   }
 
+  async update(transaction: Transaction): Promise<Transaction> {
+    const existing = await this.em.findOne(Transaction, { id: transaction.id });
+    if (!existing) return transaction;
+    this.em.assign(existing, transaction);
+    await this.em.flush();
+    return existing;
+  }
+
   async findByOrganization(
     organizationId: string,
     options?: { limit?: number; offset?: number; startDate?: Date; endDate?: Date }

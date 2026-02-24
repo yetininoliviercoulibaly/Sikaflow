@@ -1,6 +1,7 @@
-import { Controller, Post, Get, Body, Query, UseGuards, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Body, Query, Param, UseGuards, BadRequestException } from '@nestjs/common';
 import { CreateTransactionUseCase, CreateTransactionCommand } from '../use-cases/create-transaction.use-case';
 import { GetTransactionsSummaryUseCase } from '../use-cases/get-transactions-summary.use-case';
+import { UpdateTransactionCategoryUseCase } from '../use-cases/update-transaction-category.use-case';
 import { IsNotEmpty, IsNumber, IsString, IsEnum, IsOptional } from 'class-validator';
 import { TransactionType } from '../../domain/transaction.entity';
 import { ApiKeyGuard } from '../../../common/guards/api-key.guard';
@@ -31,12 +32,19 @@ class CreateTransactionDto {
   type: TransactionType;
 }
 
+class UpdateCategoryDto {
+  @IsNotEmpty()
+  @IsString()
+  category: string;
+}
+
 @Controller('transactions')
 @UseGuards(ApiKeyGuard)
 export class TransactionController {
   constructor(
     private readonly createTransactionUseCase: CreateTransactionUseCase,
     private readonly getTransactionsSummaryUseCase: GetTransactionsSummaryUseCase,
+    private readonly updateTransactionCategoryUseCase: UpdateTransactionCategoryUseCase,
   ) {}
 
   @Get()
@@ -49,6 +57,11 @@ export class TransactionController {
     const startDate = startDateStr ? new Date(startDateStr) : undefined;
     const endDate = endDateStr ? new Date(endDateStr) : undefined;
     return this.getTransactionsSummaryUseCase.execute({ phoneNumber, startDate, endDate });
+  }
+
+  @Patch(':id/category')
+  async updateCategory(@Param('id') id: string, @Body() dto: UpdateCategoryDto) {
+    return this.updateTransactionCategoryUseCase.execute({ transactionId: id, category: dto.category });
   }
 
   @Post()
