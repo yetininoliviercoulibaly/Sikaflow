@@ -1,0 +1,91 @@
+name: get_balance
+description: >
+  Récupère le résumé de la caisse de l'utilisateur : revenus totaux, dépenses totales,
+  solde net et les 5 dernières opérations. À appeler quand l'utilisateur demande
+  son solde, l'état de sa caisse, ou ses dernières transactions.
+
+type: http_request
+
+config:
+  method: GET
+  url: "{{SIKAFLOW_API_URL}}/transactions"
+  headers:
+    X-API-Key: "{{SIKAFLOW_API_KEY}}"
+  query_params:
+    phoneNumber: "{{phone_number}}"
+    summary: "true"
+
+parameters:
+  - name: phone_number
+    description: "Numéro de téléphone de l'utilisateur au format E.164 (ex: +22507000000)"
+    type: string
+    required: true
+
+response_schema:
+  type: object
+  properties:
+    totalIncome:
+      type: number
+      description: "Total des revenus (INCOME) en FCFA"
+    totalExpenses:
+      type: number
+      description: "Total des dépenses (EXPENSE) en FCFA"
+    balance:
+      type: number
+      description: "Solde net = totalIncome - totalExpenses"
+    recentTransactions:
+      type: array
+      description: "Les 5 dernières opérations de caisse (INCOME ou EXPENSE)"
+      items:
+        type: object
+        properties:
+          id:
+            type: string
+          type:
+            type: string
+            enum: [INCOME, EXPENSE]
+          amount:
+            type: number
+          category:
+            type: string
+            nullable: true
+          description:
+            type: string
+            nullable: true
+          transactionDate:
+            type: string
+            format: date-time
+
+on_error:
+  - send_message: "Désolé, je n'ai pas pu récupérer ta caisse. Réessaie dans quelques instants."
+
+examples:
+  - description: "Caisse avec transactions"
+    request:
+      phone_number: "+22507000000"
+    response:
+      totalIncome: 75000
+      totalExpenses: 7000
+      balance: 68000
+      recentTransactions:
+        - id: "tx-uuid-1"
+          type: "INCOME"
+          amount: 25000
+          category: "Ventes"
+          description: "vente de billets"
+          transactionDate: "2026-02-24T20:00:00Z"
+        - id: "tx-uuid-2"
+          type: "EXPENSE"
+          amount: 5000
+          category: "Boissons"
+          description: "boissons"
+          transactionDate: "2026-02-24T12:00:00Z"
+
+  - description: "Caisse vide"
+    request:
+      phone_number: "+22507111111"
+    response:
+      totalIncome: 0
+      totalExpenses: 0
+      balance: 0
+      recentTransactions: []
