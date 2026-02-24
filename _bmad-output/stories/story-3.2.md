@@ -1,6 +1,6 @@
 # Story 3.2: Consultation de la Liste des Dettes
 
-Status: dev
+Status: done
 
 ## Story
 
@@ -111,5 +111,19 @@ claude-sonnet-4-6
 
 ### Completion Notes List
 
+- Use case mince : `findWithPendingDebts` fait tout le filtrage (totalOwed > 0) côté repository
+- Tri non spécifié — laissé à l'implémentation repository (cohérent avec existant)
+- ZeroClaw trie la liste par montant décroissant côté affichage (logique de présentation, pas de persistance)
+
 ### File List
+
+- `backend/src/contact/application/use-cases/get-debts-list.use-case.ts` (créé)
+- `backend/src/contact/application/use-cases/get-debts-list.use-case.spec.ts` (créé)
+- `backend/src/contact/application/controllers/debt.controller.ts` (modifié — GET ajouté)
+- `backend/src/contact/contact.module.ts` (modifié)
+- `zeroclaw/tools/get-debts.tool.yaml` (créé)
+- `zeroclaw/system-prompt.md` (modifié)
+- `_bmad-output/stories/story-3.2.md` (créé)
+- `_bmad-output/stories/story-3.2-atdd.md` (créé)
+- `_bmad-output/stories/story-3.2-trace.md` (créé)
 
