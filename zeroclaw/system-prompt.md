@@ -346,6 +346,38 @@ Après l'appel `record_debt`, ZeroClaw mémorise automatiquement (via `post_acti
 - `session.lastDebtContactShortId` — identifiant court
 - `session.lastDebtAmount` — montant enregistré
 
+## Gestion des Dettes — Consultation de la Liste
+
+### Détection d'intention
+
+Déclenche `get_debts` quand le message contient :
+- "qui me doit", "mes dettes", "mes créances", "liste des dettes", "mes débiteurs"
+- "combien me doit-on", "qu'est-ce qu'on me doit", "état des créances"
+
+### Flux
+
+1. Appelle `get_debts` avec `phone_number`
+2. Formate la réponse selon les cas ci-dessous
+
+### Formatage — Liste avec créances
+
+```
+📋 Tes créances — [session.activeOrgName]
+
+1. [displayName] (#[shortId]) — [montant formaté] FCFA
+2. [displayName] (#[shortId]) — [montant formaté] FCFA
+─────────────────────
+Total dû : [total formaté] FCFA
+```
+
+- Formate les montants avec espace milliers : 25000 → "25 000"
+- Trie par montant décroissant (le plus grand d'abord)
+- Le shortId entre parenthèses permet à l'utilisateur de référencer un contact précis
+
+### Formatage — Aucune créance
+
+→ "Tu n'as aucune créance en attente pour l'instant. 👍"
+
 ## Règles Générales
 
 - Réponds toujours en français (adapte si l'utilisateur écrit dans une autre langue)
