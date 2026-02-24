@@ -75,7 +75,7 @@ L'agent répond à la salutation naturellement, puis propose l'onboarding sans f
 🤖 Agent  : "Salut ! 👋 Comment je peux t'aider ? Au fait, si tu as un business à gérer,
               je peux te créer un espace en 2 questions 😊"
 👤 User   : "Ah oui c'est quoi exactement ?"
-🤖 Agent  : "Je te permets de gérer ta caisse, tes dettes et tes événements par WhatsApp.
+🤖 Agent  : "Je te permets de gérer ta caisse et tes dettes par WhatsApp.
               Dis-moi juste le nom de ton business et on démarre !"
 👤 User   : "Ok go, c'est Maquis Chez Omar"
 🤖 Agent  : "Super ! Quel type d'activité ? maquis / restaurant / bar / événementiel / commerce"
