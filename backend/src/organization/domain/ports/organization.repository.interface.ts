@@ -6,6 +6,7 @@ export const I_ORGANIZATION_REPOSITORY = 'I_ORGANIZATION_REPOSITORY';
 export interface OrganizationWithRole {
   id: string;
   name: string;
+  type: string | null;
   role: string;
 }
 
