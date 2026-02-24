@@ -68,7 +68,9 @@ Il sert de référence pour les tests et la validation du comportement de l'agen
 
 ---
 
-### Retry Path — Type invalide puis valide
+### Retry Path — Type invalide, suggestion dynamique
+
+L'agent infère le type le plus probable à partir de la réponse brute, puis le propose.
 
 ```
 👤 User   : "Bonjour"
@@ -77,9 +79,22 @@ Il sert de référence pour les tests et la validation du comportement de l'agen
 🤖 Agent  : "Super ! Quel type d'activité ? maquis / restaurant / bar / événementiel / commerce"
 👤 User   : "concert de musique"
 🤖 Agent  : "Je n'ai pas reconnu ce type. Tu veux dire : événementiel ? (maquis / restaurant / bar / événementiel / commerce)"
-👤 User   : "oui événementiel"
+               ↑ déduit de "concert de musique" → événementiel
+👤 User   : "oui"
 🤖 Agent  : [appelle create_organization]
              "🎉 Ton espace Festival de Musique Abidjan est prêt !"
+```
+
+```
+👤 User   : "boite de nuit"
+🤖 Agent  : "Je n'ai pas reconnu ce type. Tu veux dire : bar ? (maquis / restaurant / bar / événementiel / commerce)"
+               ↑ déduit de "boite de nuit" → bar
+```
+
+```
+👤 User   : "traiteur mariage"
+🤖 Agent  : "Je n'ai pas reconnu ce type. Tu veux dire : restaurant ? (maquis / restaurant / bar / événementiel / commerce)"
+               ↑ déduit de "traiteur" → restaurant
 ```
 
 ---

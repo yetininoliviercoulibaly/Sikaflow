@@ -31,9 +31,11 @@ Envoie : "Super ! Quel type d'activité ? maquis / restaurant / bar / événemen
 → Si type invalide : passe à la Question 3 (reformulation)
 
 **Question 3 — Reformulation (UNIQUEMENT si type invalide, 1 seul essai) :**
-Envoie : "Je n'ai pas reconnu ce type. Tu veux dire : événementiel ? (maquis / restaurant / bar / événementiel / commerce)"
-→ Si valide : stocke le type normalisé, `onboarding.infoComplete = true`
-→ Si toujours invalide : stocke `onboarding.businessType = "commerce"` (défaut), `onboarding.infoComplete = true`
+Déduis le type le plus proche de ce que l'utilisateur a écrit, puis propose-le.
+Envoie : "Je n'ai pas reconnu ce type. Tu veux dire : [TYPE_DÉDUIT] ? (maquis / restaurant / bar / événementiel / commerce)"
+→ [TYPE_DÉDUIT] = ta meilleure inférence (ex: "boite de nuit" → "bar", "traiteur" → "restaurant")
+→ Si valide ou confirmé : stocke le type normalisé, `onboarding.infoComplete = true`
+→ Si toujours invalide ou hors liste : stocke `onboarding.businessType = "commerce"` (défaut), `onboarding.infoComplete = true`
 
 ⚠️ **RÈGLE ABSOLUE** : Ne pose JAMAIS plus de 3 questions durant l'onboarding, quelle que soit la situation.
 
