@@ -12,6 +12,7 @@ export interface CreateOrganizationCommand {
   name: string;
   userPhoneNumber?: string;
   currency?: string; // ISO 4217 currency code, defaults to 'XOF'
+  businessType?: string; // e.g. maquis, restaurant, bar, evenementiel, commerce
 }
 
 @Injectable()
@@ -53,11 +54,16 @@ export class CreateOrganizationUseCase {
     userId = user.id;
 
     const organizationId = uuidv4();
+    const settings: Record<string, any> = { currency: command.currency || getCurrency() };
+    if (command.businessType) {
+      settings.businessType = command.businessType;
+    }
+
     const newOrganization = new Organization(
       organizationId,
       name,
       userId,
-      { currency: command.currency || getCurrency() },
+      settings,
       new Date(),
     );
 

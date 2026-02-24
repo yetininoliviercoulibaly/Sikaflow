@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsUUID, IsEnum, IsPhoneNumber } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsUUID, IsEnum, IsPhoneNumber } from 'class-validator';
 import { UserRole } from '../../domain/organization-member.entity';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -16,6 +16,11 @@ export class CreateOrganizationDto {
   @ApiProperty({ required: false, example: '33612345678', description: 'Phone number of the owner if ID not known' })
   @IsPhoneNumber()
   userPhoneNumber?: string;
+
+  @ApiProperty({ required: false, example: 'maquis', description: 'Business type (maquis, restaurant, bar, evenementiel, commerce)' })
+  @IsOptional()
+  @IsString()
+  businessType?: string;
 }
 
 export class AddMemberDto {

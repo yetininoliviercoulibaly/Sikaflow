@@ -77,4 +77,32 @@ describe('CreateOrganizationUseCase', () => {
         expect.objectContaining({ userId: 'found-user-id', role: 'OWNER' })
     );
   });
+
+  it('should store businessType in settings when provided', async () => {
+    const ownerId = 'existing-owner-id';
+    userRepository.findById.mockResolvedValue({ id: ownerId, lastActiveOrganizationId: null } as User);
+    organizationRepository.create.mockImplementation((org: any) => Promise.resolve(org));
+
+    const result = await useCase.execute({ ownerId, name: 'Maquis Chez Omar', businessType: 'maquis' });
+
+    expect(organizationRepository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        settings: expect.objectContaining({ businessType: 'maquis' }),
+      }),
+    );
+  });
+
+  it('should create organization normally when businessType is absent', async () => {
+    const ownerId = 'existing-owner-id';
+    userRepository.findById.mockResolvedValue({ id: ownerId, lastActiveOrganizationId: null } as User);
+    organizationRepository.create.mockImplementation((org: any) => Promise.resolve(org));
+
+    const result = await useCase.execute({ ownerId, name: 'Mon Business' });
+
+    expect(organizationRepository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        settings: expect.not.objectContaining({ businessType: expect.anything() }),
+      }),
+    );
+  });
 });
