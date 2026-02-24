@@ -60,6 +60,8 @@ Ce document fournit le découpage en epics et stories pour le **POC ZeroClaw** d
 - **FR12** : Le système peut envoyer un rappel automatique à un débiteur
 - **FR13** : L'utilisateur reçoit un résumé de fin de journée
 - **FR14** : L'utilisateur peut envoyer des messages vocaux (audio) qui sont transcrits automatiquement en texte
+- **FR15** : Un utilisateur appartenant à plusieurs organisations bascule intelligemment entre elles (par contexte ou choix explicite)
+- **FR16** : Un Owner/Manager peut ajouter/supprimer des membres (Staff/Manager) via message conversationnel
 
 ### Non-Functional Requirements
 
@@ -92,13 +94,15 @@ Ce document fournit le découpage en epics et stories pour le **POC ZeroClaw** d
 | FR12 | Epic 3      | Rappel automatique débiteur         |
 | FR13 | Epic 2      | Résumé fin de journée               |
 | FR14 | Transversal | Transcription audio (vocaux)        |
+| FR15 | Epic 1      | Sélection multi-organisations       |
+| FR16 | Epic 1      | Gestion des membres (RBAC)          |
 
 ## Epic List
 
 ### Epic 1 : Onboarding Conversationnel
 
 Permettre à un nouvel utilisateur de s'inscrire et créer son espace business en quelques messages WhatsApp/Telegram, sans aucun formulaire ni application à télécharger.
-**FRs couverts :** FR1, FR2
+**FRs couverts :** FR1, FR2, FR15, FR16
 **Dépendances :** Aucune (fondation)
 
 ### Epic 2 : Gestion de Caisse
@@ -200,12 +204,66 @@ So that **je puisse automatiser l'onboarding**.
 
 **Given** l'API REST SikaFlow
 **When** `GET /organizations?phoneNumber=+225...` est appelé
-**Then** retourne `[]` si aucune org, ou `[{ id, name, type }]`
+**Then** retourne `[]` si aucune org, ou `[{ id, name, type, role }]` (avec le rôle de l'utilisateur dans chaque org)
 
 **Given** un body valide `{ name, type, phoneNumber }`
 **When** `POST /organizations` est appelé (EXISTANT)
 **Then** crée l'organisation et retourne `{ id, name, type, createdAt }`
 **And** associe le phoneNumber comme owner
+
+### Story 1.5 : Sélection d'Organisation Multi-org
+
+As a **utilisateur membre de plusieurs organisations**,
+I want **que ZeroClaw identifie automatiquement sur quelle organisation je travaille**,
+So that **mes actions soient exécutées dans le bon contexte sans confusion**.
+
+**Acceptance Criteria:**
+
+**Given** un utilisateur appartenant à 1 seule organisation
+**When** il envoie un message
+**Then** ZeroClaw utilise automatiquement cette organisation comme contexte
+**And** aucune question n'est posée
+
+**Given** un utilisateur appartenant à plusieurs organisations
+**When** il envoie son premier message de la session
+**Then** ZeroClaw vérifie la mémoire conversationnelle pour la dernière org active
+**And** si trouvée, utilise cette org par défaut : "Je suis sur _Maquis Chez Omar_. Pour changer : 'Passe sur [autre org]'"
+
+**Given** un utilisateur multi-org sans historique clair
+**When** ZeroClaw ne peut pas déterminer l'organisation
+**Then** il demande : "Tu es sur quelle organisation ? 1️⃣ Maquis Chez Omar (Owner) 2️⃣ Festival Abidjan (Manager)"
+**And** mémorise le choix pour les messages suivants
+
+**Given** un utilisateur qui dit "Passe sur Festival Abidjan"
+**When** ZeroClaw reçoit ce message
+**Then** il change le contexte actif vers cette organisation
+**And** confirme : "✅ Tu es maintenant sur _Festival Abidjan_"
+
+### Story 1.6 : [EXISTANT] Gestion des Membres d'Équipe
+
+As a **Owner ou Manager d'une organisation**,
+I want **ajouter ou supprimer des membres de mon équipe par message**,
+So that **je gère mon équipe sans quitter WhatsApp/Telegram**.
+
+> **Code existant** : `AddMemberUseCase` et `RemoveMemberUseCase` (`src/organization/application/use-cases/`), `OrganizationController` a `POST /:id/members` et `DELETE /:id/members/:userId`. RBAC vérifié côté backend (Owner peut tout, Manager peut ajouter/supprimer Staff uniquement).
+> **Travail** : Câblage ZeroClaw uniquement (system prompt + tools HTTP). Le backend gère déjà toutes les règles RBAC.
+
+**Acceptance Criteria:**
+
+**Given** un Owner qui dit "Ajoute Fatou comme staff" ou "Ajoute +2250102030405 comme manager"
+**When** ZeroClaw extrait le nom/numéro et le rôle demandé
+**Then** appelle `POST /organizations/{orgId}/members` avec `{ phoneNumber, role }` (EXISTANT)
+**And** le backend vérifie les permissions (Owner peut ajouter Manager/Staff, Manager peut ajouter Staff uniquement)
+**And** confirme : "✅ Fatou a été ajoutée comme Staff"
+
+**Given** un Manager qui essaie d'ajouter un autre Manager
+**When** le backend rejette (403 Forbidden)
+**Then** ZeroClaw répond : "⚠️ Seul le propriétaire peut ajouter un Manager"
+
+**Given** un Owner qui dit "Retire Bakary de l'équipe"
+**When** ZeroClaw appelle `DELETE /organizations/{orgId}/members/{userId}` (EXISTANT)
+**Then** le membre est supprimé
+**And** confirme : "✅ Bakary a été retiré de l'équipe"
 
 ---
 
