@@ -1,6 +1,6 @@
 # Story 3.4: Relance d'un Débiteur
 
-Status: dev
+Status: done
 
 ## Story
 
@@ -115,5 +115,21 @@ claude-sonnet-4-6
 
 ### Completion Notes List
 
+- `ResolveContextUseCase` non nécessaire — `findByShortId(userId, shortId)` suffit pour identifier le contact
+- `reminderText` toujours retourné même si messageSent=false — permet copier-coller dans WhatsApp
+- `MessagingModule` déjà importé dans `ContactModule` depuis Story 3.1 — aucune modification nécessaire
+- NotFoundException si `totalOwed <= 0` — évite les rappels inutiles (contact remboursé entre temps)
+- Epic 3 complet : 4/4 endpoints dettes opérationnels
+
 ### File List
+
+- `backend/src/contact/application/use-cases/send-debt-reminder.use-case.ts` (créé)
+- `backend/src/contact/application/use-cases/send-debt-reminder.use-case.spec.ts` (créé)
+- `backend/src/contact/application/controllers/debt.controller.ts` (modifié)
+- `backend/src/contact/contact.module.ts` (modifié)
+- `zeroclaw/tools/remind-debt.tool.yaml` (créé)
+- `zeroclaw/system-prompt.md` (modifié)
+- `_bmad-output/stories/story-3.4.md` (créé)
+- `_bmad-output/stories/story-3.4-atdd.md` (créé)
+- `_bmad-output/stories/story-3.4-trace.md` (créé)
 
