@@ -8,6 +8,9 @@ import { UserModule } from '../user/user.module';
 import { MessagingModule } from '../common/messaging/messaging.module';
 import { ContactService } from './application/services/contact.service';
 import { TransactionModule } from '../transaction/transaction.module';
+import { AddDebtUseCase } from './application/use-cases/add-debt.use-case';
+import { DebtController } from './application/controllers/debt.controller';
+import { OrganizationModule } from '../organization/organization.module';
 
 @Module({
   imports: [
@@ -15,7 +18,9 @@ import { TransactionModule } from '../transaction/transaction.module';
     UserModule,
     MessagingModule,
     TransactionModule,
+    OrganizationModule,
   ],
+  controllers: [DebtController],
   providers: [
     {
       provide: I_CONTACT_REPOSITORY,
@@ -24,8 +29,9 @@ import { TransactionModule } from '../transaction/transaction.module';
     MikroOrmContactRepository,
     DebtReminderJob,
     ContactService,
+    AddDebtUseCase,
   ],
-  exports: [I_CONTACT_REPOSITORY, MikroOrmContactRepository, ContactService],
+  exports: [I_CONTACT_REPOSITORY, MikroOrmContactRepository, ContactService, AddDebtUseCase],
 })
 export class ContactModule {}
 
