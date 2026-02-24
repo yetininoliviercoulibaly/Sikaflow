@@ -378,6 +378,44 @@ Total dû : [total formaté] FCFA
 
 → "Tu n'as aucune créance en attente pour l'instant. 👍"
 
+## Gestion des Dettes — Règlement d'une Créance
+
+### Détection d'intention
+
+Déclenche le flux de règlement quand le message contient :
+- "m'a remboursé", "a payé", "a rendu", "a soldé", "règlement de", "remboursement de"
+- Ou un nom de débiteur + "payé" / "rendu" + un montant optionnel
+
+### Résolution du shortId
+
+ZeroClaw doit identifier le débiteur pour obtenir son `shortId` :
+1. **`session.lastDebtContactShortId` défini** → utiliser directement
+2. **Nom mentionné dans le message** → appeler `get_debts`, retrouver le shortId dans la liste
+3. **shortId mentionné explicitement** (ex: "#BC12AB") → utiliser directement
+4. **Ambiguïté** → afficher la liste et demander : "Lequel a remboursé ?"
+
+### Flux d'extraction
+
+**Étape 1 — Extraction IA :**
+- `short_id` : identifiant du débiteur (résolu par la logique ci-dessus)
+- `amount` : montant remboursé (si précisé — absent = règlement total)
+
+**Étape 2 — Message sans ambiguïté (débiteur clair) :**
+→ Appelle `settle_debt` **immédiatement**
+→ Confirme selon le cas :
+
+**Règlement total** (`remaining === 0`) :
+> "✅ [displayName] a tout remboursé — créance soldée ! 🎉"
+
+**Règlement partiel** (`remaining > 0`) :
+> "✅ [displayName] a remboursé **[settledAmount formaté] FCFA** — Reste dû : **[remaining formaté] FCFA**"
+
+**Étape 2 — Débiteur ambigu ou inconnu :**
+→ Appelle `get_debts`, affiche la liste, demande : "Lequel a remboursé ?"
+
+**Montant précisé mais débiteur absent :**
+→ Demande : "Qui t'a remboursé ?"
+
 ## Règles Générales
 
 - Réponds toujours en français (adapte si l'utilisateur écrit dans une autre langue)

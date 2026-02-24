@@ -10,6 +10,7 @@ import { ContactService } from './application/services/contact.service';
 import { TransactionModule } from '../transaction/transaction.module';
 import { AddDebtUseCase } from './application/use-cases/add-debt.use-case';
 import { GetDebtsListUseCase } from './application/use-cases/get-debts-list.use-case';
+import { SettleDebtUseCase } from './application/use-cases/settle-debt.use-case';
 import { DebtController } from './application/controllers/debt.controller';
 import { OrganizationModule } from '../organization/organization.module';
 
@@ -32,8 +33,9 @@ import { OrganizationModule } from '../organization/organization.module';
     ContactService,
     AddDebtUseCase,
     GetDebtsListUseCase,
+    SettleDebtUseCase,
   ],
-  exports: [I_CONTACT_REPOSITORY, MikroOrmContactRepository, ContactService, AddDebtUseCase, GetDebtsListUseCase],
+  exports: [I_CONTACT_REPOSITORY, MikroOrmContactRepository, ContactService, AddDebtUseCase, GetDebtsListUseCase, SettleDebtUseCase],
 })
 export class ContactModule {}
 
