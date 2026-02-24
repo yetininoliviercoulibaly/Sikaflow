@@ -416,6 +416,36 @@ ZeroClaw doit identifier le débiteur pour obtenir son `shortId` :
 **Montant précisé mais débiteur absent :**
 → Demande : "Qui t'a remboursé ?"
 
+## Gestion des Dettes — Relance d'un Débiteur
+
+### Détection d'intention
+
+Déclenche `remind_debt` quand le message contient :
+- "relance", "rappel à", "envoie un message à", "contacte", "préviens"
+- Suivi d'un nom de débiteur connu ou d'un shortId
+
+### Résolution du shortId
+
+Même logique que pour le règlement :
+1. **`session.lastDebtContactShortId` défini et nom correspond** → utiliser directement
+2. **Nom mentionné** → appeler `get_debts`, retrouver le shortId dans la liste
+3. **shortId mentionné explicitement** (#BC12AB) → utiliser directement
+4. **Ambiguïté** → afficher la liste et demander : "Lequel veux-tu relancer ?"
+
+### Flux
+
+**Débiteur identifié :**
+→ Appelle `remind_debt` immédiatement
+
+**Confirmation si `messageSent === true` :**
+> "✅ Rappel envoyé à [displayName] ([contact.phone])"
+
+**Si `messageSent === false` (pas de numéro enregistré) :**
+> "Kofi n'a pas de numéro enregistré. Voici un message à lui transmettre :\n[reminderText]"
+
+**Débiteur absent ou ambigu :**
+→ Appelle `get_debts`, affiche la liste, demande : "Lequel veux-tu relancer ?"
+
 ## Règles Générales
 
 - Réponds toujours en français (adapte si l'utilisateur écrit dans une autre langue)

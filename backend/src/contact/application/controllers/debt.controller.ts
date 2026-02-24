@@ -3,6 +3,7 @@ import { IsNotEmpty, IsNumber, IsString, IsOptional, Min } from 'class-validator
 import { AddDebtUseCase } from '../use-cases/add-debt.use-case';
 import { GetDebtsListUseCase } from '../use-cases/get-debts-list.use-case';
 import { SettleDebtUseCase } from '../use-cases/settle-debt.use-case';
+import { SendDebtReminderUseCase } from '../use-cases/send-debt-reminder.use-case';
 import { ApiKeyGuard } from '../../../common/guards/api-key.guard';
 
 class CreateDebtDto {
@@ -39,6 +40,12 @@ class SettleDebtDto {
   amount?: number;
 }
 
+class RemindDebtDto {
+  @IsNotEmpty()
+  @IsString()
+  phoneNumber: string;
+}
+
 @Controller('debts')
 @UseGuards(ApiKeyGuard)
 export class DebtController {
@@ -46,6 +53,7 @@ export class DebtController {
     private readonly addDebtUseCase: AddDebtUseCase,
     private readonly getDebtsListUseCase: GetDebtsListUseCase,
     private readonly settleDebtUseCase: SettleDebtUseCase,
+    private readonly sendDebtReminderUseCase: SendDebtReminderUseCase,
   ) {}
 
   @Get()
@@ -57,6 +65,11 @@ export class DebtController {
   @Patch(':shortId/settle')
   async settle(@Param('shortId') shortId: string, @Body() dto: SettleDebtDto) {
     return this.settleDebtUseCase.execute({ phoneNumber: dto.phoneNumber, shortId, amount: dto.amount });
+  }
+
+  @Post(':shortId/remind')
+  async remind(@Param('shortId') shortId: string, @Body() dto: RemindDebtDto) {
+    return this.sendDebtReminderUseCase.execute({ phoneNumber: dto.phoneNumber, shortId });
   }
 
   @Post()
