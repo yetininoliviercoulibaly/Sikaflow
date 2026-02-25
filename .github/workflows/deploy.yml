@@ -284,6 +284,12 @@ jobs:
 
           # ── Wave ──
           WAVE_API_KEY=${{ secrets.WAVE_API_KEY }}
+          WAVE_MONTHLY_AMOUNT=${{ vars.WAVE_MONTHLY_AMOUNT || '5000' }}
+
+          # ── Business Logic ──
+          PAYMENT_REGION=${{ vars.PAYMENT_REGION || 'INTERNATIONAL' }}
+          MONTHLY_PRICE_ID=${{ vars.MONTHLY_PRICE_ID || 'price_default' }}
+          AI_CONFIDENCE_THRESHOLD=${{ vars.AI_CONFIDENCE_THRESHOLD || '0.85' }}
 
           # ── Sécurité ──
           JWT_SECRET=${{ secrets.JWT_SECRET }}
