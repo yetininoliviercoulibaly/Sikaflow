@@ -35,7 +35,7 @@ export class HelpHandler implements IActionHandler {
             availableFeaturesList.push("Créer une Organisation (Club)");
         } else {
             // Active Member Context
-            const member = await this.organizationRepository.findMember(organizationId!, user.id);
+            const member = organizationId ? await this.organizationRepository.findMember(organizationId, user.id) : null;
             role = member?.role || UserRole.STAFF;
             const isManagerOrOwner = role === UserRole.OWNER || role === UserRole.MANAGER;
 

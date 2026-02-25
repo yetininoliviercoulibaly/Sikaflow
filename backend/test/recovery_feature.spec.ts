@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ContactService } from '../src/contact/application/services/contact.service';
 import { DebtReminderJob } from '../src/contact/application/jobs/debt-reminder.job';
 import { DebtHandler } from '../src/webhook/application/handlers/debt.handler';
@@ -71,6 +72,7 @@ describe('Recovery Feature Flow (Relance Impayés)', () => {
         { provide: I_USER_REPOSITORY, useValue: userRepositoryMock },
         { provide: I_MESSAGING_SERVICE, useValue: messagingServiceMock },
         { provide: PAYMENT_PROVIDER_TOKEN, useValue: paymentProviderMock },
+        { provide: EventEmitter2, useValue: { emit: jest.fn() } },
         {
           provide: MikroORM,
           useValue: mockOrm,
@@ -94,7 +96,7 @@ describe('Recovery Feature Flow (Relance Impayés)', () => {
       const contactName = 'Moussa';
 
       // Mock create behavior
-      contactRepositoryMock.create.mockImplementation((c) => Promise.resolve({ ...c, id: 'contact-abc' }));
+      contactRepositoryMock.create.mockImplementation((c: Partial<Contact>) => Promise.resolve({ ...c, id: 'contact-abc' }));
       contactRepositoryMock.searchByName.mockResolvedValue([]); // Not found initially
 
       const result = await contactService.addDebt(userId, undefined, {
@@ -184,7 +186,7 @@ describe('Recovery Feature Flow (Relance Impayés)', () => {
           expect(messagingServiceMock.sendMessage).toHaveBeenCalledTimes(2);
 
           // Check Message to Debtor
-          const debtorCall = messagingServiceMock.sendMessage.mock.calls.find(call => call[0] === contact.phone);
+          const debtorCall = messagingServiceMock.sendMessage.mock.calls.find((call: [string, ...unknown[]]) => call[0] === contact.phone);
           expect(debtorCall).toBeDefined();
           const debtorMessage = debtorCall[1];
 

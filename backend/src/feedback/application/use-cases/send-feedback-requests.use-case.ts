@@ -31,7 +31,7 @@ export class SendFeedbackRequestsUseCase {
     const allTickets = await this.ticketRepository.findByEventIds(eventIds);
 
     // Group tickets by event for efficient lookup
-    const ticketsByEvent = allTickets.reduce((acc, ticket) => {
+    const ticketsByEvent = allTickets.reduce<Record<string, typeof allTickets>>((acc, ticket) => {
       if (!acc[ticket.eventId]) {
         acc[ticket.eventId] = [];
       }

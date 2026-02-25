@@ -1,8 +1,18 @@
-name: Build Docker Images
+name: Build & Deploy
 
 on:
   push:
-    branches: [ "main", "develop", "feat/*" ]
+    branches: [ "develop", "feat/*" ]
+  workflow_dispatch:
+    inputs:
+      target_env:
+        description: 'Target environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
 
 env:
   REGISTRY: ghcr.io
@@ -11,6 +21,9 @@ env:
   SCANNER_IMAGE_NAME: ${{ github.repository_owner }}/sikaflow-scanner
 
 jobs:
+  # ═══════════════════════════════════════════════════════════════════════════
+  # CI — Build & Push Docker Images
+  # ═══════════════════════════════════════════════════════════════════════════
   build-and-push:
     runs-on: ubuntu-latest
     permissions:
@@ -58,6 +71,24 @@ jobs:
             type=sha
             latest
 
+      - name: Extract metadata for ZeroClaw
+        id: meta-zeroclaw
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/zeroclaw
+          tags: |
+            type=ref,event=branch
+            type=sha
+            latest
+
+      - name: Set API URLs based on branch
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "API_URL=https://api.sika-flow.com" >> "$GITHUB_ENV"
+          else
+            echo "API_URL=https://api-staging.sika-flow.com" >> "$GITHUB_ENV"
+          fi
+
       - name: Build and push Backend image
         uses: docker/build-push-action@v5
         with:
@@ -65,14 +96,6 @@ jobs:
           push: true
           tags: ${{ steps.meta-backend.outputs.tags }}
           labels: ${{ steps.meta-backend.outputs.labels }}
-
-      - name: Set API URLs based on branch
-        run: |
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "API_URL=https://api.sika-flow.com" >> $GITHUB_ENV
-          else
-            echo "API_URL=https://api-staging.sika-flow.com" >> $GITHUB_ENV
-          fi
 
       - name: Build and push Frontend image
         uses: docker/build-push-action@v5
@@ -93,3 +116,313 @@ jobs:
           labels: ${{ steps.meta-scanner.outputs.labels }}
           build-args: |
              VITE_API_URL=${{ env.API_URL }}
+
+      - name: Checkout ZeroClaw repository
+        uses: actions/checkout@v4
+        with:
+          repository: 'zeroclaw-labs/zeroclaw'
+          path: './zeroclaw-src'
+
+      - name: Build and push ZeroClaw image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./zeroclaw-src
+          push: true
+          tags: ${{ steps.meta-zeroclaw.outputs.tags }}
+          labels: ${{ steps.meta-zeroclaw.outputs.labels }}
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # CD — Deploy to VPS
+  # ═══════════════════════════════════════════════════════════════════════════
+  deploy-to-vps:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    # Only deploy on develop (staging) — production disabled for now
+    if: github.ref == 'refs/heads/develop'
+    environment:
+      name: staging
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set target environment
+        id: env
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "TARGET_ENV=${{ github.event.inputs.target_env }}" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "TARGET_ENV=production" >> "$GITHUB_OUTPUT"
+          else
+            echo "TARGET_ENV=staging" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set compose file
+        id: compose
+        run: |
+          if [[ "${{ steps.env.outputs.TARGET_ENV }}" == "production" ]]; then
+            echo "COMPOSE_FILE=docker-compose.prod.yml" >> "$GITHUB_OUTPUT"
+          else
+            echo "COMPOSE_FILE=docker-compose.staging.yml" >> "$GITHUB_OUTPUT"
+          fi
+
+      # ─────────────────────────────────────────────────────────────────────
+      # Ensure Cloudflare DNS records exist (idempotent)
+      # ─────────────────────────────────────────────────────────────────────
+      - name: Ensure Cloudflare DNS records
+        if: ${{ env.CF_ZONE_ID != '' }}
+        env:
+          CF_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          ZONE_ID="${{ secrets.CLOUDFLARE_ZONE_ID }}"
+          API_TOKEN="${{ secrets.CLOUDFLARE_API_TOKEN }}"
+          TUNNEL_ID="${{ secrets.CLOUDFLARE_TUNNEL_ID }}"
+          TUNNEL_CNAME="${TUNNEL_ID}.cfargotunnel.com"
+          DOMAIN="sika-flow.com"
+
+          if [[ "${{ steps.env.outputs.TARGET_ENV }}" == "production" ]]; then
+            SUBDOMAINS=("api" "agent" "app" "scanner")
+          else
+            SUBDOMAINS=("api-staging" "agent-staging" "app-staging" "scanner-staging")
+          fi
+
+          echo "🌐 Ensuring DNS records for ${{ steps.env.outputs.TARGET_ENV }}..."
+
+          for SUB in "${SUBDOMAINS[@]}"; do
+            FULL_HOST="${SUB}.${DOMAIN}"
+
+            # Check if record exists
+            EXISTING=$(curl -s -X GET \
+              "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/dns_records?type=CNAME&name=${FULL_HOST}" \
+              -H "Authorization: Bearer ${API_TOKEN}" \
+              -H "Content-Type: application/json" | jq '.result | length')
+
+            if [ "$EXISTING" != "0" ]; then
+              echo "   ✅ $FULL_HOST — exists"
+            else
+              RESULT=$(curl -s -X POST \
+                "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/dns_records" \
+                -H "Authorization: Bearer ${API_TOKEN}" \
+                -H "Content-Type: application/json" \
+                --data "{\"type\":\"CNAME\",\"name\":\"${SUB}\",\"content\":\"${TUNNEL_CNAME}\",\"ttl\":1,\"proxied\":true}")
+
+              if echo "$RESULT" | jq -e '.success' > /dev/null 2>&1; then
+                echo "   ✅ $FULL_HOST — created"
+              else
+                echo "   ⚠️  $FULL_HOST — failed: $(echo "$RESULT" | jq -r '.errors[0].message // "unknown"')"
+              fi
+            fi
+          done
+
+      # ─────────────────────────────────────────────────────────────────────
+      # Sync files to VPS via SCP
+      # ─────────────────────────────────────────────────────────────────────
+      - name: Copy files to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          source: >-
+            ${{ steps.compose.outputs.COMPOSE_FILE }},
+            deploy.sh,
+            zeroclaw/,
+            cloudflare/config.${{ steps.env.outputs.TARGET_ENV }}.yml
+          target: ~/deploy-staging-area
+          overwrite: true
+
+      # ─────────────────────────────────────────────────────────────────────
+      # Generate .env file from individual GitHub secrets & variables
+      # ─────────────────────────────────────────────────────────────────────
+      - name: Generate .env file
+        run: |
+          cat << 'ENVFILE' > /tmp/sikaflow.env
+          # ── Docker / GitHub ──
+          GITHUB_REPOSITORY_OWNER=${{ github.repository_owner }}
+
+          # ── PostgreSQL ──
+          DB_HOST=${{ vars.DB_HOST || 'db' }}
+          DB_PORT=${{ vars.DB_PORT || '5432' }}
+          DB_USER=${{ secrets.DB_USER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          DB_NAME=${{ vars.DB_NAME }}
+
+          # ── Redis ──
+          REDIS_HOST=${{ vars.REDIS_HOST || 'redis' }}
+          REDIS_PORT=${{ vars.REDIS_PORT || '6379' }}
+
+          # ── Application ──
+          NODE_ENV=${{ vars.NODE_ENV || steps.env.outputs.TARGET_ENV }}
+          PORT=${{ vars.PORT || '3000' }}
+          APP_URL=${{ vars.APP_URL }}
+
+          # ── WhatsApp Cloud API ──
+          WHATSAPP_PHONE_NUMBER_ID=${{ secrets.WHATSAPP_PHONE_NUMBER_ID }}
+          WHATSAPP_ACCESS_TOKEN=${{ secrets.WHATSAPP_ACCESS_TOKEN }}
+          WHATSAPP_VERIFY_TOKEN=${{ secrets.WHATSAPP_VERIFY_TOKEN }}
+          WHATSAPP_APP_SECRET=${{ secrets.WHATSAPP_APP_SECRET }}
+
+          # ── Stripe ──
+          STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}
+
+          # ── Wave ──
+          WAVE_API_KEY=${{ secrets.WAVE_API_KEY }}
+
+          # ── Sécurité ──
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          ADMIN_API_KEY=${{ secrets.ADMIN_API_KEY }}
+
+          # ── Frontend ──
+          NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
+
+          # ── Cloudflare Tunnel ──
+          CLOUDFLARE_TUNNEL_ID=${{ secrets.CLOUDFLARE_TUNNEL_ID }}
+
+          # ── Mikro-ORM ──
+          MIKRO_ORM_MIGRATIONS_DISABLE_FOREIGN_KEYS=false
+
+          # ── Telegram ──
+          TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_WEBHOOK_SECRET=${{ secrets.TELEGRAM_WEBHOOK_SECRET }}
+          TELEGRAM_BOT_USERNAME=${{ vars.TELEGRAM_BOT_USERNAME || 'SikaFlowBot' }}
+
+          # ── Google AI ──
+          GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}
+          GEMINI_MODEL_NAME=${{ vars.GEMINI_MODEL_NAME || 'gemini-2.0-flash' }}
+
+          # ── Feature Flags ──
+          BYPASS_SUBSCRIPTION_CHECK=${{ vars.BYPASS_SUBSCRIPTION_CHECK || 'false' }}
+
+          # ── ZeroClaw ──
+          SIKAFLOW_API_URL=http://backend:3000
+          SIKAFLOW_API_KEY=${{ secrets.ADMIN_API_KEY }}
+          ENVFILE
+
+          # Remove leading whitespace from heredoc
+          sed -i 's/^          //' /tmp/sikaflow.env
+          # Remove empty lines that result from unset variables
+          sed -i '/=$/d' /tmp/sikaflow.env
+          echo "✅ Generated .env with $(wc -l < /tmp/sikaflow.env) lines"
+
+      - name: Upload .env to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          source: /tmp/sikaflow.env
+          target: ~/sikaflow
+          overwrite: true
+
+      - name: Install .env on VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script: |
+            mkdir -p ~/sikaflow
+            if [ -f ~/sikaflow/tmp/sikaflow.env ]; then
+              mv ~/sikaflow/tmp/sikaflow.env ~/sikaflow/.env
+              rm -rf ~/sikaflow/tmp
+            elif [ -f ~/sikaflow/sikaflow.env ]; then
+              mv ~/sikaflow/sikaflow.env ~/sikaflow/.env
+            fi
+            chmod 600 ~/sikaflow/.env
+            echo "🔐 .env installed ($(wc -l < ~/sikaflow/.env) lines)"
+
+      # ─────────────────────────────────────────────────────────────────────
+      # Execute deploy.sh on VPS
+      # ─────────────────────────────────────────────────────────────────────
+      - name: Deploy on VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script_stop: true
+          script: |
+            set -e
+            TARGET_ENV="${{ steps.env.outputs.TARGET_ENV }}"
+            COMPOSE_FILE="${{ steps.compose.outputs.COMPOSE_FILE }}"
+            STAGE=~/deploy-staging-area
+
+            echo "🚀 Deploying $TARGET_ENV..."
+
+            # Setup project directory
+            mkdir -p ~/sikaflow
+
+            # Move compose file
+            cp "$STAGE/$COMPOSE_FILE" ~/sikaflow/
+
+            # Install ZeroClaw config
+            if [ -d "$STAGE/zeroclaw" ]; then
+              echo "📦 Installing ZeroClaw config..."
+              rm -rf ~/sikaflow/zeroclaw
+              cp -r "$STAGE/zeroclaw" ~/sikaflow/zeroclaw
+            fi
+
+            # Install Cloudflare config
+            CF_FILE="$STAGE/cloudflare/config.${TARGET_ENV}.yml"
+            if [ -f "$CF_FILE" ]; then
+              echo "🌐 Installing Cloudflare config..."
+              mkdir -p ~/sikaflow/cloudflare
+              cp "$CF_FILE" ~/sikaflow/cloudflare/
+            fi
+
+            # Prepare and run deploy script
+            tr -d '\r' < "$STAGE/deploy.sh" > ~/sikaflow/deploy.sh
+            chmod +x ~/sikaflow/deploy.sh
+            ~/sikaflow/deploy.sh "$TARGET_ENV"
+
+            # Cleanup staging area
+            rm -rf "$STAGE"
+
+            echo "✅ Deployment complete!"
+
+      # ─────────────────────────────────────────────────────────────────────
+      # Health check (wait for services to start)
+      # ─────────────────────────────────────────────────────────────────────
+      - name: Health check
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script: |
+            echo "⏳ Waiting 30s for services to start..."
+            sleep 30
+
+            echo "🏥 Health checks:"
+            COMPOSE_FILE="${{ steps.compose.outputs.COMPOSE_FILE }}"
+            cd ~/sikaflow
+
+            # Check all containers are running
+            RUNNING=$(docker compose -f "$COMPOSE_FILE" ps --format '{{.Name}} {{.Status}}' | grep -v "Exit" | wc -l)
+            TOTAL=$(docker compose -f "$COMPOSE_FILE" ps --format '{{.Name}}' | wc -l)
+            echo "   Containers: $RUNNING/$TOTAL running"
+
+            # Backend health
+            if docker compose -f "$COMPOSE_FILE" exec -T backend curl -sf http://localhost:3000/health > /dev/null 2>&1; then
+              echo "   ✅ Backend: healthy"
+            else
+              echo "   ⚠️  Backend: not responding yet"
+            fi
+
+            # ZeroClaw health
+            if docker compose -f "$COMPOSE_FILE" exec -T zeroclaw curl -sf http://localhost:3001/health > /dev/null 2>&1; then
+              echo "   ✅ ZeroClaw: healthy"
+            else
+              echo "   ⚠️  ZeroClaw: not responding yet"
+            fi
+
+            echo ""
+            echo "📋 Container status:"
+            docker compose -f "$COMPOSE_FILE" ps

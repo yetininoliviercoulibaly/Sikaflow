@@ -1,0 +1,86 @@
+name: settle_debt
+description: >
+  Enregistre le remboursement total ou partiel d'une créance.
+  Utilise le shortId du débiteur (disponible dans la liste des dettes ou en mémoire session).
+  Si `amount` est absent, règle la totalité du solde dû.
+
+type: http_request
+
+config:
+  method: PATCH
+  url: "{{SIKAFLOW_API_URL}}/debts/{{short_id}}/settle"
+  headers:
+    X-API-Key: "{{SIKAFLOW_API_KEY}}"
+    Content-Type: application/json
+  body:
+    phoneNumber: "{{phone_number}}"
+    amount: "{{amount}}"
+
+parameters:
+  - name: phone_number
+    description: "Numéro de téléphone de l'utilisateur au format E.164 (ex: +22507000000)"
+    type: string
+    required: true
+
+  - name: short_id
+    description: "Identifiant court du débiteur (6 caractères, ex: BC12AB). Disponible via get_debts ou session.lastDebtContactShortId"
+    type: string
+    required: true
+
+  - name: amount
+    description: "Montant remboursé en FCFA (optionnel — si absent, règle la totalité du solde dû)"
+    type: number
+    required: false
+
+response_schema:
+  type: object
+  properties:
+    contact:
+      type: object
+      properties:
+        id:
+          type: string
+        shortId:
+          type: string
+        displayName:
+          type: string
+        totalOwed:
+          type: number
+          description: "Solde restant après règlement"
+    settledAmount:
+      type: number
+      description: "Montant effectivement réglé"
+    remaining:
+      type: number
+      description: "Solde encore dû (0 si entièrement remboursé)"
+
+on_error:
+  - send_message: "Désolé, je n'ai pas pu enregistrer le remboursement. Réessaie dans quelques instants."
+
+examples:
+  - description: "Règlement total — Kofi rembourse tout"
+    request:
+      phone_number: "+22507000000"
+      short_id: "BC12AB"
+    response:
+      contact:
+        id: "550e8400-e29b-41d4-a716-446655440010"
+        shortId: "BC12AB"
+        displayName: "Kofi"
+        totalOwed: 0
+      settledAmount: 5000
+      remaining: 0
+
+  - description: "Règlement partiel — Bakary rembourse 10000 sur 25000"
+    request:
+      phone_number: "+22507000000"
+      short_id: "AX78CD"
+      amount: 10000
+    response:
+      contact:
+        id: "550e8400-e29b-41d4-a716-446655440011"
+        shortId: "AX78CD"
+        displayName: "Bakary"
+        totalOwed: 15000
+      settledAmount: 10000
+      remaining: 15000

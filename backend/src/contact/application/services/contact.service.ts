@@ -32,6 +32,11 @@ export class ContactService {
       currency?: string;
     },
   ): Promise<Contact> {
+    // Validate amount
+    if (!data.amount || data.amount <= 0 || !Number.isFinite(data.amount)) {
+      throw new Error('Invalid amount: must be a positive number');
+    }
+
     const contact = await this.findOrCreateContact(userId, organizationId, data);
 
     // Update Totals (Pessimistic locking would be ideal here, but for MVP we assume low race condition prob per user)
@@ -68,6 +73,11 @@ export class ContactService {
       currency?: string;
     },
   ): Promise<Contact> {
+    // Validate amount
+    if (!data.amount || data.amount <= 0 || !Number.isFinite(data.amount)) {
+      throw new Error('Invalid amount: must be a positive number');
+    }
+
     const contact = await this.findOrCreateContact(userId, organizationId, data);
 
     contact.totalOwing = (Number(contact.totalOwing) || 0) + data.amount;

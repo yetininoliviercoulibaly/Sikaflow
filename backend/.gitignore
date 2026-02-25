@@ -22,3 +22,9 @@ lerna-debug.log*
 # temp directory
 .temp
 .tmp
+
+# Debug/test output files
+debug_output.txt
+test_output*.txt
+*.output.txt
+coverage/

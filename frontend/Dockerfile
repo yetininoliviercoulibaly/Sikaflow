@@ -20,7 +20,7 @@ COPY . .
 # ENV NEXT_TELEMETRY_DISABLED 1
 
 # Build-time environment variables for Next.js (NEXT_PUBLIC_* are embedded at build time)
-ARG NEXT_PUBLIC_API_URL=https://api-staging.sika-flow.com
+ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 
 RUN npm run build

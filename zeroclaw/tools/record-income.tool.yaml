@@ -1,0 +1,107 @@
+name: record_income
+description: >
+  Enregistre un revenu dans la caisse de l'organisation active.
+  À appeler directement si le montant et la description sont clairs,
+  ou après confirmation si le message est ambigu.
+  Le montant doit être en FCFA (nombre entier positif).
+
+type: http_request
+
+config:
+  method: POST
+  url: "{{SIKAFLOW_API_URL}}/transactions"
+  headers:
+    X-API-Key: "{{SIKAFLOW_API_KEY}}"
+    Content-Type: application/json
+  body:
+    phoneNumber: "{{phone_number}}"
+    amount: "{{amount}}"
+    type: "INCOME"
+    category: "{{category}}"
+    description: "{{description}}"
+
+parameters:
+  - name: phone_number
+    description: "Numéro de téléphone de l'utilisateur au format E.164 (ex: +22507000000)"
+    type: string
+    required: true
+
+  - name: amount
+    description: "Montant du revenu en FCFA (nombre entier positif, ex: 25000)"
+    type: number
+    required: true
+
+  - name: category
+    description: >
+      Catégorie du revenu. Valeurs possibles :
+      Ventes, Services, Location, Général
+    type: string
+    required: true
+
+  - name: description
+    description: "Description courte du revenu (ex: 'vente de billets', 'prestation DJ', 'loyer local')"
+    type: string
+    required: false
+
+response_schema:
+  type: object
+  properties:
+    id:
+      type: string
+      description: "UUID de la transaction créée"
+    amount:
+      type: number
+      description: "Montant enregistré"
+    type:
+      type: string
+      enum: [INCOME]
+      description: "Type de transaction"
+    category:
+      type: string
+      description: "Catégorie du revenu"
+    description:
+      type: string
+      nullable: true
+      description: "Description du revenu"
+    createdAt:
+      type: string
+      format: date-time
+      description: "Date et heure de création"
+
+post_actions:
+  - memory_write:
+      "session.lastTransactionId": "{{response.id}}"
+      "session.lastTransactionCategory": "{{response.category}}"
+      "session.lastTransactionType": "INCOME"
+
+on_error:
+  - send_message: "Désolé, je n'ai pas pu enregistrer le revenu. Réessaie dans quelques instants."
+
+examples:
+  - description: "Vente de billets 25000 FCFA"
+    request:
+      phone_number: "+22507000000"
+      amount: 25000
+      category: "Ventes"
+      description: "vente de billets"
+    response:
+      id: "550e8400-e29b-41d4-a716-446655440010"
+      amount: 25000
+      type: "INCOME"
+      category: "Ventes"
+      description: "vente de billets"
+      createdAt: "2026-02-24T20:00:00Z"
+
+  - description: "Prestation de service 50000 FCFA"
+    request:
+      phone_number: "+22507000000"
+      amount: 50000
+      category: "Services"
+      description: "prestation soirée"
+    response:
+      id: "550e8400-e29b-41d4-a716-446655440011"
+      amount: 50000
+      type: "INCOME"
+      category: "Services"
+      description: "prestation soirée"
+      createdAt: "2026-02-24T22:00:00Z"

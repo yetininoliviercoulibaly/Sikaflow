@@ -1,14 +1,12 @@
-import { Controller, Post, Body, Param, Delete, Query, BadRequestException, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, Delete, Query, BadRequestException, UseGuards } from '@nestjs/common';
 import { CreateOrganizationUseCase } from '../use-cases/create-organization.use-case';
 import { AddMemberUseCase } from '../use-cases/add-member.use-case';
 import { RemoveMemberUseCase } from '../use-cases/remove-member.use-case';
+import { GetOrganizationsByPhoneUseCase } from '../use-cases/get-organizations-by-phone.use-case';
 import { CreateOrganizationDto, AddMemberDto } from '../dtos/organization.dtos';
-import { ApiKeyGuard } from '../../../common/guards/api-key.guard';
 import { CompositeAuthGuard } from '../../../common/guards/composite-auth.guard';
 import { RolesGuard } from '../../../common/guards/roles.guard';
-import { Roles } from '../../../common/decorators/roles.decorator';
-import { UserRole } from '../../../organization/domain/organization-member.entity';
-import { ApiTags, ApiOperation, ApiResponse, ApiSecurity } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiSecurity, ApiQuery } from '@nestjs/swagger';
 
 @ApiTags('Organizations')
 @ApiSecurity('api-key')
@@ -20,11 +18,23 @@ export class OrganizationController {
     private readonly createOrganizationUseCase: CreateOrganizationUseCase,
     private readonly addMemberUseCase: AddMemberUseCase,
     private readonly removeMemberUseCase: RemoveMemberUseCase,
+    private readonly getOrganizationsByPhoneUseCase: GetOrganizationsByPhoneUseCase,
   ) {}
 
+  @Get()
+  @ApiOperation({ summary: 'Get organizations by phone number (ZeroClaw M2M lookup)' })
+  @ApiQuery({ name: 'phoneNumber', required: true, description: 'Phone number in E.164 format' })
+  @ApiResponse({ status: 200, description: 'List of organizations for this phone number (empty array if unknown).' })
+  @ApiResponse({ status: 400, description: 'Missing phoneNumber query parameter.' })
+  async getByPhone(@Query('phoneNumber') phoneNumber: string) {
+    if (!phoneNumber) {
+      throw new BadRequestException('phoneNumber query param is required');
+    }
+    return this.getOrganizationsByPhoneUseCase.execute({ phoneNumber });
+  }
+
   @Post()
-  @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Create a new organization' })
+  @ApiOperation({ summary: 'Create a new organization (ZeroClaw M2M or authenticated user)' })
   @ApiResponse({ status: 201, description: 'The organization has been successfully created.' })
   async create(@Body() createOrganizationDto: CreateOrganizationDto) {
     return this.createOrganizationUseCase.execute(createOrganizationDto);

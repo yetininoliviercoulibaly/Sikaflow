@@ -100,8 +100,8 @@ export class AgentOrchestratorService implements OnModuleInit {
         6. For debt management, use the proper tool (add_debt, settle_debt, etc.).
         7. If user asks for a report, use generate_report.`;
 
-    if ((this.agentService as any).init) {
-      await (this.agentService as any).init(messageModifier, tools);
+    if (this.agentService.init) {
+      await this.agentService.init(messageModifier, tools);
     }
 
     this.logger.log('AgentOrchestratorService initialized with IAgentService');

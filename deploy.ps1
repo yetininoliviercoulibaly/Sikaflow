@@ -24,6 +24,11 @@ if ($TargetEnv -eq "staging") {
 # 1. Copie des fichiers
 Write-Host "`n1️⃣  [Mot de passe requis] Copie des fichiers..." -ForegroundColor Cyan
 scp deploy.sh $ComposeFile "${UserHost}:~/"
+scp -r zeroclaw "${UserHost}:~/zeroclaw-upload"
+
+# Cloudflare config (environment-specific)
+Write-Host "   Copie config Cloudflare ($TargetEnv)..." -ForegroundColor DarkGray
+scp "cloudflare/config.${TargetEnv}.yml" "${UserHost}:~/cloudflare-config.yml"
 
 if ($LASTEXITCODE -ne 0) { Write-Error "Echec copie SCP."; exit 1 }
 
