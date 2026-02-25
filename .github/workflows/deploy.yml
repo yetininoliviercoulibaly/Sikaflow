@@ -74,9 +74,9 @@ jobs:
       - name: Set API URLs based on branch
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "API_URL=https://api.sika-flow.com" >> $GITHUB_ENV
+            echo "API_URL=https://api.sika-flow.com" >> "$GITHUB_ENV"
           else
-            echo "API_URL=https://api-staging.sika-flow.com" >> $GITHUB_ENV
+            echo "API_URL=https://api-staging.sika-flow.com" >> "$GITHUB_ENV"
           fi
 
       - name: Build and push Backend image
@@ -126,20 +126,20 @@ jobs:
         id: env
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "TARGET_ENV=${{ github.event.inputs.target_env }}" >> $GITHUB_OUTPUT
+            echo "TARGET_ENV=${{ github.event.inputs.target_env }}" >> "$GITHUB_OUTPUT"
           elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "TARGET_ENV=production" >> $GITHUB_OUTPUT
+            echo "TARGET_ENV=production" >> "$GITHUB_OUTPUT"
           else
-            echo "TARGET_ENV=staging" >> $GITHUB_OUTPUT
+            echo "TARGET_ENV=staging" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Set compose file
         id: compose
         run: |
           if [[ "${{ steps.env.outputs.TARGET_ENV }}" == "production" ]]; then
-            echo "COMPOSE_FILE=docker-compose.prod.yml" >> $GITHUB_OUTPUT
+            echo "COMPOSE_FILE=docker-compose.prod.yml" >> "$GITHUB_OUTPUT"
           else
-            echo "COMPOSE_FILE=docker-compose.staging.yml" >> $GITHUB_OUTPUT
+            echo "COMPOSE_FILE=docker-compose.staging.yml" >> "$GITHUB_OUTPUT"
           fi
 
       # ─────────────────────────────────────────────────────────────────────
@@ -186,7 +186,7 @@ jobs:
               if echo "$RESULT" | jq -e '.success' > /dev/null 2>&1; then
                 echo "   ✅ $FULL_HOST — created"
               else
-                echo "   ⚠️  $FULL_HOST — failed: $(echo $RESULT | jq -r '.errors[0].message // "unknown"')"
+                echo "   ⚠️  $FULL_HOST — failed: $(echo "$RESULT" | jq -r '.errors[0].message // "unknown"')"
               fi
             fi
           done
