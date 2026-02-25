@@ -232,18 +232,18 @@ jobs:
           chmod 600 ~/.ssh/vps_key
           
           # Add VPS to known_hosts to prevent interactive prompt
-          ssh-keyscan -p $VPS_PORT -H $VPS_HOST >> ~/.ssh/known_hosts
+          ssh-keyscan -p "$VPS_PORT" -H "$VPS_HOST" >> ~/.ssh/known_hosts
 
           # 2. Ensure target directory exists on VPS
-          ssh -i ~/.ssh/vps_key -p $VPS_PORT -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST "mkdir -p $TARGET_DIR"
+          ssh -i ~/.ssh/vps_key -p "$VPS_PORT" -o StrictHostKeyChecking=no "$VPS_USER@$VPS_HOST" "mkdir -p \"$TARGET_DIR\""
 
           # 3. SCP the files directly
-          scp -i ~/.ssh/vps_key -P $VPS_PORT -o StrictHostKeyChecking=no -r \
+          scp -i ~/.ssh/vps_key -P "$VPS_PORT" -o StrictHostKeyChecking=no -r \
             ${{ steps.compose.outputs.COMPOSE_FILE }} \
             deploy.sh \
             zeroclaw \
-            cloudflare/config.${{ steps.env.outputs.TARGET_ENV }}.yml \
-            $VPS_USER@$VPS_HOST:$TARGET_DIR/
+            "cloudflare/config.${{ steps.env.outputs.TARGET_ENV }}.yml" \
+            "$VPS_USER@$VPS_HOST:$TARGET_DIR/"
 
       # ─────────────────────────────────────────────────────────────────────
       # Generate .env file from individual GitHub secrets & variables
