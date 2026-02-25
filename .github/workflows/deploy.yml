@@ -269,6 +269,8 @@ jobs:
           NODE_ENV=${{ vars.NODE_ENV || steps.env.outputs.TARGET_ENV }}
           PORT=${{ vars.PORT || '3000' }}
           APP_URL=${{ vars.APP_URL }}
+          FRONTEND_URL=${{ vars.FRONTEND_URL }}
+          SCANNER_URL=${{ vars.SCANNER_URL }}
 
           # ── WhatsApp Cloud API ──
           WHATSAPP_PHONE_NUMBER_ID=${{ secrets.WHATSAPP_PHONE_NUMBER_ID }}
@@ -410,20 +412,27 @@ jobs:
             COMPOSE_FILE="${{ steps.compose.outputs.COMPOSE_FILE }}"
             cd ~/sikaflow
 
+            # Check Docker permissions
+            if ! docker info > /dev/null 2>&1; then
+                DOCKER_CMD="sudo docker"
+            else
+                DOCKER_CMD="docker"
+            fi
+
             # Check all containers are running
-            RUNNING=$(docker compose -f "$COMPOSE_FILE" ps --format '{{.Name}} {{.Status}}' | grep -v "Exit" | wc -l)
-            TOTAL=$(docker compose -f "$COMPOSE_FILE" ps --format '{{.Name}}' | wc -l)
+            RUNNING=$($DOCKER_CMD compose -f "$COMPOSE_FILE" ps --format '{{.Name}} {{.Status}}' | grep -v "Exit" | wc -l)
+            TOTAL=$($DOCKER_CMD compose -f "$COMPOSE_FILE" ps --format '{{.Name}}' | wc -l)
             echo "   Containers: $RUNNING/$TOTAL running"
 
             # Backend health
-            if docker compose -f "$COMPOSE_FILE" exec -T backend curl -sf http://localhost:3000/health > /dev/null 2>&1; then
+            if $DOCKER_CMD compose -f "$COMPOSE_FILE" exec -T backend curl -sf http://localhost:3000/health > /dev/null 2>&1; then
               echo "   ✅ Backend: healthy"
             else
               echo "   ⚠️  Backend: not responding yet"
             fi
 
             # ZeroClaw health
-            if docker compose -f "$COMPOSE_FILE" exec -T zeroclaw curl -sf http://localhost:3001/health > /dev/null 2>&1; then
+            if $DOCKER_CMD compose -f "$COMPOSE_FILE" exec -T zeroclaw curl -sf http://localhost:3001/health > /dev/null 2>&1; then
               echo "   ✅ ZeroClaw: healthy"
             else
               echo "   ⚠️  ZeroClaw: not responding yet"
@@ -431,4 +440,4 @@ jobs:
 
             echo ""
             echo "📋 Container status:"
-            docker compose -f "$COMPOSE_FILE" ps
+            $DOCKER_CMD compose -f "$COMPOSE_FILE" ps
