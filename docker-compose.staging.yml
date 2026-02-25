@@ -38,7 +38,7 @@ services:
   # ---------------------------------------------------------------------------
   migration-runner:
     # HARDCODED IMAGE to avoid variable expansion issues
-    image: ghcr.io/softilab/sikaflow-backend:${BACKEND_IMAGE_TAG:-develop}
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-SoftiLab}/sikaflow-backend:${BACKEND_IMAGE_TAG:-develop}
     command: sh -c "ls -l ./dist/src/mikro-orm.config.js && node -e \"require('./dist/src/mikro-orm.config.js')\" && ./node_modules/.bin/mikro-orm migration:up && ./node_modules/.bin/mikro-orm seeder:run"
     environment:
       NODE_ENV: staging
@@ -60,7 +60,7 @@ services:
   # ---------------------------------------------------------------------------
   backend:
     # HARDCODED IMAGE to avoid variable expansion issues
-    image: ghcr.io/softilab/sikaflow-backend:${BACKEND_IMAGE_TAG:-develop}
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-SoftiLab}/sikaflow-backend:${BACKEND_IMAGE_TAG:-develop}
     restart: always
     environment:
       NODE_ENV: staging
@@ -109,7 +109,7 @@ services:
   # ---------------------------------------------------------------------------
   frontend:
     # HARDCODED IMAGE
-    image: ghcr.io/softilab/sikaflow-frontend:develop
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-SoftiLab}/sikaflow-frontend:develop
     restart: always
     environment:
       NODE_ENV: staging
@@ -122,7 +122,7 @@ services:
   # ---------------------------------------------------------------------------
   scanner:
     # HARDCODED IMAGE
-    image: ghcr.io/softilab/sikaflow-scanner:develop
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-SoftiLab}/sikaflow-scanner:develop
     restart: always
     environment:
       VITE_API_URL: https://api-staging.sika-flow.com
@@ -174,7 +174,7 @@ services:
   # 9. ZEROCLAW AGENT (AI Orchestrator)
   # ---------------------------------------------------------------------------
   zeroclaw:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-yetininoliviercoulibaly}/zeroclaw:latest
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-SoftiLab}/zeroclaw:latest
     restart: always
     volumes:
       - ./zeroclaw/system-prompt.md:/app/system-prompt.md:ro
