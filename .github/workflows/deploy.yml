@@ -71,6 +71,16 @@ jobs:
             type=sha
             latest
 
+      - name: Extract metadata for ZeroClaw
+        id: meta-zeroclaw
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/zeroclaw
+          tags: |
+            type=ref,event=branch
+            type=sha
+            latest
+
       - name: Set API URLs based on branch
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
@@ -106,6 +116,20 @@ jobs:
           labels: ${{ steps.meta-scanner.outputs.labels }}
           build-args: |
              VITE_API_URL=${{ env.API_URL }}
+
+      - name: Checkout ZeroClaw repository
+        uses: actions/checkout@v4
+        with:
+          repository: 'zeroclaw-labs/zeroclaw'
+          path: './zeroclaw-src'
+
+      - name: Build and push ZeroClaw image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./zeroclaw-src
+          push: true
+          tags: ${{ steps.meta-zeroclaw.outputs.tags }}
+          labels: ${{ steps.meta-zeroclaw.outputs.labels }}
 
   # ═══════════════════════════════════════════════════════════════════════════
   # CD — Deploy to VPS

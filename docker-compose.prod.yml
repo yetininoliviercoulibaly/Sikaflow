@@ -156,7 +156,7 @@ services:
   # 8. ZEROCLAW AGENT (AI Orchestrator)
   # ---------------------------------------------------------------------------
   zeroclaw:
-    image: zeroclaw/zeroclaw:latest
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-yetininoliviercoulibaly}/zeroclaw:latest
     restart: always
     volumes:
       - ./zeroclaw/system-prompt.md:/app/system-prompt.md:ro
