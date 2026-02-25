@@ -23,16 +23,12 @@ jobs:
         run: npm install -g @google/gemini-cli
 
       - name: Extract Context
-        env:
-          HEAD_REF: ${{ github.head_ref }}
-          BASE_REF: ${{ github.base_ref }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           # Get the last commit message
-          git log --format=%B -n 1 "$HEAD_SHA" > commit_message.txt
+          git log --format=%B -n 1 ${{ github.event.pull_request.head.sha }} > commit_message.txt
           
           # Get the diff between the PR base and head
-          git diff "origin/$BASE_REF...origin/$HEAD_REF" > changes.diff
+          git diff origin/${{ github.base_ref }}...origin/${{ github.head_ref }} > changes.diff
           
           echo "Context extracted."
 
@@ -55,7 +51,7 @@ jobs:
           } > full_context.txt
 
           # Pipe context to Gemini
-          gemini "Act as a Senior Software Engineer. Review the code changes provided below. Focus on: 1. Clean Code 2. Security 3. Potential Bugs 4. Hexagonal Architecture compliance. Keep your response concise and in markdown format." < full_context.txt > review_output.txt
+          cat full_context.txt | gemini "Act as a Senior Software Engineer. Review the code changes provided below. Focus on: 1. Clean Code 2. Security 3. Potential Bugs 4. Hexagonal Architecture compliance. Keep your response concise and in markdown format." > review_output.txt
 
       - name: Run Gemini QA Plan
         env:
@@ -64,7 +60,7 @@ jobs:
         shell: bash
         run: |
           # Reuse full_context.txt
-          gemini "Act as a QA Engineer. Based on the code changes provided below, propose a Functional Testing plan. List scenarios to verify. Keep it concise and in markdown." < full_context.txt > qa_output.txt
+          cat full_context.txt | gemini "Act as a QA Engineer. Based on the code changes provided below, propose a Functional Testing plan. List scenarios to verify. Keep it concise and in markdown." > qa_output.txt
 
       - name: Post Feedback Comment
         uses: actions/github-script@v7
