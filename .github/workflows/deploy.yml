@@ -319,34 +319,28 @@ jobs:
           sed -i '/=$/d' /tmp/sikaflow.env
           echo "✅ Generated .env with $(wc -l < /tmp/sikaflow.env) lines"
 
-      - name: Upload .env to VPS
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_PORT || 22 }}
-          source: /tmp/sikaflow.env
-          target: ~/sikaflow
-          overwrite: true
+      - name: Upload and Install .env to VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_PORT: ${{ secrets.VPS_PORT || 22 }}
+        run: |
+          # Setup SSH
+          mkdir -p ~/.ssh
+          echo "$VPS_SSH_KEY" > ~/.ssh/vps_key
+          chmod 600 ~/.ssh/vps_key
+          ssh-keyscan -p "$VPS_PORT" -H "$VPS_HOST" >> ~/.ssh/known_hosts
 
-      - name: Install .env on VPS
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_PORT || 22 }}
-          script: |
-            mkdir -p ~/sikaflow
-            if [ -f ~/sikaflow/tmp/sikaflow.env ]; then
-              mv ~/sikaflow/tmp/sikaflow.env ~/sikaflow/.env
-              rm -rf ~/sikaflow/tmp
-            elif [ -f ~/sikaflow/sikaflow.env ]; then
-              mv ~/sikaflow/sikaflow.env ~/sikaflow/.env
-            fi
-            chmod 600 ~/sikaflow/.env
-            echo "🔐 .env installed ($(wc -l < ~/sikaflow/.env) lines)"
+          # Ensure target directory exists
+          ssh -i ~/.ssh/vps_key -p "$VPS_PORT" -o StrictHostKeyChecking=no "$VPS_USER@$VPS_HOST" "mkdir -p ~/sikaflow"
+
+          # SCP the env file directly contextually
+          scp -i ~/.ssh/vps_key -P "$VPS_PORT" -o StrictHostKeyChecking=no /tmp/sikaflow.env "$VPS_USER@$VPS_HOST:~/sikaflow/.env"
+          
+          # Secure the env file permissions
+          ssh -i ~/.ssh/vps_key -p "$VPS_PORT" -o StrictHostKeyChecking=no "$VPS_USER@$VPS_HOST" "chmod 600 ~/sikaflow/.env"
+          echo "🔐 .env installed successfully"
 
       # ─────────────────────────────────────────────────────────────────────
       # Execute deploy.sh on VPS
