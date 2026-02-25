@@ -117,16 +117,88 @@ services:
   cloudflared:
     image: cloudflare/cloudflared:latest
     restart: always
-    command: tunnel run
+    command: tunnel --config /etc/cloudflared/config.yml run
+    volumes:
+      - ./cloudflare/config.prod.yml:/etc/cloudflared/config.yml:ro
+      - ./cloudflare/credentials.json:/etc/cloudflared/credentials.json:ro
     environment:
-      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+      - CLOUDFLARE_TUNNEL_ID=${CLOUDFLARE_TUNNEL_ID}
     depends_on:
       backend:
         condition: service_started
       frontend:
         condition: service_started
+      zeroclaw:
+        condition: service_started
     networks:
       - sikaflow_net
+
+  # ---------------------------------------------------------------------------
+  # 7. ZEROCLAW DB INIT (One-shot: create zeroclaw database if not exists)
+  # ---------------------------------------------------------------------------
+  zeroclaw-db-init:
+    image: postgres:15-alpine
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        until pg_isready -h db -U ${DB_USER}; do sleep 1; done
+        psql -h db -U ${DB_USER} -d ${DB_NAME} -tc "SELECT 1 FROM pg_database WHERE datname = 'zeroclaw_prod'" | grep -q 1 || psql -h db -U ${DB_USER} -d ${DB_NAME} -c "CREATE DATABASE zeroclaw_prod"
+        echo "✅ ZeroClaw database ready"
+    environment:
+      PGPASSWORD: ${DB_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - sikaflow_net
+
+  # ---------------------------------------------------------------------------
+  # 8. ZEROCLAW AGENT (AI Orchestrator)
+  # ---------------------------------------------------------------------------
+  zeroclaw:
+    image: zeroclaw/zeroclaw:latest
+    restart: always
+    volumes:
+      - ./zeroclaw/system-prompt.md:/app/system-prompt.md:ro
+      - ./zeroclaw/memory-schema.md:/app/memory-schema.md:ro
+      - ./zeroclaw/onboarding-conversation.md:/app/onboarding-conversation.md:ro
+      - ./zeroclaw/tools:/app/tools:ro
+    environment:
+      ZEROCLAW_SYSTEM_PROMPT: /app/system-prompt.md
+      ZEROCLAW_TOOLS_DIR: /app/tools
+      ZEROCLAW_MEMORY_BACKEND: postgres
+      ZEROCLAW_DB_URL: postgres://${DB_USER}:${DB_PASSWORD}@db:5432/zeroclaw_prod
+      ZEROCLAW_GATEWAY_PORT: "3001"
+      ZEROCLAW_GATEWAY_HOST: "0.0.0.0"
+      ZEROCLAW_PROVIDER: google
+      ZEROCLAW_MODEL: ${GEMINI_MODEL_NAME:-gemini-2.0-flash}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      # Template variables for tool YAML files
+      SIKAFLOW_API_URL: http://backend:3000
+      SIKAFLOW_API_KEY: ${ADMIN_API_KEY}
+      # WhatsApp channel
+      WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID}
+      WHATSAPP_ACCESS_TOKEN: ${WHATSAPP_ACCESS_TOKEN}
+      WHATSAPP_VERIFY_TOKEN: ${WHATSAPP_VERIFY_TOKEN}
+      WHATSAPP_APP_SECRET: ${WHATSAPP_APP_SECRET:-}
+      WHATSAPP_VERIFY_SIGNATURE: "true"
+      # Telegram channel
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET}
+    depends_on:
+      db:
+        condition: service_healthy
+      backend:
+        condition: service_started
+      zeroclaw-db-init:
+        condition: service_completed_successfully
+    networks:
+      - sikaflow_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
 volumes:
   postgres_data_prod:

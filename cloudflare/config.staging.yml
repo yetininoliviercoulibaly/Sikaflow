@@ -1,0 +1,33 @@
+# =============================================================================
+# Cloudflare Tunnel — Staging Configuration
+# =============================================================================
+# This file replaces the dashboard-managed routing with local config.
+#
+# SETUP (one-time):
+# 1. Create a tunnel: cloudflared tunnel create sikaflow-staging
+# 2. Copy the credentials JSON to cloudflare/staging-credentials.json
+# 3. Set CLOUDFLARE_TUNNEL_ID in your .env
+# =============================================================================
+
+tunnel: ${CLOUDFLARE_TUNNEL_ID}
+credentials-file: /etc/cloudflared/credentials.json
+
+ingress:
+  # API Backend (NestJS)
+  - hostname: api-staging.sika-flow.com
+    service: http://backend:3000
+
+  # ZeroClaw Agent (WhatsApp/Telegram webhooks)
+  - hostname: agent-staging.sika-flow.com
+    service: http://zeroclaw:3001
+
+  # Frontend Dashboard (Next.js)
+  - hostname: app-staging.sika-flow.com
+    service: http://frontend:3000
+
+  # Scanner PWA (Ticket Validation)
+  - hostname: scanner-staging.sika-flow.com
+    service: http://scanner:80
+
+  # Catch-all (must be last)
+  - service: http_status:404
