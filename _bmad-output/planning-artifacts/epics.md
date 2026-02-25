@@ -62,6 +62,8 @@ Ce document fournit le découpage en epics et stories pour le **POC ZeroClaw** d
 - **FR14** : L'utilisateur peut envoyer des messages vocaux (audio) qui sont transcrits automatiquement en texte
 - **FR15** : Un utilisateur appartenant à plusieurs organisations bascule intelligemment entre elles (par contexte ou choix explicite)
 - **FR16** : Un Owner/Manager peut ajouter/supprimer des membres (Staff/Manager) via message conversationnel
+- **FR17** : L'utilisateur peut générer un rapport PDF de ses transactions sur une période donnée
+- **FR18** : L'utilisateur peut générer un rapport PDF de ses dettes en cours
 
 ### Non-Functional Requirements
 
@@ -96,6 +98,8 @@ Ce document fournit le découpage en epics et stories pour le **POC ZeroClaw** d
 | FR14 | Transversal | Transcription audio (vocaux)        |
 | FR15 | Epic 1      | Sélection multi-organisations       |
 | FR16 | Epic 1      | Gestion des membres (RBAC)          |
+| FR17 | Epic 2      | Rapport PDF transactions            |
+| FR18 | Epic 3      | Rapport PDF dettes                  |
 
 ## Epic List
 
@@ -108,13 +112,13 @@ Permettre à un nouvel utilisateur de s'inscrire et créer son espace business e
 ### Epic 2 : Gestion de Caisse
 
 Permettre à un utilisateur de gérer sa trésorerie au quotidien : enregistrer dépenses et revenus par message, consulter son solde, et recevoir des résumés automatiques.
-**FRs couverts :** FR3, FR4, FR5, FR6, FR7, FR13
+**FRs couverts :** FR3, FR4, FR5, FR6, FR7, FR13, FR17
 **Dépendances :** Epic 1 (utilisateur doit avoir une organisation)
 
 ### Epic 3 : Recouvrement de Dettes
 
 Permettre à un utilisateur de suivre qui lui doit de l'argent, enregistrer les dettes et crédits, marquer les remboursements, et relancer automatiquement les débiteurs.
-**FRs couverts :** FR8, FR9, FR10, FR11, FR12
+**FRs couverts :** FR8, FR9, FR10, FR11, FR12, FR18
 **Dépendances :** Epic 1 (utilisateur doit avoir une organisation)
 
 ---
@@ -343,6 +347,23 @@ So that **je puisse enregistrer et consulter les données financières**.
 **Given** `GET /transactions?phoneNumber={phone}&summary=true` (NOUVEAU)
 **Then** retourne `{ totalIncome, totalExpenses, balance, recentTransactions[] }`
 
+### Story 2.6 : [EXISTANT] Génération de Rapport PDF Transactions
+
+As a **gérant**,
+I want **demander un rapport PDF de mes transactions**,
+So that **je puisse avoir un document formel pour ma comptabilité ou mes partenaires**.
+
+> **Code existant** : `PdfGeneratorServiceImpl` (`src/report/infrastructure/pdf-generator.service.ts`) — génère des PDF brandés SikaFlow avec pdfkit. `BusinessIntelligenceService` fournit les métriques.
+> **Travail** : Créer `GET /reports/transactions?phoneNumber={phone}&from={date}&to={date}&format=pdf` qui câble le service existant.
+
+**Acceptance Criteria:**
+
+**Given** un message "Rapport de ma caisse" ou "PDF de mes transactions du mois"
+**When** ZeroClaw appelle `GET /reports/transactions?phoneNumber={phone}&format=pdf`
+**Then** le backend génère un PDF via `PdfGeneratorServiceImpl` (EXISTANT)
+**And** retourne le fichier PDF en réponse
+**And** ZeroClaw envoie le PDF à l'utilisateur via WhatsApp/Telegram
+
 ---
 
 ## Epic 3 : Recouvrement de Dettes
@@ -437,3 +458,20 @@ So that **je puisse enregistrer, consulter et gérer les dettes**.
 
 **Given** `POST /debts/{id}/remind` (NOUVEAU controller, logique existante dans DebtHandler)
 **Then** envoie un message de rappel au débiteur
+
+### Story 3.7 : [NOUVEAU] Génération de Rapport PDF Dettes
+
+As a **gérant**,
+I want **demander un rapport PDF de mes dettes en cours**,
+So that **je puisse suivre et partager l'état de mes créances**.
+
+> **Code existant** : `PdfGeneratorServiceImpl` existe et peut être réutilisé. Il faut ajouter un template PDF dettes.
+> **Travail** : Créer `GET /reports/debts?phoneNumber={phone}&format=pdf` qui génère un PDF des dettes en cours.
+
+**Acceptance Criteria:**
+
+**Given** un message "Rapport de mes dettes" ou "PDF qui me doit quoi"
+**When** ZeroClaw appelle `GET /reports/debts?phoneNumber={phone}&format=pdf`
+**Then** le backend génère un PDF listant toutes les dettes en cours (nom, montant, date, ancienneté)
+**And** inclut un total général
+**And** ZeroClaw envoie le PDF à l'utilisateur via WhatsApp/Telegram
