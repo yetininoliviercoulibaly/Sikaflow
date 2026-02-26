@@ -37,7 +37,7 @@ services:
   # 3. MIGRATION RUNNER (Job Init)
   # ---------------------------------------------------------------------------
   migration-runner:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-SoftiLab}/sikaflow-backend:latest
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-softilab}/sikaflow-backend:latest
     command: sh -c "npx mikro-orm migration:up --config ./dist/src/mikro-orm.config.js && npx mikro-orm seeder:run --config ./dist/src/mikro-orm.config.js"
     environment:
       NODE_ENV: production
@@ -57,7 +57,7 @@ services:
   # 4. API (NestJS)
   # ---------------------------------------------------------------------------
   backend:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-SoftiLab}/sikaflow-backend:latest
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-softilab}/sikaflow-backend:latest
     restart: always
     environment:
       NODE_ENV: production
@@ -107,7 +107,7 @@ services:
   # 5. FRONTEND (Next.js)
   # ---------------------------------------------------------------------------
   frontend:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-SoftiLab}/sikaflow-frontend:latest
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-softilab}/sikaflow-frontend:latest
     restart: always
     environment:
       NODE_ENV: production
@@ -160,7 +160,7 @@ services:
   # 8. ZEROCLAW AGENT (AI Orchestrator)
   # ---------------------------------------------------------------------------
   zeroclaw:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-SoftiLab}/zeroclaw:latest
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-softilab}/zeroclaw:latest
     restart: always
     volumes:
       - ./zeroclaw/system-prompt.md:/app/system-prompt.md:ro

@@ -325,6 +325,8 @@ jobs:
           sed -i 's/^          //' /tmp/sikaflow.env
           # Remove empty lines that result from unset variables
           sed -i '/=$/d' /tmp/sikaflow.env
+          # Ensure GitHub Repository Owner is strictly lowercase for Docker image tags
+          sed -i -e '/^GITHUB_REPOSITORY_OWNER=/ s/=.*/\L&/' /tmp/sikaflow.env
           echo "✅ Generated .env with $(wc -l < /tmp/sikaflow.env) lines"
 
       - name: Upload and Install .env to VPS
