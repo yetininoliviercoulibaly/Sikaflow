@@ -342,11 +342,11 @@ jobs:
           [gateway]
           allow_public_bind = true
 
-          [channels.telegram]
+          [channels_config.telegram]
           bot_token = "${{ secrets.TELEGRAM_BOT_TOKEN }}"
           allowed_users = ["*"]
           
-          [channels.whatsapp]
+          [channels_config.whatsapp]
           phone_number_id = "${{ secrets.WHATSAPP_PHONE_NUMBER_ID }}"
           access_token = "${{ secrets.WHATSAPP_ACCESS_TOKEN }}"
           verify_token = "${{ secrets.WHATSAPP_VERIFY_TOKEN }}"
