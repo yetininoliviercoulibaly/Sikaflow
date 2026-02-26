@@ -124,9 +124,8 @@ services:
     command: tunnel --config /etc/cloudflared/config.yml run
     volumes:
       - ./cloudflare/config.prod.yml:/etc/cloudflared/config.yml:ro
-      - ./cloudflare/credentials.json:/etc/cloudflared/credentials.json:ro
     environment:
-      - CLOUDFLARE_TUNNEL_ID=${CLOUDFLARE_TUNNEL_ID}
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
     depends_on:
       backend:
         condition: service_started

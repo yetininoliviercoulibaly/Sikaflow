@@ -22,11 +22,8 @@ if ! grep -q "GITHUB_REPOSITORY_OWNER=" .env; then
     echo "GITHUB_REPOSITORY_OWNER=$REPO_OWNER" >> .env
 fi
 
-# Sécurité: s'assurer que credentials.json est un fichier, pas un dossier
+# Sécurité: s'assurer que le répertoire cloudflare existe
 mkdir -p cloudflare
-if [ ! -f "cloudflare/credentials.json" ] && [ ! -d "cloudflare/credentials.json" ]; then
-    echo "{}" > cloudflare/credentials.json
-fi
 
 echo "📥 Pulling images..."
 if [ "$TARGET_ENV" = "staging" ]; then
