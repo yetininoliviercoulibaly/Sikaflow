@@ -329,6 +329,21 @@ jobs:
           sed -i -e '/^GITHUB_REPOSITORY_OWNER=/ s/=.*/\L&/' /tmp/sikaflow.env
           echo "✅ Generated .env with $(wc -l < /tmp/sikaflow.env) lines"
 
+      - name: Generate ZeroClaw config.toml
+        run: |
+          cat <<EOF > /tmp/zeroclaw.toml
+          [channels.telegram]
+          bot_token = "${{ secrets.TELEGRAM_BOT_TOKEN }}"
+          allowed_users = ["*"]
+          
+          [channels.whatsapp]
+          phone_number_id = "${{ secrets.WHATSAPP_PHONE_NUMBER_ID }}"
+          access_token = "${{ secrets.WHATSAPP_ACCESS_TOKEN }}"
+          verify_token = "${{ secrets.WHATSAPP_VERIFY_TOKEN }}"
+          app_secret = "${{ secrets.WHATSAPP_APP_SECRET }}"
+          EOF
+          echo "✅ Generated zeroclaw.toml"
+
       - name: Upload and Install .env to VPS
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
@@ -343,11 +358,13 @@ jobs:
           ssh-keyscan -p "$VPS_PORT" -H "$VPS_HOST" >> ~/.ssh/known_hosts
 
           # Ensure target directory exists
-          ssh -i ~/.ssh/vps_key -p "$VPS_PORT" -o StrictHostKeyChecking=no "$VPS_USER@$VPS_HOST" "mkdir -p ~/sikaflow"
+          ssh -i ~/.ssh/vps_key -p "$VPS_PORT" -o StrictHostKeyChecking=no "$VPS_USER@$VPS_HOST" "mkdir -p ~/sikaflow ~/sikaflow/zeroclaw"
 
           # SCP the env file directly contextually
           scp -i ~/.ssh/vps_key -P "$VPS_PORT" -o StrictHostKeyChecking=no /tmp/sikaflow.env "$VPS_USER@$VPS_HOST:~/sikaflow/.env"
-          
+
+          # SCP the ZeroClaw config.toml
+          scp -i ~/.ssh/vps_key -P "$VPS_PORT" -o StrictHostKeyChecking=no /tmp/zeroclaw.toml "$VPS_USER@$VPS_HOST:~/sikaflow/zeroclaw/config.toml"
           # Secure the env file permissions
           ssh -i ~/.ssh/vps_key -p "$VPS_PORT" -o StrictHostKeyChecking=no "$VPS_USER@$VPS_HOST" "chmod 600 ~/sikaflow/.env"
           echo "🔐 .env installed successfully"
