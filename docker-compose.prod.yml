@@ -191,6 +191,7 @@ services:
       TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET}
       # Explicit config directory
       ZEROCLAW_CONFIG_DIR: /app/config
+      ZEROCLAW_WORKSPACE: /tmp/workspace
     depends_on:
       db:
         condition: service_healthy
