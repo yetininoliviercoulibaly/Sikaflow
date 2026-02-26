@@ -337,6 +337,8 @@ jobs:
       - name: Generate ZeroClaw config.toml
         run: |
           cat <<EOF > /tmp/zeroclaw.toml
+          default_temperature = 0.7
+
           [channels.telegram]
           bot_token = "${{ secrets.TELEGRAM_BOT_TOKEN }}"
           allowed_users = ["*"]
