@@ -342,6 +342,9 @@ jobs:
           [gateway]
           allow_public_bind = true
 
+          [channels_config]
+          cli = true
+
           [channels_config.telegram]
           bot_token = "${{ secrets.TELEGRAM_BOT_TOKEN }}"
           allowed_users = ["*"]
