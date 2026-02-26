@@ -372,7 +372,7 @@ jobs:
           scp -i ~/.ssh/vps_key -P "$VPS_PORT" -o StrictHostKeyChecking=no /tmp/zeroclaw.toml "$VPS_USER@$VPS_HOST:~/sikaflow/zeroclaw_config.toml"
           
           # Secure the files permissions
-          ssh -i ~/.ssh/vps_key -p "$VPS_PORT" -o StrictHostKeyChecking=no "$VPS_USER@$VPS_HOST" "chmod 600 ~/sikaflow/.env ~/sikaflow/zeroclaw_config.toml"
+          ssh -i ~/.ssh/vps_key -p "$VPS_PORT" -o StrictHostKeyChecking=no "$VPS_USER@$VPS_HOST" "chmod 600 ~/sikaflow/.env && chmod 644 ~/sikaflow/zeroclaw_config.toml"
           echo "🔐 .env and config.toml installed successfully"
 
       # ─────────────────────────────────────────────────────────────────────
