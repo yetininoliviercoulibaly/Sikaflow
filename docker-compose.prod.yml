@@ -167,7 +167,6 @@ services:
       - ./zeroclaw/memory-schema.md:/app/memory-schema.md:ro
       - ./zeroclaw/onboarding-conversation.md:/app/onboarding-conversation.md:ro
       - ./zeroclaw/tools:/app/tools:ro
-      - zeroclaw_workspace_prod:/app/workspace
     environment:
       ZEROCLAW_SYSTEM_PROMPT: /app/system-prompt.md
       ZEROCLAW_TOOLS_DIR: /app/tools
@@ -192,7 +191,7 @@ services:
       TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET}
       # Explicit config directory
       ZEROCLAW_CONFIG_DIR: /app/config
-      ZEROCLAW_WORKSPACE: /app/workspace
+      ZEROCLAW_WORKSPACE: /zeroclaw-data/workspace
     depends_on:
       db:
         condition: service_healthy
@@ -211,7 +210,6 @@ services:
 volumes:
   postgres_data_prod:
   redis_data_prod:
-  zeroclaw_workspace_prod:
 
 networks:
   sikaflow_net:
