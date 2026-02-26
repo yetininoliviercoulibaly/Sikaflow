@@ -121,6 +121,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: 'zeroclaw-labs/zeroclaw'
+          ref: 'v0.1.7'
           path: './zeroclaw-src'
 
       - name: Patch ZeroClaw Dockerfile
