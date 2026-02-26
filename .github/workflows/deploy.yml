@@ -269,6 +269,7 @@ jobs:
           # ── Redis ──
           REDIS_HOST=${{ vars.REDIS_HOST || 'redis' }}
           REDIS_PORT=${{ vars.REDIS_PORT || '6379' }}
+          REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
 
           # ── Application ──
           NODE_ENV=${{ vars.NODE_ENV || steps.env.outputs.TARGET_ENV }}
