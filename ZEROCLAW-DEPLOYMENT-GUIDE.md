@@ -27,7 +27,7 @@ zeroclaw/
 ├── system-prompt.md          # Règles agent (456 lignes)
 ├── memory-schema.md          # Schéma mémoire conversationnelle
 ├── onboarding-conversation.md # Design onboarding
-└── tools/                    # 10 tools YAML (type: http_request)
+└── tools/                    # 10 tools YAML (injectés dynamiquement par deploy.sh)
     ├── check-user-exists.tool.yaml
     ├── create-organization.tool.yaml
     ├── record-expense.tool.yaml
@@ -39,6 +39,8 @@ zeroclaw/
     ├── remind-debt.tool.yaml
     └── update-transaction-category.tool.yaml
 ```
+
+> **Note Sécurité :** L'authentification entre ZeroClaw et l'API SikaFlow se fait via des variables (`{{SIKAFLOW_API_URL}}` et `{{SIKAFLOW_API_KEY}}`). Le script `deploy.sh` s'occupe de remplacer automatiquement ces placeholders avec les vraies valeurs du `.env` juste avant de lancer le conteneur `zeroclaw`.
 
 ---
 

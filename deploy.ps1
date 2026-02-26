@@ -36,7 +36,7 @@ if ($LASTEXITCODE -ne 0) { Write-Error "Echec copie SCP."; exit 1 }
 Write-Host "`n2️⃣  [Mot de passe requis] Lancement..." -ForegroundColor Cyan
 
 # Astuce: On chaine tout avec '&&' sur une seule ligne PowerShell pour eviter les problemes CRLF
-ssh $UserHost "mkdir -p ~/sikaflow && mv ~/$ComposeFile ~/sikaflow/ && tr -d '\r' < ~/deploy.sh > ~/sikaflow/deploy.sh && rm ~/deploy.sh && chmod +x ~/sikaflow/deploy.sh && ~/sikaflow/deploy.sh $TargetEnv"
+ssh $UserHost "mkdir -p ~/sikaflow && rm -rf ~/sikaflow/zeroclaw && mv ~/zeroclaw-upload ~/sikaflow/zeroclaw && mv ~/$ComposeFile ~/sikaflow/ && tr -d '\r' < ~/deploy.sh > ~/sikaflow/deploy.sh && rm ~/deploy.sh && chmod +x ~/sikaflow/deploy.sh && ~/sikaflow/deploy.sh $TargetEnv"
 
 if ($LASTEXITCODE -ne 0) { 
     Write-Error "Echec du deploiement distant."

@@ -164,10 +164,12 @@ services:
     restart: always
     volumes:
       - ./zeroclaw_config.toml:/zeroclaw-data/.zeroclaw/config.toml:ro
-      - ./zeroclaw/system-prompt.md:/app/system-prompt.md:ro
-      - ./zeroclaw/memory-schema.md:/app/memory-schema.md:ro
-      - ./zeroclaw/onboarding-conversation.md:/app/onboarding-conversation.md:ro
-      - ./zeroclaw/tools:/app/tools:ro
+      # ZeroClaw expects identity context in IDENTITY.md or AGENTS.md inside the workspace
+      - ./zeroclaw/system-prompt.md:/zeroclaw-data/workspace/IDENTITY.md:ro
+      # Mount other context files into the workspace so the LLM can use file_read to read them
+      - ./zeroclaw/memory-schema.md:/zeroclaw-data/workspace/MEMORY_SCHEMA.md:ro
+      - ./zeroclaw/onboarding-conversation.md:/zeroclaw-data/workspace/ONBOARDING.md:ro
+      - ./zeroclaw/tools:/zeroclaw-data/workspace/tools:ro
     environment:
       ZEROCLAW_SYSTEM_PROMPT: /app/system-prompt.md
       ZEROCLAW_TOOLS_DIR: /app/tools

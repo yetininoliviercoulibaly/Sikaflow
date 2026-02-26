@@ -25,6 +25,22 @@ fi
 # Sécurité: s'assurer que le répertoire cloudflare existe
 mkdir -p cloudflare
 
+# Injection des variables d'environnement dans les outils ZeroClaw
+if [ -d "zeroclaw/tools" ] && [ -f ".env" ]; then
+    echo "🔧 Injection des identifiants dans les outils ZeroClaw..."
+    # Chargement des variables
+    export $(grep -v '^#' .env | xargs)
+    if [ -n "$SIKAFLOW_API_URL" ] && [ -n "$SIKAFLOW_API_KEY" ]; then
+        for tool_file in zeroclaw/tools/*.tool.yaml; do
+            sed -i "s|{{SIKAFLOW_API_URL}}|$SIKAFLOW_API_URL|g" "$tool_file"
+            sed -i "s|{{SIKAFLOW_API_KEY}}|$SIKAFLOW_API_KEY|g" "$tool_file"
+        done
+        echo "✅ Identifiants injectés."
+    else
+        echo "⚠️  SIKAFLOW_API_URL ou SIKAFLOW_API_KEY manquant dans .env."
+    fi
+fi
+
 echo "📥 Pulling images..."
 if [ "$TARGET_ENV" = "staging" ]; then
     $DOCKER_CMD compose -f docker-compose.staging.yml pull
