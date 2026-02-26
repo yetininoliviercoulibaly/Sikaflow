@@ -173,13 +173,13 @@ scp cloudflare/credentials.json user@vps:~/sikaflow/cloudflare/
 
 Configurez les webhooks une seule fois :
 
-- **WhatsApp** (Meta) : `https://agent-staging.sika-flow.com/webhook/whatsapp`
+- **WhatsApp** (Meta) : `https://agent-staging.sika-flow.com/webhook`
 - **Telegram** :
 
 ```bash
 curl -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
   -H "Content-Type: application/json" \
-  -d '{"url": "https://agent-staging.sika-flow.com/webhook/telegram", "secret_token": "${TELEGRAM_WEBHOOK_SECRET}"}'
+  -d '{"url": "https://agent-staging.sika-flow.com/webhook", "secret_token": "${TELEGRAM_WEBHOOK_SECRET}"}'
 ```
 
 ---
