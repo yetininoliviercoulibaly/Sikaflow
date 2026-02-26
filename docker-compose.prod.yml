@@ -160,6 +160,7 @@ services:
   # ---------------------------------------------------------------------------
   zeroclaw:
     image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-softilab}/zeroclaw:latest
+    command: ["daemon"]
     restart: always
     volumes:
       - ./zeroclaw_config.toml:/zeroclaw-data/.zeroclaw/config.toml:ro
