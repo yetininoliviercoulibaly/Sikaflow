@@ -342,6 +342,9 @@ jobs:
           [gateway]
           allow_public_bind = true
 
+          [runtime.wasm]
+          tools_dir = "/zeroclaw-data/workspace/tools"
+
           [channels_config]
           cli = true
 
