@@ -242,7 +242,7 @@ jobs:
             ${{ steps.compose.outputs.COMPOSE_FILE }} \
             deploy.sh \
             zeroclaw \
-            "cloudflare/config.${{ steps.env.outputs.TARGET_ENV }}.yml" \
+            cloudflare \
             "$VPS_USER@$VPS_HOST:$TARGET_DIR/"
 
       # ─────────────────────────────────────────────────────────────────────

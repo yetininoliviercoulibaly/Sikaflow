@@ -22,6 +22,12 @@ if ! grep -q "GITHUB_REPOSITORY_OWNER=" .env; then
     echo "GITHUB_REPOSITORY_OWNER=$REPO_OWNER" >> .env
 fi
 
+# Sécurité: s'assurer que credentials.json est un fichier, pas un dossier
+mkdir -p cloudflare
+if [ ! -f "cloudflare/credentials.json" ] && [ ! -d "cloudflare/credentials.json" ]; then
+    echo "{}" > cloudflare/credentials.json
+fi
+
 echo "📥 Pulling images..."
 if [ "$TARGET_ENV" = "staging" ]; then
     $DOCKER_CMD compose -f docker-compose.staging.yml pull
