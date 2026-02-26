@@ -162,7 +162,7 @@ services:
     image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-softilab}/zeroclaw:latest
     restart: always
     volumes:
-      - ./zeroclaw_config.toml:/app/config/config.toml:ro
+      - ./zeroclaw_config.toml:/zeroclaw-data/.zeroclaw/config.toml:ro
       - ./zeroclaw/system-prompt.md:/app/system-prompt.md:ro
       - ./zeroclaw/memory-schema.md:/app/memory-schema.md:ro
       - ./zeroclaw/onboarding-conversation.md:/app/onboarding-conversation.md:ro
@@ -189,8 +189,6 @@ services:
       # Telegram channel
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
       TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET}
-      # Explicit config directory
-      ZEROCLAW_CONFIG_DIR: /app/config
       ZEROCLAW_WORKSPACE: /zeroclaw-data/workspace
     depends_on:
       db:
