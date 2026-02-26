@@ -123,6 +123,10 @@ jobs:
           repository: 'zeroclaw-labs/zeroclaw'
           path: './zeroclaw-src'
 
+      - name: Patch ZeroClaw Dockerfile
+        run: |
+          sed -i 's/--locked//g' ./zeroclaw-src/Dockerfile
+
       - name: Build and push ZeroClaw image
         uses: docker/build-push-action@v5
         with:
