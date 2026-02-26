@@ -180,7 +180,7 @@ services:
     image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-softilab}/zeroclaw:latest
     restart: always
     volumes:
-      - ./zeroclaw/config.toml:/app/config/config.toml:ro
+      - ./zeroclaw_config.toml:/app/config/config.toml:ro
       - ./zeroclaw/system-prompt.md:/app/system-prompt.md:ro
       - ./zeroclaw/memory-schema.md:/app/memory-schema.md:ro
       - ./zeroclaw/onboarding-conversation.md:/app/onboarding-conversation.md:ro
