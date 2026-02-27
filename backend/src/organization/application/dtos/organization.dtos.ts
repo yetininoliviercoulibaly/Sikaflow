@@ -9,11 +9,13 @@ export class CreateOrganizationDto {
   name: string;
 
   @ApiProperty({ required: false, example: 'uuid-of-owner', description: 'User ID of the owner' })
+  @IsOptional()
   @IsUUID()
   @IsNotEmpty()
   ownerId?: string;
 
   @ApiProperty({ required: false, example: '33612345678', description: 'Phone number of the owner if ID not known' })
+  @IsOptional()
   @IsPhoneNumber()
   userPhoneNumber?: string;
 
