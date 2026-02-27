@@ -3,11 +3,6 @@ default_temperature = 0.7
 [gateway]
 allow_public_bind = true
 
-[memory]
-backend = "postgres"
-auto_save = true
-url = "{{ZEROCLAW_DB_URL}}"
-
 [channels_config]
 cli = false
 
