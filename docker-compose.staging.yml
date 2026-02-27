@@ -178,7 +178,10 @@ services:
   # 9. ZEROCLAW AGENT (AI Orchestrator)
   # ---------------------------------------------------------------------------
   zeroclaw:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-softilab}/zeroclaw:latest
+    build:
+      context: ./zeroclaw-engine
+      dockerfile: Dockerfile
+    image: sikaflow/zeroclaw:custom
     command: ["daemon"]
     restart: always
     volumes:
@@ -188,10 +191,8 @@ services:
       # Mount other context files into the workspace so the LLM can use file_read to read them
       - ./zeroclaw/memory-schema.md:/zeroclaw-data/workspace/MEMORY_SCHEMA.md:ro
       - ./zeroclaw/onboarding-conversation.md:/zeroclaw-data/workspace/ONBOARDING.md:ro
-      - ./zeroclaw/tools:/zeroclaw-data/workspace/tools:ro
     environment:
       ZEROCLAW_SYSTEM_PROMPT: /zeroclaw-data/workspace/IDENTITY.md
-      ZEROCLAW_TOOLS_DIR: /zeroclaw-data/workspace/tools
       ZEROCLAW_MEMORY_BACKEND: postgres
       ZEROCLAW_DB_URL: postgres://${DB_USER}:${DB_PASSWORD}@db:5432/zeroclaw_poc
       ZEROCLAW_GATEWAY_PORT: "3001"
