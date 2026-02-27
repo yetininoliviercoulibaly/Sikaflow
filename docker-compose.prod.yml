@@ -172,7 +172,7 @@ services:
       - ./zeroclaw/tools:/zeroclaw-data/workspace/tools:ro
     environment:
       ZEROCLAW_SYSTEM_PROMPT: /zeroclaw-data/workspace/IDENTITY.md
-      ZEROCLAW_TOOLS_DIR: /app/tools
+      ZEROCLAW_TOOLS_DIR: /zeroclaw-data/workspace/tools
       ZEROCLAW_MEMORY_BACKEND: postgres
       ZEROCLAW_DB_URL: postgres://${DB_USER}:${DB_PASSWORD}@db:5432/zeroclaw_prod
       ZEROCLAW_GATEWAY_PORT: "3001"

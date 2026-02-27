@@ -54,6 +54,11 @@ if [ -d "zeroclaw/tools" ] && [ -f ".env" ]; then
         sed -i "s|{{WHATSAPP_VERIFY_TOKEN}}|$WHATSAPP_VERIFY_TOKEN|g" "zeroclaw/config.toml"
         sed -i "s|{{WHATSAPP_APP_SECRET}}|$WHATSAPP_APP_SECRET|g" "zeroclaw/config.toml"
     fi
+
+    # Security: Ensure ZeroClaw container (running as non-root) can read the tools and config
+    echo "🔒 Application des permissions de lecture pour le conteneur ZeroClaw..."
+    chmod -R +r zeroclaw/
+    find zeroclaw/ -type d -exec chmod +x {} +
 fi
 
 echo "📥 Pulling images..."
