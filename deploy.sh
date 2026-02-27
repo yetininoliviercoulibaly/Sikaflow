@@ -65,13 +65,13 @@ echo "📥 Pulling images..."
 if [ "$TARGET_ENV" = "staging" ]; then
     $DOCKER_CMD compose -f docker-compose.staging.yml pull
     echo "🔄 Restarting staging..."
-    $DOCKER_CMD compose -f docker-compose.staging.yml up -d --remove-orphans
+    $DOCKER_CMD compose -f docker-compose.staging.yml up -d --build --remove-orphans
 else
     echo "Checking for prod file..."
     ls -l docker-compose.prod.yml
     $DOCKER_CMD compose -f docker-compose.prod.yml pull
     echo "🔄 Restarting production..."
-    $DOCKER_CMD compose -f docker-compose.prod.yml up -d --remove-orphans
+    $DOCKER_CMD compose -f docker-compose.prod.yml up -d --build --remove-orphans
 fi
 
 echo "🧹 Nettoyage..."
