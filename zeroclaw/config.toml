@@ -4,7 +4,7 @@ default_temperature = 0.7
 allow_public_bind = true
 
 [memory]
-provider = "postgres"
+backend = "postgres"
 url = "{{ZEROCLAW_DB_URL}}"
 
 [channels_config]
