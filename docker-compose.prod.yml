@@ -163,6 +163,7 @@ services:
     command: ["daemon"]
     restart: always
     volumes:
+      - ./zeroclaw/config.toml:/zeroclaw-data/.zeroclaw/config.toml:ro
       # ZeroClaw expects identity context in IDENTITY.md or AGENTS.md inside the workspace
       - ./zeroclaw/system-prompt.md:/zeroclaw-data/workspace/IDENTITY.md:ro
       # Mount other context files into the workspace so the LLM can use file_read to read them

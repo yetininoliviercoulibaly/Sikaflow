@@ -39,6 +39,21 @@ if [ -d "zeroclaw/tools" ] && [ -f ".env" ]; then
     else
         echo "⚠️  SIKAFLOW_API_URL ou SIKAFLOW_API_KEY manquant dans .env."
     fi
+
+    # Injection des variables dans config.toml
+    if [ -f "zeroclaw/config.toml" ]; then
+        echo "🔧 Injection des secrets dans config.toml..."
+        DB_URL="postgres://${DB_USER}:${DB_PASSWORD}@db:5432/zeroclaw_prod"
+        if [ "$TARGET_ENV" = "staging" ]; then
+            DB_URL="postgres://${DB_USER}:${DB_PASSWORD}@db:5432/zeroclaw_poc"
+        fi
+        sed -i "s|{{ZEROCLAW_DB_URL}}|$DB_URL|g" "zeroclaw/config.toml"
+        sed -i "s|{{TELEGRAM_BOT_TOKEN}}|$TELEGRAM_BOT_TOKEN|g" "zeroclaw/config.toml"
+        sed -i "s|{{WHATSAPP_PHONE_NUMBER_ID}}|$WHATSAPP_PHONE_NUMBER_ID|g" "zeroclaw/config.toml"
+        sed -i "s|{{WHATSAPP_ACCESS_TOKEN}}|$WHATSAPP_ACCESS_TOKEN|g" "zeroclaw/config.toml"
+        sed -i "s|{{WHATSAPP_VERIFY_TOKEN}}|$WHATSAPP_VERIFY_TOKEN|g" "zeroclaw/config.toml"
+        sed -i "s|{{WHATSAPP_APP_SECRET}}|$WHATSAPP_APP_SECRET|g" "zeroclaw/config.toml"
+    fi
 fi
 
 echo "📥 Pulling images..."
