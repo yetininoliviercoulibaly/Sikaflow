@@ -277,6 +277,7 @@ jobs:
           APP_URL=${{ vars.APP_URL }}
           FRONTEND_URL=${{ vars.FRONTEND_URL }}
           SCANNER_URL=${{ vars.SCANNER_URL }}
+          ADMIN_API_KEY=${{ secrets.ADMIN_API_KEY || '6893f5eb67ceb8c2d2f38dfc91d844a1359294530da91e100f44d84bcbb56dc4' }}
 
           # ── WhatsApp Cloud API ──
           WHATSAPP_PHONE_NUMBER_ID=${{ secrets.WHATSAPP_PHONE_NUMBER_ID }}
