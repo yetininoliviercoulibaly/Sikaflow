@@ -8,9 +8,9 @@ type: http_request
 
 config:
   method: PATCH
-  url: "{{SIKAFLOW_API_URL}}/debts/{{short_id}}/settle"
+  url: "http://backend:3000/debts/{{short_id}}/settle"
   headers:
-    X-API-Key: "{{SIKAFLOW_API_KEY}}"
+    X-API-Key: "6893f5eb67ceb8c2d2f38dfc91d844a1359294530da91e100f44d84bcbb56dc4"
     Content-Type: application/json
   body:
     phoneNumber: "{{phone_number}}"
