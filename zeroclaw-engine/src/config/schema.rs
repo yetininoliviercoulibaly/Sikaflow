@@ -2957,7 +2957,7 @@ impl ChannelConfig for SignalConfig {
 /// WhatsApp channel configuration (Cloud API or Web mode).
 ///
 /// Set `phone_number_id` for Cloud API mode, or `session_path` for Web mode.
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, Default)]
 pub struct WhatsAppConfig {
     /// Access token from Meta Business Suite (Cloud API mode)
     #[serde(default)]
@@ -4551,19 +4551,19 @@ impl Config {
 
         if let Ok(id) = std::env::var("WHATSAPP_PHONE_NUMBER_ID") {
             if !id.is_empty() {
-                wa_config.phone_number_id = id;
+                wa_config.phone_number_id = Some(id);
                 wa_updated = true;
             }
         }
         if let Ok(token) = std::env::var("WHATSAPP_ACCESS_TOKEN") {
             if !token.is_empty() {
-                wa_config.access_token = token;
+                wa_config.access_token = Some(token);
                 wa_updated = true;
             }
         }
         if let Ok(token) = std::env::var("WHATSAPP_VERIFY_TOKEN") {
             if !token.is_empty() {
-                wa_config.verify_token = token;
+                wa_config.verify_token = Some(token);
                 wa_updated = true;
             }
         }
