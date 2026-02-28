@@ -53,37 +53,50 @@ git push origin main      # Pour production
 
 GitHub Actions va automatiquement :
 
-- ✅ Builder les images Docker
-- ✅ Les pousser vers GHCR (GitHub Container Registry)
+- ✅ Builder les images Docker (backend, frontend, scanner)
+- ✅ Préparer le code source ZeroClaw (zeroclaw-engine) pour le build distant
 
 ### Étape 2 : Déploiement Manuel
 
 **Pour Staging :**
 
 ```powershell
-.\deploy.ps1 -env staging
+.\deploy.ps1 -TargetEnv staging
 ```
 
 **Pour Production :**
 
 ```powershell
-.\deploy.ps1 -env production
+.\deploy.ps1 -TargetEnv production
 ```
 
 Le script va :
 
 1. Copier les fichiers docker-compose vers le VPS
-2. Se connecter au VPS via SSH
-3. Télécharger les dernières images depuis GHCR
-4. Redémarrer les conteneurs
+2. Copier le code source de l'agent (**zeroclaw-engine**) vers le VPS
+3. Se connecter au VPS via SSH
+4. Télécharger les dernières images depuis GHCR
+5. Recompiler l'image ZeroClaw personnalisée (**sikaflow/zeroclaw:custom**) via `docker compose up --build`
+6. Redémarrer les conteneurs
 
 ## Vérification
 
 ```bash
 # Sur le VPS
-docker ps                                    # Voir les conteneurs actifs
-docker compose -f docker-compose.staging.yml logs -f  # Voir les logs
+docker ps                                           # Voir les conteneurs actifs
+docker compose -f docker-compose.staging.yml logs -f zeroclaw # Voir les logs de l'agent
 ```
+
+## Maintenance de l'Agent (ZeroClaw)
+
+L'agent IA est implémenté en Rust dans le dossier `zeroclaw-engine`.
+Contrairement aux versions précédentes, les outils sont **compilés nativement** dans le binaire.
+
+Pour ajouter un outil :
+
+1. Créez un fichier `.rs` dans `zeroclaw-engine/src/tools/sikaflow/`.
+2. Enregistrez-le dans `mod.rs`.
+3. Poussez votre code. Le déploiement se chargera de la compilation sur le serveur.
 
 ## Rollback
 
