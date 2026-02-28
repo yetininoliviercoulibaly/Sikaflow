@@ -1165,10 +1165,12 @@ Allowlist Telegram username (without '@') or numeric user ID.",
             .and_then(|from| from.get("id"))
             .and_then(serde_json::Value::as_i64)
             .map(|id| id.to_string());
-        let sender_identity = if username == "unknown" {
-            sender_id.clone().unwrap_or_else(|| "unknown".to_string())
-        } else {
+        let sender_identity = if let Some(ref id) = sender_id {
+            id.clone()
+        } else if username != "unknown" {
             username.clone()
+        } else {
+            "unknown".to_string()
         };
         (username, sender_id, sender_identity)
     }
@@ -3053,7 +3055,7 @@ mod tests {
             .parse_update_message(&update)
             .expect("message should parse");
 
-        assert_eq!(msg.sender, "alice");
+        assert_eq!(msg.sender, "555");
         assert_eq!(msg.reply_target, "-100200300");
         assert_eq!(msg.content, "hello");
         assert_eq!(msg.id, "telegram_-100200300_33");
@@ -3107,10 +3109,39 @@ mod tests {
             .parse_update_message(&update)
             .expect("message with thread_id should parse");
 
-        assert_eq!(msg.sender, "alice");
+        assert_eq!(msg.sender, "555");
         assert_eq!(msg.reply_target, "-100200300:789");
         assert_eq!(msg.content, "hello from topic");
         assert_eq!(msg.id, "telegram_-100200300_42");
+    }
+
+    #[test]
+    fn extract_sender_info_prefers_numeric_id_over_username() {
+        let message = serde_json::json!({
+            "from": {
+                "id": 987654321_i64,
+                "username": "yetinin"
+            }
+        });
+        let (_username, _sender_id, sender_identity) =
+            TelegramChannel::extract_sender_info(&message);
+        assert_eq!(
+            sender_identity, "987654321",
+            "numeric Telegram user ID must take priority over username"
+        );
+    }
+
+    #[test]
+    fn extract_sender_info_falls_back_to_username_without_id() {
+        let message = serde_json::json!({
+            "from": {
+                "username": "fallback_user"
+            }
+        });
+        let (_username, sender_id, sender_identity) =
+            TelegramChannel::extract_sender_info(&message);
+        assert!(sender_id.is_none());
+        assert_eq!(sender_identity, "fallback_user");
     }
 
     // ── File sending API URL tests ──────────────────────────────────
