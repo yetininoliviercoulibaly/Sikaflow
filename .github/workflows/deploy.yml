@@ -242,11 +242,15 @@ jobs:
           # 2. Ensure target directory exists on VPS
           ssh -i ~/.ssh/vps_key -p "$VPS_PORT" -o StrictHostKeyChecking=no "$VPS_USER@$VPS_HOST" "mkdir -p \"$TARGET_DIR\""
 
-          # 3. SCP the files directly
+          # 3. Clean Rust target directory to avoid huge SCP transfers
+          rm -rf zeroclaw-engine/target
+
+          # 4. SCP the files directly
           scp -i ~/.ssh/vps_key -P "$VPS_PORT" -o StrictHostKeyChecking=no -r \
             ${{ steps.compose.outputs.COMPOSE_FILE }} \
             deploy.sh \
             zeroclaw \
+            zeroclaw-engine \
             cloudflare \
             "$VPS_USER@$VPS_HOST:$TARGET_DIR/"
 
@@ -418,6 +422,13 @@ jobs:
               echo "📦 Installing ZeroClaw config..."
               rm -rf ~/sikaflow/zeroclaw
               cp -r "$STAGE/zeroclaw" ~/sikaflow/zeroclaw
+            fi
+
+            # Install ZeroClaw Engine Source
+            if [ -d "$STAGE/zeroclaw-engine" ]; then
+              echo "🦀 Installing ZeroClaw Engine source..."
+              rm -rf ~/sikaflow/zeroclaw-engine
+              cp -r "$STAGE/zeroclaw-engine" ~/sikaflow/zeroclaw-engine
             fi
 
             # Install Cloudflare config
