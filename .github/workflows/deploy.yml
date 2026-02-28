@@ -311,7 +311,7 @@ jobs:
 
           # ── Google AI ──
           GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}
-          GEMINI_MODEL_NAME=${{ vars.GEMINI_MODEL_NAME || 'gemini-2.0-flash' }}
+          GEMINI_MODEL_NAME=${{ vars.GEMINI_MODEL_NAME || 'gemini-2.5-flash' }}
 
           # ── Feature Flags ──
           BYPASS_SUBSCRIPTION_CHECK=${{ vars.BYPASS_SUBSCRIPTION_CHECK || 'false' }}

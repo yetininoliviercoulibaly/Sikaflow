@@ -116,12 +116,12 @@ pub async fn transcribe_audio(
 }
 
 /// Normalise le nom du modèle Gemini pour la transcription.
-/// - Fallback sur "gemini-2.0-flash" si invalide (vide, template non résolu, modèle Groq)
+/// - Fallback sur "gemini-2.5-flash" si invalide (vide, template non résolu, modèle Groq)
 /// - Strip le préfixe "models/" pour éviter le double dans l'URL
 fn normalize_gemini_model_name(model: &str) -> String {
     let trimmed = model.trim();
     if trimmed.is_empty() || trimmed.contains("{{") || trimmed.starts_with("whisper") {
-        return "gemini-2.0-flash".to_string();
+        return "gemini-2.5-flash".to_string();
     }
     trimmed
         .strip_prefix("models/")
@@ -325,31 +325,31 @@ mod tests {
 
     #[test]
     fn normalize_gemini_model_passthrough_valid() {
-        assert_eq!(normalize_gemini_model_name("gemini-2.0-flash"), "gemini-2.0-flash");
+        assert_eq!(normalize_gemini_model_name("gemini-2.5-flash"), "gemini-2.5-flash");
         assert_eq!(normalize_gemini_model_name("gemini-1.5-flash"), "gemini-1.5-flash");
         assert_eq!(normalize_gemini_model_name("gemini-2.5-pro"), "gemini-2.5-pro");
     }
 
     #[test]
     fn normalize_gemini_model_strips_models_prefix() {
-        assert_eq!(normalize_gemini_model_name("models/gemini-2.0-flash"), "gemini-2.0-flash");
+        assert_eq!(normalize_gemini_model_name("models/gemini-2.0-flash"), "gemini-2.5-flash");
         assert_eq!(normalize_gemini_model_name("models/gemini-1.5-pro"), "gemini-1.5-pro");
     }
 
     #[test]
     fn normalize_gemini_model_fallback_empty() {
-        assert_eq!(normalize_gemini_model_name(""), "gemini-2.0-flash");
-        assert_eq!(normalize_gemini_model_name("  "), "gemini-2.0-flash");
+        assert_eq!(normalize_gemini_model_name(""), "gemini-2.5-flash");
+        assert_eq!(normalize_gemini_model_name("  "), "gemini-2.5-flash");
     }
 
     #[test]
     fn normalize_gemini_model_fallback_unresolved_template() {
-        assert_eq!(normalize_gemini_model_name("{{GEMINI_MODEL_NAME}}"), "gemini-2.0-flash");
+        assert_eq!(normalize_gemini_model_name("{{GEMINI_MODEL_NAME}}"), "gemini-2.5-flash");
     }
 
     #[test]
     fn normalize_gemini_model_fallback_whisper() {
-        assert_eq!(normalize_gemini_model_name("whisper-large-v3-turbo"), "gemini-2.0-flash");
-        assert_eq!(normalize_gemini_model_name("whisper-1"), "gemini-2.0-flash");
+        assert_eq!(normalize_gemini_model_name("whisper-large-v3-turbo"), "gemini-2.5-flash");
+        assert_eq!(normalize_gemini_model_name("whisper-1"), "gemini-2.5-flash");
     }
 }

@@ -91,7 +91,7 @@ services:
       PAYMENT_REGION: ${PAYMENT_REGION:-INTERNATIONAL}
       MONTHLY_PRICE_ID: ${MONTHLY_PRICE_ID:-price_default}
       GOOGLE_API_KEY: ${GOOGLE_API_KEY}
-      GEMINI_MODEL_NAME: ${GEMINI_MODEL_NAME:-gemini-1.5-flash}
+      GEMINI_MODEL_NAME: ${GEMINI_MODEL_NAME:-gemini-2.5-flash}
       AI_CONFIDENCE_THRESHOLD: ${AI_CONFIDENCE_THRESHOLD:-0.85}
       # Telegram
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
@@ -195,7 +195,7 @@ services:
       ZEROCLAW_GATEWAY_PORT: "3001"
       ZEROCLAW_GATEWAY_HOST: "0.0.0.0"
       ZEROCLAW_PROVIDER: google
-      ZEROCLAW_MODEL: ${GEMINI_MODEL_NAME:-gemini-2.0-flash}
+      ZEROCLAW_MODEL: ${GEMINI_MODEL_NAME:-gemini-2.5-flash}
       GOOGLE_API_KEY: ${GOOGLE_API_KEY}
       # Template variables for tool YAML files
       SIKAFLOW_API_URL: http://backend:3000

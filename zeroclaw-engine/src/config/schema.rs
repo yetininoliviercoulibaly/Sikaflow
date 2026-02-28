@@ -4450,6 +4450,19 @@ impl Config {
             }
         }
 
+        // Transcription model: resolve {{GEMINI_MODEL_NAME}} template or override
+        // when the configured value is a template placeholder, empty, or a non-Gemini model.
+        if self.transcription.model.contains("{{")
+            || self.transcription.model.trim().is_empty()
+            || self.transcription.model.starts_with("whisper")
+        {
+            if let Ok(model) = std::env::var("GEMINI_MODEL_NAME") {
+                if !model.is_empty() {
+                    self.transcription.model = model;
+                }
+            }
+        }
+
         // Apply named provider profile remapping (Codex app-server compatibility).
         self.apply_named_model_provider_profile();
 
