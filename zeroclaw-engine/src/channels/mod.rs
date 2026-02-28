@@ -418,6 +418,7 @@ fn channel_delivery_instructions(channel_name: &str) -> Option<&'static str> {
 fn build_channel_system_prompt(
     base_prompt: &str,
     channel_name: &str,
+    sender: &str,
     reply_target: &str,
 ) -> String {
     let mut prompt = base_prompt.to_string();
@@ -430,14 +431,20 @@ fn build_channel_system_prompt(
         }
     }
 
-    if !reply_target.is_empty() {
-        let context = format!(
+    if !sender.is_empty() || !reply_target.is_empty() {
+        let mut context = format!(
             "\n\nChannel context: You are currently responding on channel={channel_name}, \
-             reply_target={reply_target}. When scheduling delayed messages or reminders \
-             via cron_add for this conversation, use delivery={{\"mode\":\"announce\",\
-             \"channel\":\"{channel_name}\",\"to\":\"{reply_target}\"}} so the message \
-             reaches the user."
+             sender={sender}."
         );
+        if !reply_target.is_empty() {
+            context.push_str(&format!(
+                " reply_target={reply_target}. When scheduling delayed messages \
+                 or reminders via cron_add for this conversation, use \
+                 delivery={{\"mode\":\"announce\",\
+                 \"channel\":\"{channel_name}\",\"to\":\"{reply_target}\"}} so the message \
+                 reaches the user."
+            ));
+        }
         prompt.push_str(&context);
     }
 
@@ -1628,7 +1635,7 @@ async fn process_channel_message(
     }
 
     let system_prompt =
-        build_channel_system_prompt(ctx.system_prompt.as_str(), &msg.channel, &msg.reply_target);
+        build_channel_system_prompt(ctx.system_prompt.as_str(), &msg.channel, &msg.sender, &msg.reply_target);
     let mut history = vec![ChatMessage::system(system_prompt)];
     history.extend(prior_turns);
     let use_streaming = target_channel

@@ -11,6 +11,7 @@ import { ResolveContextUseCase } from './application/use-cases/resolve-context.u
 import { RemoveMemberUseCase } from './application/use-cases/remove-member.use-case';
 import { SwitchOrganizationUseCase } from './application/use-cases/switch-organization.use-case';
 import { GetOrganizationsByPhoneUseCase } from './application/use-cases/get-organizations-by-phone.use-case';
+import { GetOrganizationsByTelegramUseCase } from './application/use-cases/get-organizations-by-telegram.use-case';
 import { UserModule } from '../user/user.module';
 import { AuthModule } from '../auth/auth.module';
 import { forwardRef } from '@nestjs/common';
@@ -33,6 +34,7 @@ import { forwardRef } from '@nestjs/common';
     RemoveMemberUseCase,
     SwitchOrganizationUseCase,
     GetOrganizationsByPhoneUseCase,
+    GetOrganizationsByTelegramUseCase,
   ],
   exports: [I_ORGANIZATION_REPOSITORY, ResolveContextUseCase, RemoveMemberUseCase, SwitchOrganizationUseCase, CreateOrganizationUseCase, AddMemberUseCase],
 })

@@ -3,6 +3,7 @@ import { CreateOrganizationUseCase } from '../use-cases/create-organization.use-
 import { AddMemberUseCase } from '../use-cases/add-member.use-case';
 import { RemoveMemberUseCase } from '../use-cases/remove-member.use-case';
 import { GetOrganizationsByPhoneUseCase } from '../use-cases/get-organizations-by-phone.use-case';
+import { GetOrganizationsByTelegramUseCase } from '../use-cases/get-organizations-by-telegram.use-case';
 import { CreateOrganizationDto, AddMemberDto } from '../dtos/organization.dtos';
 import { CompositeAuthGuard } from '../../../common/guards/composite-auth.guard';
 import { RolesGuard } from '../../../common/guards/roles.guard';
@@ -19,18 +20,29 @@ export class OrganizationController {
     private readonly addMemberUseCase: AddMemberUseCase,
     private readonly removeMemberUseCase: RemoveMemberUseCase,
     private readonly getOrganizationsByPhoneUseCase: GetOrganizationsByPhoneUseCase,
+    private readonly getOrganizationsByTelegramUseCase: GetOrganizationsByTelegramUseCase,
   ) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get organizations by phone number (ZeroClaw M2M lookup)' })
-  @ApiQuery({ name: 'phoneNumber', required: true, description: 'Phone number in E.164 format' })
-  @ApiResponse({ status: 200, description: 'List of organizations for this phone number (empty array if unknown).' })
-  @ApiResponse({ status: 400, description: 'Missing phoneNumber query parameter.' })
-  async getByPhone(@Query('phoneNumber') phoneNumber: string) {
-    if (!phoneNumber) {
-      throw new BadRequestException('phoneNumber query param is required');
+  @ApiOperation({ summary: 'Get organizations by phone number or Telegram user ID (ZeroClaw M2M lookup)' })
+  @ApiQuery({ name: 'phoneNumber', required: false, description: 'Phone number in E.164 format' })
+  @ApiQuery({ name: 'telegramUserId', required: false, description: 'Telegram user ID (numeric)' })
+  @ApiResponse({ status: 200, description: 'With phoneNumber: OrganizationWithRole[]. With telegramUserId: { userPhoneNumber: string | null, organizations: OrganizationWithRole[] }.' })
+  @ApiResponse({ status: 400, description: 'Missing phoneNumber or telegramUserId query parameter.' })
+  async getOrganizations(
+    @Query('phoneNumber') phoneNumber?: string,
+    @Query('telegramUserId') telegramUserId?: string,
+  ) {
+    if (telegramUserId) {
+      if (!/^\d{1,20}$/.test(telegramUserId)) {
+        throw new BadRequestException('telegramUserId must be a numeric string');
+      }
+      return this.getOrganizationsByTelegramUseCase.execute({ telegramUserId });
     }
-    return this.getOrganizationsByPhoneUseCase.execute({ phoneNumber });
+    if (phoneNumber) {
+      return this.getOrganizationsByPhoneUseCase.execute({ phoneNumber });
+    }
+    throw new BadRequestException('phoneNumber or telegramUserId query param is required');
   }
 
   @Post()

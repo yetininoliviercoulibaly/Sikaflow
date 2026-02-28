@@ -29,9 +29,10 @@ impl Tool for CheckUserExistsTool {
 
     fn description(&self) -> &str {
         "Vérifie si un utilisateur est déjà enregistré dans SikaFlow en cherchant \
-        ses organisations par numéro de téléphone. Retourne une liste vide si \
-        l'utilisateur est nouveau, ou la liste de ses organisations avec son rôle \
-        dans chacune."
+        ses organisations par numéro de téléphone OU par identifiant Telegram. \
+        Retourne une liste vide si l'utilisateur est nouveau, ou la liste de ses \
+        organisations avec son rôle dans chacune. Quand l'identifiant Telegram est \
+        utilisé, la réponse inclut aussi le userPhoneNumber associé."
     }
 
     fn parameters_schema(&self) -> Value {
@@ -40,31 +41,54 @@ impl Tool for CheckUserExistsTool {
             "properties": {
                 "phone_number": {
                     "type": "string",
-                    "description": "Numéro de téléphone de l'utilisateur au format E.164 (ex: +22507000000)"
+                    "description": "Numéro de téléphone de l'utilisateur au format E.164 (ex: +22507000000). Utilise ce paramètre pour WhatsApp."
+                },
+                "telegram_user_id": {
+                    "type": "string",
+                    "description": "Identifiant unique Telegram de l'utilisateur (numérique). Utilise ce paramètre pour Telegram à la place du numéro de téléphone."
                 }
-            },
-            "required": ["phone_number"]
+            }
         })
     }
 
     async fn execute(&self, args: Value) -> anyhow::Result<ToolResult> {
         let phone_number = args["phone_number"].as_str().unwrap_or("");
-        if phone_number.is_empty() {
+        let telegram_user_id = args["telegram_user_id"].as_str().unwrap_or("");
+
+        if phone_number.is_empty() && telegram_user_id.is_empty() {
             return Ok(ToolResult {
                 success: false,
                 output: String::new(),
-                error: Some("phone_number is required".into()),
+                error: Some("phone_number or telegram_user_id is required".into()),
             });
         }
 
-        // Fast replacement for E.164 URLs
-        let encoded_phone = phone_number.replace("+", "%2B");
-        let client = reqwest::Client::new();
-        let url = format!(
-            "{}/organizations?phoneNumber={}",
-            self.api_url, encoded_phone
-        );
+        let url = if !telegram_user_id.is_empty() {
+            // Telegram user IDs are numeric, but encode for safety
+            let encoded_id: String = telegram_user_id
+                .chars()
+                .filter(|c| c.is_ascii_digit())
+                .collect();
+            if encoded_id.is_empty() {
+                return Ok(ToolResult {
+                    success: false,
+                    output: String::new(),
+                    error: Some("telegram_user_id must be numeric".into()),
+                });
+            }
+            format!(
+                "{}/organizations?telegramUserId={}",
+                self.api_url, encoded_id
+            )
+        } else {
+            let encoded_phone = phone_number.replace("+", "%2B");
+            format!(
+                "{}/organizations?phoneNumber={}",
+                self.api_url, encoded_phone
+            )
+        };
 
+        let client = reqwest::Client::new();
         let res = client
             .get(&url)
             .header("X-API-Key", &self.api_key)

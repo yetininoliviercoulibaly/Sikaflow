@@ -11,5 +11,6 @@ export const UserSchema = new EntitySchema<User>({
     lastActiveOrganizationId: { type: 'uuid', nullable: true },
     preferredLanguage: { type: 'string', default: 'fr' },
     createdAt: { type: 'datetime', defaultRaw: 'CURRENT_TIMESTAMP' },
+    telegramUserId: { type: 'varchar', length: 50, nullable: true, unique: true },
   },
 });

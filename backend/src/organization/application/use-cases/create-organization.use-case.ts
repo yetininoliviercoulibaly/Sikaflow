@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, ConflictException } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { Organization } from '../../domain/organization.entity';
 import { OrganizationMember, UserRole } from '../../domain/organization-member.entity';
@@ -13,6 +13,7 @@ export interface CreateOrganizationCommand {
   userPhoneNumber?: string;
   currency?: string; // ISO 4217 currency code, defaults to 'XOF'
   businessType?: string; // e.g. maquis, restaurant, bar, evenementiel, commerce
+  telegramUserId?: string; // Telegram user ID to link to the user account
 }
 
 @Injectable()
@@ -29,7 +30,12 @@ export class CreateOrganizationUseCase {
     let userId = ownerId;
     let user = userId ? await this.userRepository.findById(userId) : null;
 
-    // If user not found by ID, try to find by phone number if provided
+    // If user not found by ID, try to find by Telegram user ID if provided
+    if (!user && command.telegramUserId) {
+        user = await this.userRepository.findByTelegramUserId(command.telegramUserId);
+    }
+
+    // If user not found by ID or Telegram, try to find by phone number if provided
     if (!user && userPhoneNumber) {
         user = await this.userRepository.findByPhoneNumber(userPhoneNumber);
     }
@@ -42,9 +48,21 @@ export class CreateOrganizationUseCase {
             userPhoneNumber,
             null, // Name unknown initially
             null, // No org yet
-            new Date()
+            new Date(),
+            'fr',
+            command.telegramUserId || null,
         );
         user = await this.userRepository.create(newUser);
+    }
+
+    // Link Telegram user ID to existing user if not already set
+    if (user && command.telegramUserId && !user.telegramUserId) {
+        const existingTgUser = await this.userRepository.findByTelegramUserId(command.telegramUserId);
+        if (existingTgUser && existingTgUser.id !== user.id) {
+            throw new ConflictException('This Telegram account is already linked to another user.');
+        }
+        user.telegramUserId = command.telegramUserId;
+        await this.userRepository.update(user);
     }
 
     if (!user) {

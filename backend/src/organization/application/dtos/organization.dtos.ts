@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString, IsUUID, IsEnum, IsPhoneNumber } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsUUID, IsEnum, IsPhoneNumber, Matches } from 'class-validator';
 import { UserRole } from '../../domain/organization-member.entity';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -23,6 +23,11 @@ export class CreateOrganizationDto {
   @IsOptional()
   @IsString()
   businessType?: string;
+
+  @ApiProperty({ required: false, example: '123456789', description: 'Telegram user ID to link to the user account' })
+  @IsOptional()
+  @Matches(/^\d{1,20}$/, { message: 'telegramUserId must be a numeric string' })
+  telegramUserId?: string;
 }
 
 export class AddMemberDto {

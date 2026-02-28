@@ -43,6 +43,10 @@ impl Tool for CreateOrganizationTool {
                 "phone_number": {
                     "type": "string",
                     "description": "Numéro de téléphone de l'utilisateur au format E.164"
+                },
+                "telegram_user_id": {
+                    "type": "string",
+                    "description": "Identifiant unique Telegram de l'utilisateur (numérique). Permet de lier le compte Telegram au compte SikaFlow."
                 }
             },
             "required": ["business_name", "phone_number"]
@@ -70,6 +74,13 @@ impl Tool for CreateOrganizationTool {
             body["businessType"] = json!(bt);
         }
 
+        if let Some(tg_id) = args.get("telegram_user_id").and_then(|v| v.as_str()) {
+            let cleaned: String = tg_id.chars().filter(|c| c.is_ascii_digit()).collect();
+            if !cleaned.is_empty() {
+                body["telegramUserId"] = json!(cleaned);
+            }
+        }
+
         let client = reqwest::Client::new();
         let url = format!("{}/organizations", self.api_url);
         
@@ -94,6 +105,11 @@ impl Tool for CreateOrganizationTool {
                             let _ = self.memory.store("session.activeOrgName", name, MemoryCategory::Core, None).await;
                         }
                         let _ = self.memory.store("session.activeOrgRole", "OWNER", MemoryCategory::Core, None).await;
+                    }
+
+                    // Cache phone number for Telegram sessions to avoid re-identification
+                    if !phone_number.is_empty() {
+                        let _ = self.memory.store("session.userPhoneNumber", phone_number, MemoryCategory::Core, None).await;
                     }
 
                     Ok(ToolResult {
