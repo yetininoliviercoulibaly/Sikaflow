@@ -178,10 +178,7 @@ services:
   # 9. ZEROCLAW AGENT (AI Orchestrator)
   # ---------------------------------------------------------------------------
   zeroclaw:
-    build:
-      context: ./zeroclaw-engine
-      dockerfile: Dockerfile
-    image: sikaflow/zeroclaw:custom
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-softilab}/zeroclaw:${ZEROCLAW_IMAGE_TAG:-develop}
     command: ["daemon"]
     restart: always
     volumes:

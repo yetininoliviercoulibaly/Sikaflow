@@ -1,4 +1,5 @@
 use anyhow::{bail, Context, Result};
+use base64::Engine;
 use reqwest::multipart::{Form, Part};
 
 use crate::config::TranscriptionConfig;
@@ -46,6 +47,15 @@ pub async fn transcribe_audio(
             "Audio file too large ({} bytes, max {MAX_AUDIO_BYTES})",
             audio_data.len()
         );
+    }
+
+    // Dispatch to Gemini if requested
+    if let Some(ref provider) = config.provider {
+        if provider.eq_ignore_ascii_case("gemini") {
+            let extension = file_name.rsplit_once('.').map(|(_, e)| e).unwrap_or("");
+            let mime = mime_for_audio(extension).unwrap_or("audio/ogg");
+            return transcribe_audio_via_gemini(audio_data, mime, config).await;
+        }
     }
 
     let normalized_name = normalize_audio_filename(file_name);
@@ -100,6 +110,89 @@ pub async fn transcribe_audio(
     let text = body["text"]
         .as_str()
         .context("Transcription response missing 'text' field")?
+        .to_string();
+
+    Ok(text)
+}
+
+/// Transcribe audio bytes via Google Gemini.
+///
+/// This is used as a fallback or alternative to Groq Whisper, particularly for
+/// channels like WhatsApp when multimodal capabilities of Gemini are preferred.
+pub async fn transcribe_audio_via_gemini(
+    audio_data: Vec<u8>,
+    mime_type: &str,
+    config: &TranscriptionConfig,
+) -> Result<String> {
+    if audio_data.len() > MAX_AUDIO_BYTES {
+        bail!(
+            "Audio file too large ({} bytes, max {MAX_AUDIO_BYTES})",
+            audio_data.len()
+        );
+    }
+
+    let api_key = std::env::var("GEMINI_API_KEY")
+        .or_else(|_| std::env::var("GOOGLE_API_KEY"))
+        .or_else(|_| std::env::var("ZEROCLAW_API_KEY"))
+        .or_else(|_| std::env::var("API_KEY"))
+        .context(
+            "GEMINI_API_KEY or GOOGLE_API_KEY environment variable is not set — required for Gemini transcription",
+        )?;
+
+    let client = crate::config::build_runtime_proxy_client("provider.gemini");
+
+    // Gemini 1.5 Flash is excellent for fast, high-quality transcription.
+    let model = &config.model;
+    let url = format!(
+        "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent?key={}",
+        model, api_key
+    );
+
+    let base64_audio = base64::engine::general_purpose::STANDARD.encode(audio_data);
+
+    let payload = serde_json::json!({
+        "contents": [{
+            "parts": [
+                {
+                    "inline_data": {
+                        "mime_type": mime_type,
+                        "data": base64_audio
+                    }
+                },
+                {
+                    "text": "Please transcribe this audio exactly as it is spoken. Only return the transcription, no other text."
+                }
+            ]
+        }],
+        "generationConfig": {
+            "temperature": 0.0,
+            "topP": 0.8,
+            "topK": 40
+        }
+    });
+
+    let resp = client
+        .post(&url)
+        .json(&payload)
+        .send()
+        .await
+        .context("Failed to send Gemini transcription request")?;
+
+    let status = resp.status();
+    let body: serde_json::Value = resp
+        .json()
+        .await
+        .context("Failed to parse Gemini transcription response")?;
+
+    if !status.is_success() {
+        let error_msg = body["error"]["message"].as_str().unwrap_or("unknown error");
+        bail!("Gemini Transcription API error ({}): {}", status, error_msg);
+    }
+
+    let text = body["candidates"][0]["content"]["parts"][0]["text"]
+        .as_str()
+        .context("Gemini transcription response missing text part")?
+        .trim()
         .to_string();
 
     Ok(text)

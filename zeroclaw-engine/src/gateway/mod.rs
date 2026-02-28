@@ -1121,6 +1121,103 @@ pub fn verify_whatsapp_signature(app_secret: &str, body: &[u8], signature_header
     mac.verify_slice(&expected).is_ok()
 }
 
+/// Helper to fetch the actual download URL for a WhatsApp media ID.
+async fn fetch_whatsapp_media_url(
+    wa: &crate::channels::whatsapp::WhatsAppChannel,
+    media_id: &str,
+) -> anyhow::Result<String> {
+    let client = crate::config::build_runtime_proxy_client("gateway.whatsapp");
+    let url = format!("https://graph.facebook.com/v21.0/{}", media_id);
+
+    let resp = client
+        .get(&url)
+        .header("Authorization", format!("Bearer {}", wa.token()))
+        .send()
+        .await
+        .context("Failed to fetch WhatsApp media metadata")?;
+
+    if !resp.status().is_success() {
+        let status = resp.status();
+        let body = resp.text().await.unwrap_or_default();
+        anyhow::bail!("WhatsApp Media API error ({}): {}", status, body);
+    }
+
+    let data: serde_json::Value = resp.json().await?;
+    let download_url = data
+        .get("url")
+        .and_then(|v| v.as_str())
+        .context("WhatsApp media metadata missing 'url'")?
+        .to_string();
+
+    Ok(download_url)
+}
+
+/// Helper to download bytes from a WhatsApp media URL.
+async fn download_whatsapp_media(
+    wa: &crate::channels::whatsapp::WhatsAppChannel,
+    download_url: &str,
+) -> anyhow::Result<Vec<u8>> {
+    let client = crate::config::build_runtime_proxy_client("gateway.whatsapp");
+
+    let resp = client
+        .get(download_url)
+        .header("Authorization", format!("Bearer {}", wa.token()))
+        .send()
+        .await
+        .context("Failed to download WhatsApp media")?;
+
+    if !resp.status().is_success() {
+        let status = resp.status();
+        let body = resp.text().await.unwrap_or_default();
+        anyhow::bail!("WhatsApp Media Download error ({}): {}", status, body);
+    }
+
+    let bytes = resp.bytes().await?.to_vec();
+    Ok(bytes)
+}
+
+/// Orchestrate WhatsApp audio download and transcription.
+async fn process_whatsapp_audio(
+    wa: &crate::channels::whatsapp::WhatsAppChannel,
+    content: &str,
+    transcription_config: &crate::config::TranscriptionConfig,
+) -> anyhow::Result<String> {
+    // Expected format: [WHATSAPP_AUDIO_ID:<id>|MIME:<mime>]
+    let Some(id_part) = content.strip_prefix("[WHATSAPP_AUDIO_ID:") else {
+        return Ok(content.to_string());
+    };
+    let Some((id, rest)) = id_part.split_once('|') else {
+        return Ok(content.to_string());
+    };
+    let mime = rest
+        .strip_prefix("MIME:")
+        .and_then(|m| m.strip_suffix(']'))
+        .unwrap_or("audio/ogg");
+
+    tracing::info!(
+        "WhatsApp: Processing audio message (id: {}, mime: {})",
+        id,
+        mime
+    );
+
+    let download_url = fetch_whatsapp_media_url(wa, id).await?;
+    let audio_bytes = download_whatsapp_media(wa, &download_url).await?;
+
+    let transcription = crate::channels::transcription::transcribe_audio_via_gemini(
+        audio_bytes,
+        mime,
+        transcription_config,
+    )
+    .await?;
+
+    tracing::info!(
+        "WhatsApp: Audio transcribed successfully: {}",
+        truncate_with_ellipsis(&transcription, 50)
+    );
+
+    Ok(transcription)
+}
+
 /// POST /whatsapp — incoming message webhook
 async fn handle_whatsapp_message(
     State(state): State<AppState>,
@@ -1175,10 +1272,32 @@ async fn handle_whatsapp_message(
 
     // Process each message
     for msg in &messages {
+        let mut final_content = msg.content.clone();
+
+        // Check if it's an audio message marker
+        if final_content.starts_with("[WHATSAPP_AUDIO_ID:") {
+            let t_config = state.config.lock().transcription.clone();
+            match process_whatsapp_audio(wa, &final_content, &t_config).await {
+                Ok(transcribed) => {
+                    final_content = transcribed;
+                }
+                Err(e) => {
+                    tracing::error!("Failed to process WhatsApp audio: {e:#}");
+                    let _ = wa
+                        .send(&SendMessage::new(
+                            "Sorry, I couldn't transcribe your audio message.",
+                            &msg.reply_target,
+                        ))
+                        .await;
+                    continue;
+                }
+            }
+        }
+
         tracing::info!(
             "WhatsApp message from {}: {}",
             msg.sender,
-            truncate_with_ellipsis(&msg.content, 50)
+            truncate_with_ellipsis(&final_content, 50)
         );
 
         // Auto-save to memory
@@ -1186,11 +1305,11 @@ async fn handle_whatsapp_message(
             let key = whatsapp_memory_key(msg);
             let _ = state
                 .mem
-                .store(&key, &msg.content, MemoryCategory::Conversation, None)
+                .store(&key, &final_content, MemoryCategory::Conversation, None)
                 .await;
         }
 
-        match run_gateway_chat_with_tools(&state, &msg.content).await {
+        match run_gateway_chat_with_tools(&state, &final_content).await {
             Ok(response) => {
                 // Send reply via WhatsApp
                 if let Err(e) = wa

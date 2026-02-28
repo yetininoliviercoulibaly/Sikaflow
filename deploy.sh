@@ -44,6 +44,7 @@ if [ -d "zeroclaw/tools" ] && [ -f ".env" ]; then
         sed -i "s|{{WHATSAPP_ACCESS_TOKEN}}|$WHATSAPP_ACCESS_TOKEN|g" "zeroclaw/config.toml"
         sed -i "s|{{WHATSAPP_VERIFY_TOKEN}}|$WHATSAPP_VERIFY_TOKEN|g" "zeroclaw/config.toml"
         sed -i "s|{{WHATSAPP_APP_SECRET}}|$WHATSAPP_APP_SECRET|g" "zeroclaw/config.toml"
+        sed -i "s|{{GEMINI_MODEL_NAME}}|$GEMINI_MODEL_NAME|g" "zeroclaw/config.toml"
     fi
 
     # Security: Ensure ZeroClaw container (running as non-root) can read the tools and config

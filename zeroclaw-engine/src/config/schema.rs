@@ -360,16 +360,19 @@ fn default_transcription_max_duration_secs() -> u64 {
     120
 }
 
-/// Voice transcription configuration (Whisper API via Groq).
+/// Voice transcription configuration (Whisper API via Groq or Gemini).
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct TranscriptionConfig {
     /// Enable voice transcription for channels that support it.
     #[serde(default)]
     pub enabled: bool,
-    /// Whisper API endpoint URL.
+    /// Transcription provider: "groq" (Whisper) or "gemini".
+    #[serde(default)]
+    pub provider: Option<String>,
+    /// Whisper API endpoint URL (only used for Groq).
     #[serde(default = "default_transcription_api_url")]
     pub api_url: String,
-    /// Whisper model name.
+    /// Model name (e.g. "whisper-large-v3-turbo" or "gemini-1.5-flash").
     #[serde(default = "default_transcription_model")]
     pub model: String,
     /// Optional language hint (ISO-639-1, e.g. "en", "ru").
@@ -384,6 +387,7 @@ impl Default for TranscriptionConfig {
     fn default() -> Self {
         Self {
             enabled: false,
+            provider: None,
             api_url: default_transcription_api_url(),
             model: default_transcription_model(),
             language: None,
@@ -4521,6 +4525,57 @@ impl Config {
                     self.default_temperature = temp;
                 }
             }
+        }
+
+        // Telegram: TELEGRAM_BOT_TOKEN
+        if let Ok(token) = std::env::var("TELEGRAM_BOT_TOKEN") {
+            if !token.is_empty() {
+                let tg = self
+                    .channels_config
+                    .telegram
+                    .get_or_insert_with(|| TelegramConfig {
+                        bot_token: token.clone(),
+                        allowed_users: vec!["*".to_string()],
+                        stream_mode: StreamMode::Off,
+                        draft_update_interval_ms: 1000,
+                        interrupt_on_new_message: false,
+                        mention_only: false,
+                    });
+                tg.bot_token = token;
+            }
+        }
+
+        // WhatsApp: WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_ACCESS_TOKEN, etc.
+        let mut wa_updated = false;
+        let mut wa_config = self.channels_config.whatsapp.clone().unwrap_or_default();
+
+        if let Ok(id) = std::env::var("WHATSAPP_PHONE_NUMBER_ID") {
+            if !id.is_empty() {
+                wa_config.phone_number_id = id;
+                wa_updated = true;
+            }
+        }
+        if let Ok(token) = std::env::var("WHATSAPP_ACCESS_TOKEN") {
+            if !token.is_empty() {
+                wa_config.access_token = token;
+                wa_updated = true;
+            }
+        }
+        if let Ok(token) = std::env::var("WHATSAPP_VERIFY_TOKEN") {
+            if !token.is_empty() {
+                wa_config.verify_token = token;
+                wa_updated = true;
+            }
+        }
+        if let Ok(secret) = std::env::var("WHATSAPP_APP_SECRET") {
+            if !secret.is_empty() {
+                wa_config.app_secret = Some(secret);
+                wa_updated = true;
+            }
+        }
+
+        if wa_updated {
+            self.channels_config.whatsapp = Some(wa_config);
         }
 
         // Reasoning override: ZEROCLAW_REASONING_ENABLED or REASONING_ENABLED

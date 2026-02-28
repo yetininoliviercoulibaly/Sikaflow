@@ -58,6 +58,11 @@ impl WhatsAppChannel {
         &self.verify_token
     }
 
+    /// Get the access token for API requests
+    pub fn token(&self) -> &str {
+        &self.access_token
+    }
+
     /// Parse an incoming webhook payload from Meta and extract messages
     pub fn parse_webhook_payload(&self, payload: &serde_json::Value) -> Vec<ChannelMessage> {
         let mut messages = Vec::new();
@@ -105,16 +110,32 @@ impl WhatsAppChannel {
                         continue;
                     }
 
-                    // Extract text content (support text messages only for now)
+                    // Extract text content (support text/audio messages)
                     let content = if let Some(text_obj) = msg.get("text") {
                         text_obj
                             .get("body")
                             .and_then(|b| b.as_str())
                             .unwrap_or("")
                             .to_string()
+                    } else if let Some(audio_obj) = msg.get("audio") {
+                        // Extract audio ID for later transcription in gateway
+                        let id = audio_obj.get("id").and_then(|v| v.as_str()).unwrap_or("");
+                        let mime = audio_obj
+                            .get("mime_type")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("audio/ogg");
+                        if id.is_empty() {
+                            tracing::debug!(
+                                "WhatsApp: skipping audio message with missing ID from {from}"
+                            );
+                            continue;
+                        }
+                        format!("[WHATSAPP_AUDIO_ID:{id}|MIME:{mime}]")
                     } else {
-                        // Could be image, audio, etc. — skip for now
-                        tracing::debug!("WhatsApp: skipping non-text message from {from}");
+                        // Could be image, video, etc. — skip for now
+                        tracing::debug!(
+                            "WhatsApp: skipping non-text/non-audio message from {from}"
+                        );
                         continue;
                     };
 

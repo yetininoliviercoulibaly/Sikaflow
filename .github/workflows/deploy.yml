@@ -117,21 +117,10 @@ jobs:
           build-args: |
              VITE_API_URL=${{ env.API_URL }}
 
-      - name: Checkout ZeroClaw repository
-        uses: actions/checkout@v4
-        with:
-          repository: 'zeroclaw-labs/zeroclaw'
-          ref: 'v0.1.7'
-          path: './zeroclaw-src'
-
-      - name: Patch ZeroClaw Dockerfile
-        run: |
-          sed -i 's/--locked//g' ./zeroclaw-src/Dockerfile
-
       - name: Build and push ZeroClaw image
         uses: docker/build-push-action@v5
         with:
-          context: ./zeroclaw-src
+          context: ./zeroclaw-engine
           push: true
           tags: ${{ steps.meta-zeroclaw.outputs.tags }}
           labels: ${{ steps.meta-zeroclaw.outputs.labels }}
@@ -327,9 +316,8 @@ jobs:
           # ── Feature Flags ──
           BYPASS_SUBSCRIPTION_CHECK=${{ vars.BYPASS_SUBSCRIPTION_CHECK || 'false' }}
 
-          # ── ZeroClaw ──
-          SIKAFLOW_API_URL=http://backend:3000
           SIKAFLOW_API_KEY=${{ secrets.ADMIN_API_KEY }}
+          ZEROCLAW_IMAGE_TAG=${{ steps.env.outputs.TARGET_ENV == 'production' && 'latest' || 'develop' }}
           ENVFILE
 
           # Remove leading whitespace from heredoc
@@ -340,31 +328,7 @@ jobs:
           sed -i -e '/^GITHUB_REPOSITORY_OWNER=/ s/=.*/\L&/' /tmp/sikaflow.env
           echo "✅ Generated .env with $(wc -l < /tmp/sikaflow.env) lines"
 
-      - name: Generate ZeroClaw config.toml
-        run: |
-          cat <<EOF > /tmp/zeroclaw.toml
-          default_temperature = 0.7
-
-          [gateway]
-          allow_public_bind = true
-
-          [runtime.wasm]
-          tools_dir = "/zeroclaw-data/workspace/tools"
-
-          [channels_config]
-          cli = true
-
-          [channels_config.telegram]
-          bot_token = "${{ secrets.TELEGRAM_BOT_TOKEN }}"
-          allowed_users = ["*"]
-          
-          [channels_config.whatsapp]
-          phone_number_id = "${{ secrets.WHATSAPP_PHONE_NUMBER_ID }}"
-          access_token = "${{ secrets.WHATSAPP_ACCESS_TOKEN }}"
-          verify_token = "${{ secrets.WHATSAPP_VERIFY_TOKEN }}"
-          app_secret = "${{ secrets.WHATSAPP_APP_SECRET }}"
-          EOF
-          echo "✅ Generated zeroclaw.toml"
+          echo "✅ .env file and cloudflare config ready"
 
       - name: Upload and Install .env to VPS
         env:
@@ -385,12 +349,9 @@ jobs:
           # SCP the env file directly contextually
           scp -i ~/.ssh/vps_key -P "$VPS_PORT" -o StrictHostKeyChecking=no /tmp/sikaflow.env "$VPS_USER@$VPS_HOST:~/sikaflow/.env"
 
-          # SCP the ZeroClaw config.toml securely to a new file destination
-          scp -i ~/.ssh/vps_key -P "$VPS_PORT" -o StrictHostKeyChecking=no /tmp/zeroclaw.toml "$VPS_USER@$VPS_HOST:~/sikaflow/zeroclaw_config.toml"
-          
           # Secure the files permissions
-          ssh -i ~/.ssh/vps_key -p "$VPS_PORT" -o StrictHostKeyChecking=no "$VPS_USER@$VPS_HOST" "chmod 600 ~/sikaflow/.env && chmod 644 ~/sikaflow/zeroclaw_config.toml"
-          echo "🔐 .env and config.toml installed successfully"
+          ssh -i ~/.ssh/vps_key -p "$VPS_PORT" -o StrictHostKeyChecking=no "$VPS_USER@$VPS_HOST" "chmod 600 ~/sikaflow/.env"
+          echo "🔐 .env installed successfully"
 
       # ─────────────────────────────────────────────────────────────────────
       # Execute deploy.sh on VPS
