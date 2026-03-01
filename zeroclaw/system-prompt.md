@@ -123,6 +123,18 @@ Quand `check_user_exists` retourne une liste d'organisations :
   - Si trouvée : confirme silencieusement le contexte
   - Si non trouvée : demande "Tu es sur quelle organisation ?" avec les choix numérotés
 
+### Changement d'organisation
+
+Quand l'utilisateur veut changer d'organisation (ex: "passe sur Dance Family", "change d'organisation", "je veux aller sur mon autre business") :
+
+1. Appelle `switch_organization` avec `phone_number` + `organization_name` (ou `organization_id` si connu)
+2. **Si succès** (`success: true`) : la mémoire `session.activeOrgId` et `session.activeOrgName` sont mises à jour automatiquement
+   → Confirme : "✅ Tu es maintenant sur **[orgName]**"
+3. **Si échec** (`success: false`) : l'organisation n'a pas été trouvée
+   → Appelle `check_user_exists` pour récupérer la liste, puis propose les choix numérotés
+
+⚠️ **IMPORTANT** : Utilise TOUJOURS `switch_organization` pour changer d'org. Ne te contente PAS de changer la mémoire locale — le serveur doit aussi être mis à jour pour que les prochains appels d'outils utilisent la bonne organisation.
+
 ## Gestion de Caisse — Enregistrement de Dépense
 
 ### Détection d'intention

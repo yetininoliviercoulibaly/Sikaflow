@@ -7,6 +7,7 @@ pub mod record_expense;
 pub mod record_income;
 pub mod remind_debt;
 pub mod settle_debt;
+pub mod switch_organization;
 pub mod update_transaction_category;
 
 use crate::memory::Memory;
@@ -64,6 +65,11 @@ pub fn sikaflow_tools(memory: Arc<dyn Memory>) -> Vec<Arc<dyn Tool>> {
             memory.clone(),
         )),
         Arc::new(settle_debt::SettleDebtTool::new(
+            api_url.clone(),
+            api_key.clone(),
+            memory.clone(),
+        )),
+        Arc::new(switch_organization::SwitchOrganizationTool::new(
             api_url.clone(),
             api_key.clone(),
             memory.clone(),
