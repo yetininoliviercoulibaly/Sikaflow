@@ -30,6 +30,23 @@ export class CreateOrganizationDto {
   telegramUserId?: string;
 }
 
+export class SwitchOrganizationDto {
+  @ApiProperty({ example: '+22501234567', description: 'Phone number or Telegram user ID of the user' })
+  @IsNotEmpty()
+  @IsString()
+  phoneNumber: string;
+
+  @ApiProperty({ required: false, example: 'uuid-of-org', description: 'Target organization ID' })
+  @IsOptional()
+  @IsString()
+  organizationId?: string;
+
+  @ApiProperty({ required: false, example: 'My Event Corp', description: 'Target organization name (fuzzy match)' })
+  @IsOptional()
+  @IsString()
+  organizationName?: string;
+}
+
 export class AddMemberDto {
   @ApiProperty({ example: 'uuid-of-requester', description: 'ID of the admin making the request' })
   @IsNotEmpty()

@@ -1,13 +1,15 @@
-import { Controller, Post, Get, Body, Param, Delete, Query, BadRequestException, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Body, Param, Delete, Query, Inject, BadRequestException, NotFoundException, UseGuards } from '@nestjs/common';
 import { CreateOrganizationUseCase } from '../use-cases/create-organization.use-case';
 import { AddMemberUseCase } from '../use-cases/add-member.use-case';
 import { RemoveMemberUseCase } from '../use-cases/remove-member.use-case';
+import { SwitchOrganizationUseCase } from '../use-cases/switch-organization.use-case';
 import { GetOrganizationsByPhoneUseCase } from '../use-cases/get-organizations-by-phone.use-case';
 import { GetOrganizationsByTelegramUseCase } from '../use-cases/get-organizations-by-telegram.use-case';
-import { CreateOrganizationDto, AddMemberDto } from '../dtos/organization.dtos';
+import { CreateOrganizationDto, AddMemberDto, SwitchOrganizationDto } from '../dtos/organization.dtos';
 import { CompositeAuthGuard } from '../../../common/guards/composite-auth.guard';
 import { RolesGuard } from '../../../common/guards/roles.guard';
 import { ApiTags, ApiOperation, ApiResponse, ApiSecurity, ApiQuery } from '@nestjs/swagger';
+import { IUserRepository, I_USER_REPOSITORY } from '../../../user/domain/ports/user.repository.interface';
 
 @ApiTags('Organizations')
 @ApiSecurity('api-key')
@@ -19,8 +21,10 @@ export class OrganizationController {
     private readonly createOrganizationUseCase: CreateOrganizationUseCase,
     private readonly addMemberUseCase: AddMemberUseCase,
     private readonly removeMemberUseCase: RemoveMemberUseCase,
+    private readonly switchOrganizationUseCase: SwitchOrganizationUseCase,
     private readonly getOrganizationsByPhoneUseCase: GetOrganizationsByPhoneUseCase,
     private readonly getOrganizationsByTelegramUseCase: GetOrganizationsByTelegramUseCase,
+    @Inject(I_USER_REPOSITORY) private readonly userRepository: IUserRepository,
   ) {}
 
   @Get()
@@ -62,6 +66,26 @@ export class OrganizationController {
     return this.addMemberUseCase.execute({
       ...addMemberDto,
       organizationId: id,
+    });
+  }
+
+  @Patch('switch')
+  @ApiOperation({ summary: 'Switch active organization for a user (ZeroClaw M2M)' })
+  @ApiResponse({ status: 200, description: 'Organization switched successfully.' })
+  @ApiResponse({ status: 404, description: 'User or organization not found.' })
+  async switchOrganization(@Body() switchDto: SwitchOrganizationDto) {
+    const { phoneNumber, organizationId, organizationName } = switchDto;
+
+    // Resolve user from phoneNumber (supports both phone and Telegram ID)
+    const user = await this.userRepository.findByIdentifier(phoneNumber);
+    if (!user) {
+      throw new NotFoundException(`User with identifier ${phoneNumber} not found`);
+    }
+
+    return this.switchOrganizationUseCase.execute({
+      userId: user.id,
+      targetOrganizationId: organizationId,
+      targetOrganizationName: organizationName,
     });
   }
 

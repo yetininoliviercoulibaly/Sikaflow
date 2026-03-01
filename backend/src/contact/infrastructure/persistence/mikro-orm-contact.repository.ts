@@ -21,8 +21,12 @@ export class MikroOrmContactRepository implements IContactRepository {
     return this.em.findOne(Contact, { ownerId, shortId });
   }
 
-  async findByPhone(ownerId: string, phone: string): Promise<Contact | null> {
-    return this.em.findOne(Contact, { ownerId, phone });
+  async findByPhone(ownerId: string, phone: string, organizationId?: string): Promise<Contact | null> {
+    const query: Record<string, unknown> = { ownerId, phone };
+    if (organizationId) {
+      query.organizationId = organizationId;
+    }
+    return this.em.findOne(Contact, query);
   }
 
   async findByOwner(
@@ -41,18 +45,22 @@ export class MikroOrmContactRepository implements IContactRepository {
     });
   }
 
-  async searchByName(ownerId: string, query: string, limit = 10): Promise<Contact[]> {
+  async searchByName(ownerId: string, query: string, limit = 10, organizationId?: string): Promise<Contact[]> {
     // Case-insensitive LIKE search on displayName and context
     const searchPattern = `%${query}%`;
+    const filter: Record<string, unknown> = {
+      ownerId,
+      $or: [
+        { displayName: { $ilike: searchPattern } },
+        { context: { $ilike: searchPattern } },
+      ],
+    };
+    if (organizationId) {
+      filter.organizationId = organizationId;
+    }
     return this.em.find(
       Contact,
-      {
-        ownerId,
-        $or: [
-          { displayName: { $ilike: searchPattern } },
-          { context: { $ilike: searchPattern } },
-        ],
-      },
+      filter,
       {
         orderBy: { lastInteractionAt: 'DESC' },
         limit,

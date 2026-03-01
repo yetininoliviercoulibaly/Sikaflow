@@ -326,7 +326,7 @@ export class DebtHandler implements IActionHandler {
         return;
     }
 
-    const contacts = await this.contactRepository.searchByName(user!.id, contactName, 1);
+    const contacts = await this.contactRepository.searchByName(user!.id, contactName, 1, context.organizationId || undefined);
     const contact = contacts[0];
 
     if (!contact) {

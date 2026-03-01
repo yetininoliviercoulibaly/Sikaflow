@@ -76,8 +76,8 @@ describe('DebtHandler', () => {
 
       await handler.handle(data, context);
 
-      // Verify that searchByName was called with the correctly extracted name
-      expect(mockContactRepo.searchByName).toHaveBeenCalledWith('user1', 'Roland Coulibaly', 1);
+      // Verify that searchByName was called with the correctly extracted name and org filter
+      expect(mockContactRepo.searchByName).toHaveBeenCalledWith('user1', 'Roland Coulibaly', 1, 'org1');
     });
 
     it('should extract contactName from camelCase "contactName" payload (backward compatibility)', async () => {
@@ -100,7 +100,7 @@ describe('DebtHandler', () => {
 
       await handler.handle(data, context);
 
-      expect(mockContactRepo.searchByName).toHaveBeenCalledWith('user1', 'Roland Camel', 1);
+      expect(mockContactRepo.searchByName).toHaveBeenCalledWith('user1', 'Roland Camel', 1, 'org1');
     });
   });
 
