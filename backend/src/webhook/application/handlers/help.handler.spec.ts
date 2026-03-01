@@ -20,6 +20,7 @@ describe('HelpHandler', () => {
     beforeEach(async () => {
         mockUserRepository = {
             findByPhoneNumber: jest.fn(),
+            findByIdentifier: jest.fn(),
         };
 
         mockOrganizationRepository = {
@@ -57,7 +58,7 @@ describe('HelpHandler', () => {
 
     // I. HelpHandler Functionality - New User Help Request (No Organization)
     it('should call agent for new user (no organization)', async () => {
-        mockUserRepository.findByPhoneNumber.mockResolvedValue(null);
+        mockUserRepository.findByIdentifier.mockResolvedValue(null);
 
         const context: Partial<ActionContext> = {
             senderPhoneNumber: '123456789',
@@ -82,7 +83,7 @@ describe('HelpHandler', () => {
     // I. HelpHandler Functionality - Existing User Help Request - Free Plan (Staff Role)
     it('should call agent for staff user with free plan', async () => {
         const user = { id: 'user1', lastActiveOrganizationId: 'org1' } as User;
-        mockUserRepository.findByPhoneNumber.mockResolvedValue(user);
+        mockUserRepository.findByIdentifier.mockResolvedValue(user);
         mockOrganizationRepository.findMember.mockResolvedValue({ role: 'STAFF' });
 
         mockGetOrganizationFeaturesUseCase.execute.mockResolvedValue({
@@ -124,7 +125,7 @@ describe('HelpHandler', () => {
     // I. HelpHandler Functionality - Existing User Help Request - Premium Plan (Owner/Manager Role)
     it('should call agent for owner/manager with premium plan', async () => {
         const user = { id: 'user1', lastActiveOrganizationId: 'org1' } as User;
-        mockUserRepository.findByPhoneNumber.mockResolvedValue(user);
+        mockUserRepository.findByIdentifier.mockResolvedValue(user);
         mockOrganizationRepository.findMember.mockResolvedValue({ role: 'OWNER' }); // or MANAGER
 
         mockGetOrganizationFeaturesUseCase.execute.mockResolvedValue({

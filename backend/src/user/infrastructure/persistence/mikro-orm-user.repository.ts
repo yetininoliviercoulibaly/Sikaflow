@@ -22,6 +22,12 @@ export class MikroOrmUserRepository implements IUserRepository {
     return this.em.findOne(User, { telegramUserId });
   }
 
+  async findByIdentifier(identifier: string): Promise<User | null> {
+    const userByPhone = await this.findByPhoneNumber(identifier);
+    if (userByPhone) return userByPhone;
+    return this.findByTelegramUserId(identifier);
+  }
+
   async findAll(): Promise<User[]> {
     return this.em.find(User, {});
   }

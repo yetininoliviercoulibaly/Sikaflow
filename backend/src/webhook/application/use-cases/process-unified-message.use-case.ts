@@ -48,7 +48,7 @@ export class ProcessUnifiedMessageUseCase {
       }
 
       // 2. FETCH USER CONTEXT
-      const user: User | null = await this.userRepository.findByPhoneNumber(senderId);
+      const user: User | null = await this.userRepository.findByIdentifier(senderId);
 
       // 3. AGENTIC FLOW (if enabled)
       const isAgentEnabled = this.configService.get<string>('AGENT_ENABLED') === 'true';

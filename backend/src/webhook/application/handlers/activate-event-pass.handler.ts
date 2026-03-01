@@ -21,7 +21,7 @@ export class ActivateEventPassHandler implements IActionHandler {
     const { senderPhoneNumber, messagingService } = context;
 
     // Resolve user and organization
-    const user = await this.userRepository.findByPhoneNumber(senderPhoneNumber);
+    const user = await this.userRepository.findByIdentifier(senderPhoneNumber);
     if (!user || !user.lastActiveOrganizationId) {
       await messagingService.sendMessage(
         senderPhoneNumber,

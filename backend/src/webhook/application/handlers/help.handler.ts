@@ -25,7 +25,7 @@ export class HelpHandler implements IActionHandler {
     async handle(data: any, context: ActionContext): Promise<void> {
         const { senderPhoneNumber, organizationId, messagingService } = context;
 
-        const user = await this.userRepository.findByPhoneNumber(senderPhoneNumber);
+        const user = await this.userRepository.findByIdentifier(senderPhoneNumber);
         const availableFeaturesList: string[] = [];
         let role = 'UNKNOWN';
         let planName = 'Aucun';

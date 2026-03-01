@@ -55,7 +55,7 @@ export class GenerateReportHandler implements IActionHandler {
         );
 
         // Emit Event (fetch user first)
-        const user = await this.userRepository.findByPhoneNumber(context.senderPhoneNumber);
+        const user = await this.userRepository.findByIdentifier(context.senderPhoneNumber);
         if (user) {
              this.eventEmitter.emit('report.generated', {
                 userId: user.id,

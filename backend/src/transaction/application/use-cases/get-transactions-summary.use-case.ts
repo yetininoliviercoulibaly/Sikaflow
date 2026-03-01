@@ -39,7 +39,7 @@ export class GetTransactionsSummaryUseCase {
   async execute(command: GetTransactionsSummaryCommand): Promise<TransactionsSummary> {
     const { phoneNumber, startDate, endDate } = command;
 
-    const user = await this.userRepository.findByPhoneNumber(phoneNumber);
+    const user = await this.userRepository.findByIdentifier(phoneNumber);
     if (!user) {
       throw new NotFoundException(`User with phone ${phoneNumber} not found`);
     }

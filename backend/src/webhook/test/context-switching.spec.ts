@@ -49,7 +49,7 @@ describe('Context Switching Logic', () => {
                 IntentResolverService,
                 {
                     provide: I_USER_REPOSITORY,
-                    useValue: { findByPhoneNumber: jest.fn().mockResolvedValue(mockUser) }
+                    useValue: { findByPhoneNumber: jest.fn().mockResolvedValue(mockUser), findByIdentifier: jest.fn().mockResolvedValue(mockUser) }
                 },
                 {
                     provide: LLM_PROVIDER_TOKEN,

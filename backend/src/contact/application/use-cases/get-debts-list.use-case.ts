@@ -21,7 +21,7 @@ export class GetDebtsListUseCase {
   async execute(command: GetDebtsListCommand): Promise<Contact[]> {
     const { phoneNumber } = command;
 
-    const user = await this.userRepository.findByPhoneNumber(phoneNumber);
+    const user = await this.userRepository.findByIdentifier(phoneNumber);
     if (!user) {
       throw new NotFoundException(`User with phone ${phoneNumber} not found`);
     }

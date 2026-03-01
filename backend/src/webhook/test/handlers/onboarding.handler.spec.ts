@@ -28,6 +28,7 @@ describe('OnboardingHandler', () => {
         };
         userRepository = {
             findByPhoneNumber: jest.fn().mockResolvedValue(mockUser),
+            findByIdentifier: jest.fn().mockResolvedValue(mockUser),
         };
         organizationRepository = {
             findMember: jest.fn().mockResolvedValue({ role: UserRole.OWNER }),

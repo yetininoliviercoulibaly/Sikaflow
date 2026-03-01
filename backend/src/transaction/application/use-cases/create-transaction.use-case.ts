@@ -31,7 +31,7 @@ export class CreateTransactionUseCase {
     const organization = await this.resolveContextUseCase.execute({ phoneNumber });
 
     // 2. Resolve User (for reportedByUserId)
-    const user = await this.userRepository.findByPhoneNumber(phoneNumber);
+    const user = await this.userRepository.findByIdentifier(phoneNumber);
     if (!user) {
         throw new NotFoundException(`User with phone ${phoneNumber} not found`);
     }

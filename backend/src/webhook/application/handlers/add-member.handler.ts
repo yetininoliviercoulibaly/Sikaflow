@@ -45,7 +45,7 @@ export class AddMemberHandler implements IActionHandler {
         }
 
         // Check Permissions (Only Owner/Manager can add)
-        const requestor = await this.userRepository.findByPhoneNumber(senderPhoneNumber);
+        const requestor = await this.userRepository.findByIdentifier(senderPhoneNumber);
         const requestorMember = await this.organizationRepository.findMember(organizationId, requestor!.id);
 
         if (!requestorMember || (requestorMember.role !== UserRole.OWNER && requestorMember.role !== UserRole.MANAGER)) {

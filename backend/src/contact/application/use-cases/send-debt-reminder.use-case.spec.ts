@@ -16,16 +16,16 @@ const makeContact = (totalOwed: number, phone?: string): Contact => {
 
 describe('SendDebtReminderUseCase', () => {
   let useCase: SendDebtReminderUseCase;
-  let userRepository: { findByPhoneNumber: jest.Mock };
+  let userRepository: { findByPhoneNumber: jest.Mock; findByIdentifier: jest.Mock };
   let contactRepository: { findByShortId: jest.Mock };
   let messagingService: { sendMessage: jest.Mock };
 
   beforeEach(async () => {
-    userRepository = { findByPhoneNumber: jest.fn() };
+    userRepository = { findByPhoneNumber: jest.fn(), findByIdentifier: jest.fn() };
     contactRepository = { findByShortId: jest.fn() };
     messagingService = { sendMessage: jest.fn() };
 
-    userRepository.findByPhoneNumber.mockResolvedValue({ id: 'user-1', phoneNumber: '+22507000000' });
+    userRepository.findByIdentifier.mockResolvedValue({ id: 'user-1', phoneNumber: '+22507000000' });
     messagingService.sendMessage.mockResolvedValue(undefined);
 
     const module: TestingModule = await Test.createTestingModule({
@@ -78,7 +78,7 @@ describe('SendDebtReminderUseCase', () => {
   });
 
   it('should throw NotFoundException when user not found', async () => {
-    userRepository.findByPhoneNumber.mockResolvedValue(null);
+    userRepository.findByIdentifier.mockResolvedValue(null);
 
     await expect(
       useCase.execute({ phoneNumber: '+22500000000', shortId: 'BC12AB' }),

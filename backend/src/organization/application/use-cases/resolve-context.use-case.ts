@@ -22,7 +22,7 @@ export class ResolveContextUseCase {
     const { phoneNumber } = command;
 
     // 1. Find User
-    const user = await this.userRepository.findByPhoneNumber(phoneNumber);
+    const user = await this.userRepository.findByIdentifier(phoneNumber);
     if (!user) {
       this.logger.warn(`Security Risk: Unknown phone number attempted access: ${phoneNumber}`);
       throw new NotFoundException(`User with phone ${phoneNumber} not found`);
