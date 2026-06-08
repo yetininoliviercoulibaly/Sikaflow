@@ -1,0 +1,78 @@
+# ============================================================================
+# SikaFlow — .gitignore racine (monorepo backend / frontend / scanner / zeroclaw-engine)
+# ============================================================================
+
+# --- Dépendances ---
+node_modules/
+**/node_modules/
+.pnp
+.pnp.js
+
+# --- Secrets & variables d'environnement ---
+# Ne JAMAIS committer de vrais secrets. Seuls les *.example / *.template sont versionnés.
+.env
+.env.*
+**/.env
+**/.env.*
+# Conserver les exemples et templates (racine et sous-dossiers)
+!.env.example
+!.env.*.example
+!.env.*.template
+!**/.env.example
+!**/.env.*.example
+!**/.env.*.template
+
+# Credentials Cloudflare Tunnel
+cloudflare/*.json
+**/cloudflare/credentials*.json
+
+# --- Builds & artefacts (Node) ---
+dist/
+build/
+out/
+.next/
+**/dist/
+**/build/
+**/.next/
+**/out/
+*.tsbuildinfo
+
+# --- Builds & artefacts (Rust — zeroclaw-engine) ---
+**/target/
+
+# --- Tests & couverture ---
+coverage/
+**/coverage/
+.nyc_output/
+
+# --- Logs ---
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- Sorties de debug/test ponctuelles ---
+debug_output.txt
+test_output*.txt
+*.output.txt
+
+# --- Caches divers ---
+.cache/
+.temp/
+.tmp/
+.eslintcache
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Éditeurs / IDE ---
+.idea/
+*.swp
+*.swo
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
