@@ -1,13 +1,13 @@
 # 🚀 SikaFlow (MVP)
 
-**The AI-Powered Orchestration OS for Modern Event Management**
+**The AI-Powered, WhatsApp-First Management OS for Small Businesses**
 
-SikaFlow est une plateforme "WhatsApp-First" conçue pour digitaliser la gestion opérationnelle et financière des événements. Elle utilise une **Intelligence Artificielle Multimodale (Gemini)** pour transformer conversations, images et documents en données structurées.
+SikaFlow est une plateforme "WhatsApp-First" qui aide les **PME et entrepreneurs** (restaurants, bars, maquis, commerces, organisateurs d'événements) à piloter leur **gestion financière** au quotidien. Elle utilise une **Intelligence Artificielle Multimodale (Gemini)** pour transformer conversations, vocaux, images et documents en données structurées : trésorerie, créances, contacts, rapports. La billetterie événementielle est l'un des verticaux pris en charge.
 
 ## 🌍 Vision & Dual Market
 
-- **Afrique Francophone** : Gestion du cash, Mobile Money (Wave), rapports sponsors (Concerts, Matchs).
-- **Québec (Montréal)** : Nightlife, conformité taxes/tips, sécurité (RACJ).
+- **Afrique Francophone** : Gestion du cash, Mobile Money (Wave), suivi des créances. L'IA comprend le Nouchi.
+- **Québec (Montréal)** : Restauration & nightlife, conformité taxes/tips (TPS/TVQ).
 
 ---
 
@@ -28,6 +28,15 @@ Consultez le [Diagramme d'Architecture détaillé](docs/architecture.md) pour pl
 
 ---
 
+### 💰 Gestion financière (cœur)
+
+| Fonctionnalité           | Description                                                                     |
+| :----------------------- | :------------------------------------------------------------------------------ |
+| **🧾 Gestion de caisse** | Revenus/dépenses extraits des messages, catégorisation auto, solde par période  |
+| **🤝 Créances & dettes** | Suivi des ardoises, règlements partiels/totaux, relances automatiques           |
+| **👥 Contacts / CRM**    | Répertoire des clients, fournisseurs et débiteurs                                |
+| **📦 Stock**             | Vérification d'inventaire                                                        |
+
 ### 🎯 Core Platform
 
 | Fonctionnalité               | Description                                            |
@@ -38,7 +47,7 @@ Consultez le [Diagramme d'Architecture détaillé](docs/architecture.md) pour pl
 | **🧠 IA Multimodale**        | Analyse texte, audio, images et PDF via Gemini         |
 | **📊 Reporting Instantané**  | Génération de rapports PDF et synthèse par IA          |
 
-### 🎫 Ticketing & Événements
+### 🎫 Ticketing & événements (vertical)
 
 | Fonctionnalité              | Description                                 |
 | :-------------------------- | :------------------------------------------ |

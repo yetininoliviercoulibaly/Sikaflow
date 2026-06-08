@@ -2,7 +2,7 @@
 
 ## 1. Product Vision
 
-**SikaFlow** is the first **Orchestration Operating System (OS)** for event and nightlife management (Clubs, Maquis, Festivals), entirely driven by **Artificial Intelligence** via a **WhatsApp** interface.
+**SikaFlow** is a **financial management platform for SMEs** (restaurants, bars, maquis, shops and event organizers), entirely driven by **Artificial Intelligence** via a **WhatsApp and Telegram** interface. The functional core covers cash flow, receivables, contacts and reporting; event ticketing is one of the supported verticals.
 
 The goal is to eliminate the friction of traditional applications (downloading, login, training) by integrating where teams already communicate: WhatsApp.
 
