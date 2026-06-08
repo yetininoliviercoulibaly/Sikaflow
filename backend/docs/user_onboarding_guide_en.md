@@ -1,6 +1,6 @@
-# 🚀 Getting Started Guide - Event-Pilot
+# 🚀 Getting Started Guide - SikaFlow
 
-Welcome to the future of event management! **Event-Pilot** transforms your WhatsApp into a true management assistant for your Club, Festival, or Restaurant.
+Welcome to the future of event management! **SikaFlow** transforms your WhatsApp into a true management assistant for your Club, Festival, or Restaurant.
 
 No app to install. No passwords to remember. Everything happens in your chat.
 
@@ -10,7 +10,7 @@ No app to install. No passwords to remember. Everything happens in your chat.
 
 ### First Connection
 
-1. Save the Event-Pilot number in your contacts: **+1 555 010 9999** (Example).
+1. Save the SikaFlow number in your contacts: **+1 555 010 9999** (Example).
 2. Open WhatsApp and simply send: **"Hi"** 👋.
 3. The assistant will guide you to create your first Organization.
    - _Assistant_: "Welcome! I don't see an account. Do you want to create an organization?"
@@ -49,7 +49,7 @@ Forget notebooks and lost receipts. Just tell the AI.
 - **Option 2 (Voice 🎙️)**: Hold the mic and speak: "I paid the DJ 200 euros in cash right now."
 - **Option 3 (Photo 📸)**: Take a photo of the bill. Add caption "Drinks invoice".
 
-> ✅ **Event-Pilot** will reply: "Expense recorded: 5000 FCFA (Category: Logistics)".
+> ✅ **SikaFlow** will reply: "Expense recorded: 5000 FCFA (Category: Logistics)".
 
 ### Report an Incident 🚨
 

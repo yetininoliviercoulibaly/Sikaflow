@@ -1,10 +1,10 @@
 ---
-description: Développement backend Event-Pilot - Charge les règles d'architecture et coding standards
+description: Développement backend SikaFlow - Charge les règles d'architecture et coding standards
 ---
 
 # Backend Development Workflow
 
-Ce workflow charge les règles d'architecture et de codage pour le développement du backend Event-Pilot (NestJS).
+Ce workflow charge les règles d'architecture et de codage pour le développement du backend SikaFlow (NestJS).
 
 ## Règles à Consulter
 

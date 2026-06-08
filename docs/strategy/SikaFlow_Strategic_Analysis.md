@@ -2,7 +2,7 @@
 
 **Date:** 19 Janvier 2026
 **Auteur:** Antigravity (Expert Business & Tech)
-**Projet:** SikaFlow (EventPilot)
+**Projet:** SikaFlow
 
 ---
 

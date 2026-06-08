@@ -1,4 +1,4 @@
-# 🦄 Event-Pilot: The Invisible OS for Events Management
+# 🦄 SikaFlow: The Invisible OS for Events Management
 
 **"The power of an ERP, the simplicity of a WhatsApp message."**
 
@@ -12,9 +12,9 @@ In the Nightlife and Events industry in Francophone Africa and Quebec, managemen
 - **Unsuitable Tools**: Managers refuse to use complex accounting software (QuickBooks, Sage) on the ground.
 - **Shadow Channel**: Everything already happens on WhatsApp (staff groups, photos of invoices), but this data is **unstructured** and unusable.
 
-## 2. The Solution: Event-Pilot
+## 2. The Solution: SikaFlow
 
-Event-Pilot is not a new app. It is **artificial intelligence layered on top of WhatsApp**.
+SikaFlow is not a new app. It is **artificial intelligence layered on top of WhatsApp**.
 
 We don't ask users to change their habits. We transform their natural chat flow into structured data and audible financial reports.
 
@@ -63,7 +63,7 @@ A hybrid model to capture the "Long Tail" of events:
 
 ## 6. The Vision
 
-Event-Pilot is much more than a chatbot. It is an **Artificial CFO (Chief Financial Officer)**.
+SikaFlow is much more than a chatbot. It is an **Artificial CFO (Chief Financial Officer)**.
 Tomorrow, future evolutions will allow direct supplier payments and stock prediction via AI.
 
 **Invest in ending operational chaos.**

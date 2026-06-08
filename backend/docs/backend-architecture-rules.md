@@ -2,7 +2,7 @@
 
 ## 1. Vision & Architecture
 
-L'application Event-Pilot suit une **Architecture Hexagonale stricte** avec une **Inversion de Dépendance** basée sur des interfaces (Tokens/Symbols) pour garantir un découplage total.
+L'application SikaFlow suit une **Architecture Hexagonale stricte** avec une **Inversion de Dépendance** basée sur des interfaces (Tokens/Symbols) pour garantir un découplage total.
 
 ## 2. Stack Technique
 

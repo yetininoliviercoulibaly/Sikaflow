@@ -40,7 +40,7 @@ graph TD
     WaveAPI[Wave]
 
     %% Application Boundary
-    subgraph "Event Pilot Backend - NestJS"
+    subgraph "SikaFlow Backend - NestJS"
 
         %% Entry Points
         WebhookController["Messaging Webhook<br/>(WhatsApp & Telegram)"]
