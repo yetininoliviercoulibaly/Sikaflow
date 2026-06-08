@@ -1,8 +1,8 @@
 # 🚀 SikaFlow
 
-**The AI-Powered Orchestration OS for Modern Event Management.**
+**The AI-Powered, WhatsApp-First Management OS for Small Businesses.**
 
-SikaFlow est une plateforme SaaS **« WhatsApp-First »** qui digitalise la gestion opérationnelle et financière des événements. Les utilisateurs interagissent via **WhatsApp / Telegram** ; une **IA multimodale (Google Gemini)** transforme messages, notes vocales, images et PDF en données structurées (transactions, billets, incidents, rapports).
+SikaFlow est une plateforme **SaaS B2B « WhatsApp-First »** qui transforme la messagerie en un **assistant de gestion IA** pour les **PME et entrepreneurs**. Par simple message (texte, vocal, photo), un gérant suit sa **trésorerie** (revenus/dépenses), ses **créances** (ardoises), ses **clients** et ses opérations — **sans application à installer**. Une **IA multimodale (Google Gemini)** transforme les conversations en données structurées. L'**événementiel** (billetterie, contrôle d'accès) est l'un des secteurs pris en charge, aux côtés des restaurants, bars, maquis et commerces.
 
 <p align="left">
   <img alt="NestJS" src="https://img.shields.io/badge/Backend-NestJS_11-E0234E?logo=nestjs&logoColor=white">
@@ -36,29 +36,47 @@ SikaFlow est une plateforme SaaS **« WhatsApp-First »** qui digitalise la gest
 
 ## 🌍 Présentation
 
-SikaFlow cible deux marchés via une seule plateforme :
+SikaFlow s'adresse à **tout type de PME** — restaurants, bars, maquis, commerces et organisateurs d'événements. Le cœur du produit est la **gestion financière du quotidien** : caisse (revenus/dépenses), créances (ardoises, relances) et pilotage via rapports. La **billetterie événementielle** est **un vertical d'acquisition**, pas la finalité.
 
-- **Afrique francophone** — promoteurs de concerts et de matchs : gestion du cash, Mobile Money (**Wave**), rapports sponsors. L'IA comprend le **Nouchi**.
-- **Québec (Montréal)** — *nightlife* : calcul des taxes **TPS/TVQ**, pourboires, conformité RACJ/sécurité. L'IA comprend le **Joual**.
+L'interface principale est la **messagerie** : **aucune application à installer** pour le gérant ou ses employés. Un **dashboard web** et une **PWA de scan QR** complètent l'expérience pour l'administration et le contrôle d'accès.
 
-L'interface principale est la messagerie : **aucune application à installer** pour les opérateurs terrain. Un **dashboard web** et une **PWA de scan QR** complètent l'expérience pour les administrateurs et le contrôle d'accès.
+**Deux marchés ciblés :**
+
+- **Afrique francophone** — entrepreneurs et commerçants : gestion du cash, Mobile Money (**Wave**), suivi des créances. L'IA comprend le **Nouchi**.
+- **Québec (Montréal)** — restauration & *nightlife* : taxes **TPS/TVQ**, pourboires. L'IA comprend le **Joual**.
 
 ---
 
 ## ✨ Fonctionnalités clés
 
-| Domaine | Description |
-| :------ | :---------- |
-| 📱 **Multi-plateforme** | Orchestration WhatsApp **et** Telegram via une interface unifiée `IMessagingService` |
-| 🧠 **IA multimodale** | Analyse de texte, transcription audio, OCR d'images et de PDF via Gemini |
-| 🤖 **Agents conversationnels** | Workflows agentiques multi-étapes (backend LangChain/LangGraph + moteur **ZeroClaw** en Rust) |
-| 💸 **Transactions** | Enregistrement de revenus/dépenses extraits de messages non structurés |
-| 🎫 **Billetterie & événements** | Création d'événements, génération de billets/QR, validation au scan |
-| 🏢 **Organisations** | Multi-utilisateurs avec rôles hiérarchiques (Admin, Manager, Staff) |
-| 💳 **Paiements** | Abonnements & *event pass* — **Stripe** (international) ou **Wave** (Afrique) |
-| 📊 **Reporting** | Rapports PDF « sponsor-ready » / « comptable-ready » générés en asynchrone |
-| 🛡️ **Registre d'incidents** | Consignation instantanée pour traçabilité légale |
-| 👋 **Onboarding guidé** | Parcours interactif automatisé pour les nouveaux utilisateurs |
+### 💰 Cœur — Gestion financière
+
+| Fonctionnalité | Description |
+| :------------- | :---------- |
+| **Gestion de caisse** | Revenus/dépenses extraits de messages (texte/vocal/photo), catégorisation automatique, solde en temps réel par période |
+| **Créances & dettes** | Suivi des ardoises clients, règlements partiels/totaux, relances automatiques des débiteurs |
+| **Contacts / CRM** | Répertoire des clients, fournisseurs et débiteurs |
+| **Reporting** | Rapports PDF et synthèses IA, générés en asynchrone |
+| **Stock** | Vérification d'inventaire |
+
+### 🏢 Plateforme & opérations
+
+| Fonctionnalité | Description |
+| :------------- | :---------- |
+| **Multi-plateforme** | WhatsApp **et** Telegram via une interface unifiée `IMessagingService` |
+| **IA multimodale** | Texte, transcription audio, OCR d'images et de PDF via Gemini |
+| **Agents conversationnels** | Workflows multi-étapes (backend LangChain/LangGraph + moteur **ZeroClaw** en Rust) |
+| **Organisations & équipe** | Multi-organisations, rôles hiérarchiques (Admin, Manager, Staff), invitations |
+| **Paiements & abonnements** | SaaS via **Stripe** (international) ou **Wave** (Afrique) |
+| **Onboarding guidé** | Création d'un espace business en ≤ 3 questions |
+
+### 🎫 Vertical événementiel
+
+| Fonctionnalité | Description |
+| :------------- | :---------- |
+| **Billetterie & QR** | Création d'événements, billets/QR infalsifiables, *event pass* |
+| **Contrôle d'accès** | Validation des billets au scan (PWA scanner) |
+| **Registre d'incidents** | Consignation instantanée pour traçabilité |
 
 ---
 
