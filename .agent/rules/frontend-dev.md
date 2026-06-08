@@ -1,10 +1,10 @@
 ---
-description: Développement frontend Event-Pilot - Charge les règles d'architecture et coding standards
+description: Développement frontend SikaFlow - Charge les règles d'architecture et coding standards
 ---
 
 # Frontend Development Workflow
 
-Ce workflow charge les règles d'architecture et de codage pour le développement du frontend Event-Pilot (Next.js).
+Ce workflow charge les règles d'architecture et de codage pour le développement du frontend SikaFlow (Next.js).
 
 ## Règles à Consulter
 

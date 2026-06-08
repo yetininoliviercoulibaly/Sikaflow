@@ -1,8 +1,8 @@
-# 📑 Spécifications Fonctionnelles & Architecture - Event-Pilot
+# 📑 Spécifications Fonctionnelles & Architecture - SikaFlow
 
 ## 1. Vision du Produit
 
-**Event-Pilot** est le premier **Système d'Exploitation (OS) Orchestral** pour la gestion d'événements et d'établissements de nuit (Clubs, Maquis, Festivals), entièrement piloté par **Intelligence Artificielle** via une interface **WhatsApp et Telegram**.
+**SikaFlow** est une plateforme de **gestion financière pour PME** (restaurants, bars, maquis, commerces et organisateurs d'événements), entièrement pilotée par **Intelligence Artificielle** via une interface **WhatsApp et Telegram**. Le cœur fonctionnel couvre la trésorerie, les créances, les contacts et le reporting ; la billetterie événementielle est l'un des verticaux pris en charge.
 
 L'objectif est de supprimer la friction des applications traditionnelles (téléchargement, login, formation) en s'intégrant là où les équipes communiquent déjà : leurs messageries instantanées préférées.
 
@@ -15,9 +15,9 @@ Le projet repose sur une architecture **Hexagonale (Ports & Adapters)** stricte,
 ```mermaid
 graph TD
     User((Utilisateur)) -->|WhatsApp / Telegram| Cloud_API[Messaging APIs]
-    Cloud_API -->|Webhook| EP_Webhook[Event-Pilot Webhook]
+    Cloud_API -->|Webhook| EP_Webhook[SikaFlow Webhook]
 
-    subgraph "Event-Pilot Core - NestJS"
+    subgraph "SikaFlow Core - NestJS"
         EP_Webhook --> Strategy[Message Strategy<br/>Text/Audio/Image/Doc/Interactive]
 
         subgraph "AI Processing"
@@ -154,7 +154,7 @@ Gestion complète des événements et billets.
 ```mermaid
 sequenceDiagram
     participant O as Owner
-    participant EP as Event-Pilot
+    participant EP as SikaFlow
     participant A as Attendee
 
     O->>EP: "Créer événement Soirée VIP le 20 janvier"

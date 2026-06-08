@@ -1,8 +1,8 @@
-# 📑 Functional Specifications & Architecture - Event-Pilot
+# 📑 Functional Specifications & Architecture - SikaFlow
 
 ## 1. Product Vision
 
-**Event-Pilot** is the first **Orchestration Operating System (OS)** for event and nightlife management (Clubs, Maquis, Festivals), entirely driven by **Artificial Intelligence** via a **WhatsApp** interface.
+**SikaFlow** is a **financial management platform for SMEs** (restaurants, bars, maquis, shops and event organizers), entirely driven by **Artificial Intelligence** via a **WhatsApp and Telegram** interface. The functional core covers cash flow, receivables, contacts and reporting; event ticketing is one of the supported verticals.
 
 The goal is to eliminate the friction of traditional applications (downloading, login, training) by integrating where teams already communicate: WhatsApp.
 
@@ -15,9 +15,9 @@ The project relies on a strict **Hexagonal Architecture (Ports & Adapters)**, en
 ```mermaid
 graph TD
     User((User)) -->|WhatsApp| WA_Cloud[WhatsApp Cloud API]
-    WA_Cloud -->|Webhook| EP_Webhook[Event-Pilot Webhook]
+    WA_Cloud -->|Webhook| EP_Webhook[SikaFlow Webhook]
 
-    subgraph "Event-Pilot Core (NestJS)"
+    subgraph "SikaFlow Core (NestJS)"
         EP_Webhook --> Strategy[Message Strategy]
 
         subgraph "AI Processing"

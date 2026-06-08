@@ -1,8 +1,8 @@
 # 🎨 SikaFlow Dashboard
 
-**The Premium Control Center for Event Organizers**
+**The Premium Control Center for Small Businesses**
 
-Ce frontend est le tableau de bord moderne de SikaFlow, offrant une vue d'ensemble sur l'activité des événements, les statistiques financières et la gestion d'équipe.
+Ce frontend est le tableau de bord moderne de SikaFlow, offrant une vue d'ensemble sur l'activité du business, les statistiques financières (caisse, créances) et la gestion d'équipe.
 
 ## ✨ Caractéristiques UX
 

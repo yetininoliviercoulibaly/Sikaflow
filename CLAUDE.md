@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-SikaFlow is an AI-Powered SaaS platform ("WhatsApp-First") for event management. Users interact via WhatsApp/Telegram to manage transactions, ticketing, team members, and reports. The AI (Google Gemini) extracts structured data from unstructured messages (text, voice, images).
+SikaFlow is an AI-Powered SaaS platform ("WhatsApp-First") for **small-business financial management**. SMEs and entrepreneurs (restaurants, bars, maquis, shops, event organizers) interact via WhatsApp/Telegram to manage their **cash flow (income/expenses), debts & receivables, contacts, team members, and reports**. Ticketing/events is one supported vertical. The AI (Google Gemini) extracts structured data from unstructured messages (text, voice, images).
 
 **Monorepo with three apps:**
 - `backend/` — NestJS 11, MikroORM 6, PostgreSQL, Redis/BullMQ, Google Gemini AI

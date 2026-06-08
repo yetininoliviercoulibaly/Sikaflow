@@ -1,4 +1,4 @@
-# 🦄 Event-Pilot : L'OS Invisible de l'Événementiel
+# 🦄 SikaFlow : L'OS Invisible de l'Événementiel
 
 **"La puissance d'un ERP, la simplicité d'un message WhatsApp."**
 
@@ -17,9 +17,9 @@ Dans l'industrie de la nuit (Nightlife) et de l'événementiel :
 
 ---
 
-## 2. La Solution : Event-Pilot
+## 2. La Solution : SikaFlow
 
-Event-Pilot n'est pas une nouvelle application. C'est une **IA superposée à WhatsApp**.
+SikaFlow n'est pas une nouvelle application. C'est une **IA superposée à WhatsApp**.
 
 ### La Magie (Secret Sauce)
 
@@ -116,7 +116,7 @@ Architecture **robuste et scalable** difficile à répliquer :
 
 ## 8. La Vision
 
-Event-Pilot est un **CFO (Directeur Financier) artificiel**.
+SikaFlow est un **CFO (Directeur Financier) artificiel**.
 
 > "Investissez dans la fin du chaos opérationnel."
 

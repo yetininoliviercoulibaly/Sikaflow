@@ -1,6 +1,6 @@
-# 🚀 Guide de Démarrage - Event-Pilot
+# 🚀 Guide de Démarrage - SikaFlow
 
-Bienvenue dans le futur de la gestion d'événements ! **Event-Pilot** transforme votre application de messagerie (WhatsApp ou Telegram) en un véritable assistant de gestion pour votre Club, Festival ou Restaurant.
+Bienvenue dans le futur de la gestion d'événements ! **SikaFlow** transforme votre application de messagerie (WhatsApp ou Telegram) en un véritable assistant de gestion pour votre Club, Festival ou Restaurant.
 
 **Pas d'application à installer. Pas de mots de passe à retenir. Tout se passe dans votre discussion.**
 
@@ -10,7 +10,7 @@ Bienvenue dans le futur de la gestion d'événements ! **Event-Pilot** transform
 
 ### Première Connexion
 
-1. Enregistrez le numéro d'Event-Pilot (WhatsApp) ou trouvez le bot (Telegram).
+1. Enregistrez le numéro d'SikaFlow (WhatsApp) ou trouvez le bot (Telegram).
 2. Ouvrez la discussion et envoyez simplement : **"Salut"** 👋
 3. L'assistant vous guidera automatiquement :
    - _Assistant_ : "Bienvenue ! Je ne vois pas de compte..."
@@ -19,7 +19,7 @@ Bienvenue dans le futur de la gestion d'événements ! **Event-Pilot** transform
 
 ### 🎓 Tutoriel Interactif (Onboarding Coach)
 
-Event-Pilot vous guide à travers **5 étapes clés** pour maîtriser l'outil :
+SikaFlow vous guide à travers **5 étapes clés** pour maîtriser l'outil :
 
 | Étape | Action               | Comment la compléter                |
 | :---- | :------------------- | :---------------------------------- |
@@ -211,7 +211,7 @@ Si l'assistant ne comprend pas :
 
 ## 🌍 Paiement
 
-Event-Pilot supporte deux modes de paiement :
+SikaFlow supporte deux modes de paiement :
 
 | Provider   | Zone               | Méthode             |
 | ---------- | ------------------ | ------------------- |
