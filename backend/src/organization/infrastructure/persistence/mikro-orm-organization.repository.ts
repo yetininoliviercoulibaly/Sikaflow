@@ -62,7 +62,7 @@ export class MikroOrmOrganizationRepository implements IOrganizationRepository {
     const rows = await knex('organization as o')
       .select('o.id', 'o.name', 'om.role', knex.raw("o.settings->>'businessType' as type"))
       .innerJoin('organization_member as om', 'o.id', 'om.organization_id')
-      .innerJoin('users as u', 'om.user_id', 'u.id')
+      .innerJoin('app_user as u', 'om.user_id', 'u.id')
       .where('u.phone_number', phoneNumber);
 
     return rows.map((row: any) => ({

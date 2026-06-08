@@ -37,7 +37,7 @@ services:
   # 3. MIGRATION RUNNER (Job Init)
   # ---------------------------------------------------------------------------
   migration-runner:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/sikaflow-backend:latest
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-softilab}/sikaflow-backend:latest
     command: sh -c "npx mikro-orm migration:up --config ./dist/src/mikro-orm.config.js && npx mikro-orm seeder:run --config ./dist/src/mikro-orm.config.js"
     environment:
       NODE_ENV: production
@@ -57,7 +57,7 @@ services:
   # 4. API (NestJS)
   # ---------------------------------------------------------------------------
   backend:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/sikaflow-backend:latest
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-softilab}/sikaflow-backend:latest
     restart: always
     environment:
       NODE_ENV: production
@@ -81,8 +81,12 @@ services:
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
       WAVE_API_KEY: ${WAVE_API_KEY}
+      WAVE_MONTHLY_AMOUNT: ${WAVE_MONTHLY_AMOUNT:-5000}
+      PAYMENT_REGION: ${PAYMENT_REGION:-INTERNATIONAL}
+      MONTHLY_PRICE_ID: ${MONTHLY_PRICE_ID:-price_default}
       GOOGLE_API_KEY: ${GOOGLE_API_KEY}
-      GEMINI_MODEL_NAME: ${GEMINI_MODEL_NAME:-gemini-1.5-flash}
+      GEMINI_MODEL_NAME: ${GEMINI_MODEL_NAME:-gemini-2.5-flash}
+      AI_CONFIDENCE_THRESHOLD: ${AI_CONFIDENCE_THRESHOLD:-0.85}
       # Telegram
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
       TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET}
@@ -103,7 +107,7 @@ services:
   # 5. FRONTEND (Next.js)
   # ---------------------------------------------------------------------------
   frontend:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/sikaflow-frontend:latest
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-softilab}/sikaflow-frontend:latest
     restart: always
     environment:
       NODE_ENV: production
@@ -120,9 +124,8 @@ services:
     command: tunnel --config /etc/cloudflared/config.yml run
     volumes:
       - ./cloudflare/config.prod.yml:/etc/cloudflared/config.yml:ro
-      - ./cloudflare/credentials.json:/etc/cloudflared/credentials.json:ro
     environment:
-      - CLOUDFLARE_TUNNEL_ID=${CLOUDFLARE_TUNNEL_ID}
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
     depends_on:
       backend:
         condition: service_started
@@ -156,22 +159,27 @@ services:
   # 8. ZEROCLAW AGENT (AI Orchestrator)
   # ---------------------------------------------------------------------------
   zeroclaw:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-yetininoliviercoulibaly}/zeroclaw:latest
+    build:
+      context: ./zeroclaw-engine
+      dockerfile: Dockerfile
+    image: sikaflow/zeroclaw:custom
+    command: ["daemon"]
     restart: always
     volumes:
-      - ./zeroclaw/system-prompt.md:/app/system-prompt.md:ro
-      - ./zeroclaw/memory-schema.md:/app/memory-schema.md:ro
-      - ./zeroclaw/onboarding-conversation.md:/app/onboarding-conversation.md:ro
-      - ./zeroclaw/tools:/app/tools:ro
+      - ./zeroclaw/config.toml:/zeroclaw-data/.zeroclaw/config.toml:ro
+      # ZeroClaw expects identity context in IDENTITY.md or AGENTS.md inside the workspace
+      - ./zeroclaw/system-prompt.md:/zeroclaw-data/workspace/IDENTITY.md:ro
+      # Mount other context files into the workspace so the LLM can use file_read to read them
+      - ./zeroclaw/memory-schema.md:/zeroclaw-data/workspace/MEMORY_SCHEMA.md:ro
+      - ./zeroclaw/onboarding-conversation.md:/zeroclaw-data/workspace/ONBOARDING.md:ro
     environment:
-      ZEROCLAW_SYSTEM_PROMPT: /app/system-prompt.md
-      ZEROCLAW_TOOLS_DIR: /app/tools
+      ZEROCLAW_SYSTEM_PROMPT: /zeroclaw-data/workspace/IDENTITY.md
       ZEROCLAW_MEMORY_BACKEND: postgres
       ZEROCLAW_DB_URL: postgres://${DB_USER}:${DB_PASSWORD}@db:5432/zeroclaw_prod
       ZEROCLAW_GATEWAY_PORT: "3001"
       ZEROCLAW_GATEWAY_HOST: "0.0.0.0"
       ZEROCLAW_PROVIDER: google
-      ZEROCLAW_MODEL: ${GEMINI_MODEL_NAME:-gemini-2.0-flash}
+      ZEROCLAW_MODEL: ${GEMINI_MODEL_NAME:-gemini-2.5-flash}
       GOOGLE_API_KEY: ${GOOGLE_API_KEY}
       # Template variables for tool YAML files
       SIKAFLOW_API_URL: http://backend:3000
@@ -185,6 +193,7 @@ services:
       # Telegram channel
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
       TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET}
+      ZEROCLAW_WORKSPACE: /zeroclaw-data/workspace
     depends_on:
       db:
         condition: service_healthy

@@ -116,7 +116,7 @@ export class ContactService {
       contact = await this.contactRepository.findByShortId(userId, data.contactShortId);
     }
     if (!contact && data.contactName) {
-      const matches = await this.contactRepository.searchByName(userId, data.contactName, 1);
+      const matches = await this.contactRepository.searchByName(userId, data.contactName, 1, organizationId);
       contact = matches[0] || null;
     }
 
@@ -157,11 +157,11 @@ export class ContactService {
     let contact: Contact | null = null;
 
     if (data.contactPhone) {
-      contact = await this.contactRepository.findByPhone(userId, data.contactPhone);
+      contact = await this.contactRepository.findByPhone(userId, data.contactPhone, organizationId);
     }
 
     if (!contact) {
-      const matches = await this.contactRepository.searchByName(userId, data.contactName, 1);
+      const matches = await this.contactRepository.searchByName(userId, data.contactName, 1, organizationId);
       // Strict matching could be added here
       contact = matches[0] || null;
     }

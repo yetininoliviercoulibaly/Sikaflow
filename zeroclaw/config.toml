@@ -1,0 +1,23 @@
+default_temperature = 0.7
+
+[gateway]
+allow_public_bind = true
+
+[channels_config]
+cli = false
+
+[channels_config.telegram]
+bot_token = "{{TELEGRAM_BOT_TOKEN}}"
+allowed_users = ["*"]
+
+[channels_config.whatsapp]
+phone_number_id = "{{WHATSAPP_PHONE_NUMBER_ID}}"
+access_token = "{{WHATSAPP_ACCESS_TOKEN}}"
+verify_token = "{{WHATSAPP_VERIFY_TOKEN}}"
+app_secret = "{{WHATSAPP_APP_SECRET}}"
+
+[transcription]
+enabled = true
+provider = "gemini"
+model = "{{GEMINI_MODEL_NAME}}"
+max_duration_secs = 120

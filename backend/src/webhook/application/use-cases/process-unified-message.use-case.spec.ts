@@ -33,6 +33,7 @@ import { AnalysisOrchestratorService } from '../services/analysis-orchestrator.s
         };
         mockUserRepo = {
             findByPhoneNumber: jest.fn(),
+            findByIdentifier: jest.fn(),
         };
         mockConversationState = {
             getPendingAction: jest.fn(),
@@ -78,7 +79,7 @@ import { AnalysisOrchestratorService } from '../services/analysis-orchestrator.s
 
         useCase = module.get<ProcessUnifiedMessageUseCase>(ProcessUnifiedMessageUseCase);
         
-        mockUserRepo.findByPhoneNumber.mockResolvedValue({ id: 'default_user' });
+        mockUserRepo.findByIdentifier.mockResolvedValue({ id: 'default_user' });
     });
 
     const createMessage = (content: string, type: MessageType = MessageType.TEXT, senderId = '123'): MessageEntity => ({
@@ -97,7 +98,7 @@ import { AnalysisOrchestratorService } from '../services/analysis-orchestrator.s
             data: {}, 
             actions: [{ intent: LLMIntent.GREETING, data: {} }] 
         });
-        mockUserRepo.findByPhoneNumber.mockResolvedValue({});
+        mockUserRepo.findByIdentifier.mockResolvedValue({});
 
         await useCase.execute(message, mockMessaging);
 
@@ -122,7 +123,7 @@ import { AnalysisOrchestratorService } from '../services/analysis-orchestrator.s
             actions: [{ intent: LLMIntent.CREATE_TRANSACTION, data: mockPending.data, missing_fields: [] }]
         });
 
-        mockUserRepo.findByPhoneNumber.mockResolvedValue({});
+        mockUserRepo.findByIdentifier.mockResolvedValue({});
 
         await useCase.execute(message, mockMessaging);
 
@@ -148,7 +149,7 @@ import { AnalysisOrchestratorService } from '../services/analysis-orchestrator.s
              }]
         });
 
-        mockUserRepo.findByPhoneNumber.mockResolvedValue({});
+        mockUserRepo.findByIdentifier.mockResolvedValue({});
 
         await useCase.execute(message, mockMessaging);
 

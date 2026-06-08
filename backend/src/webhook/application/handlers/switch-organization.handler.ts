@@ -25,7 +25,7 @@ export class SwitchOrganizationHandler implements IActionHandler {
     const organizationName = data.organization_name;
     const targetOrganizationId = data.targetOrganizationId;
 
-    const user = await this.userRepository.findByPhoneNumber(senderPhoneNumber);
+    const user = await this.userRepository.findByIdentifier(senderPhoneNumber);
     if (!user) return;
 
     // 1. Direct Switch via ID (Interactive Button)

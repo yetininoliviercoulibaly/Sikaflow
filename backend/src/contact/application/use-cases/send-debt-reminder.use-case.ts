@@ -29,7 +29,7 @@ export class SendDebtReminderUseCase {
   async execute(command: SendDebtReminderCommand): Promise<SendDebtReminderResult> {
     const { phoneNumber, shortId } = command;
 
-    const user = await this.userRepository.findByPhoneNumber(phoneNumber);
+    const user = await this.userRepository.findByIdentifier(phoneNumber);
     if (!user) {
       throw new NotFoundException(`User with phone ${phoneNumber} not found`);
     }

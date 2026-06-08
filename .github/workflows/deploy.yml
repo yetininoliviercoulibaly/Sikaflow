@@ -117,16 +117,10 @@ jobs:
           build-args: |
              VITE_API_URL=${{ env.API_URL }}
 
-      - name: Checkout ZeroClaw repository
-        uses: actions/checkout@v4
-        with:
-          repository: 'zeroclaw-labs/zeroclaw'
-          path: './zeroclaw-src'
-
       - name: Build and push ZeroClaw image
         uses: docker/build-push-action@v5
         with:
-          context: ./zeroclaw-src
+          context: ./zeroclaw-engine
           push: true
           tags: ${{ steps.meta-zeroclaw.outputs.tags }}
           labels: ${{ steps.meta-zeroclaw.outputs.labels }}
@@ -219,15 +213,35 @@ jobs:
       # Sync files to VPS via SCP
       # ─────────────────────────────────────────────────────────────────────
       - name: Copy files to VPS
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_PORT || 22 }}
-          source: "${{ steps.compose.outputs.COMPOSE_FILE }},deploy.sh,zeroclaw/,cloudflare/config.${{ steps.env.outputs.TARGET_ENV }}.yml"
-          target: ~/deploy-staging-area
-          overwrite: true
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_PORT: ${{ secrets.VPS_PORT || 22 }}
+          TARGET_DIR: ~/deploy-staging-area
+        run: |
+          # 1. Setup SSH File structure
+          mkdir -p ~/.ssh
+          echo "$VPS_SSH_KEY" > ~/.ssh/vps_key
+          chmod 600 ~/.ssh/vps_key
+          
+          # Add VPS to known_hosts to prevent interactive prompt
+          ssh-keyscan -p "$VPS_PORT" -H "$VPS_HOST" >> ~/.ssh/known_hosts
+
+          # 2. Ensure target directory exists on VPS
+          ssh -i ~/.ssh/vps_key -p "$VPS_PORT" -o StrictHostKeyChecking=no "$VPS_USER@$VPS_HOST" "mkdir -p \"$TARGET_DIR\""
+
+          # 3. Clean Rust target directory to avoid huge SCP transfers
+          rm -rf zeroclaw-engine/target
+
+          # 4. SCP the files directly
+          scp -i ~/.ssh/vps_key -P "$VPS_PORT" -o StrictHostKeyChecking=no -r \
+            ${{ steps.compose.outputs.COMPOSE_FILE }} \
+            deploy.sh \
+            zeroclaw \
+            zeroclaw-engine \
+            cloudflare \
+            "$VPS_USER@$VPS_HOST:$TARGET_DIR/"
 
       # ─────────────────────────────────────────────────────────────────────
       # Generate .env file from individual GitHub secrets & variables
@@ -248,11 +262,15 @@ jobs:
           # ── Redis ──
           REDIS_HOST=${{ vars.REDIS_HOST || 'redis' }}
           REDIS_PORT=${{ vars.REDIS_PORT || '6379' }}
+          REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
 
           # ── Application ──
           NODE_ENV=${{ vars.NODE_ENV || steps.env.outputs.TARGET_ENV }}
           PORT=${{ vars.PORT || '3000' }}
           APP_URL=${{ vars.APP_URL }}
+          FRONTEND_URL=${{ vars.FRONTEND_URL }}
+          SCANNER_URL=${{ vars.SCANNER_URL }}
+          ADMIN_API_KEY=${{ secrets.ADMIN_API_KEY || '6893f5eb67ceb8c2d2f38dfc91d844a1359294530da91e100f44d84bcbb56dc4' }}
 
           # ── WhatsApp Cloud API ──
           WHATSAPP_PHONE_NUMBER_ID=${{ secrets.WHATSAPP_PHONE_NUMBER_ID }}
@@ -266,6 +284,12 @@ jobs:
 
           # ── Wave ──
           WAVE_API_KEY=${{ secrets.WAVE_API_KEY }}
+          WAVE_MONTHLY_AMOUNT=${{ vars.WAVE_MONTHLY_AMOUNT || '5000' }}
+
+          # ── Business Logic ──
+          PAYMENT_REGION=${{ vars.PAYMENT_REGION || 'INTERNATIONAL' }}
+          MONTHLY_PRICE_ID=${{ vars.MONTHLY_PRICE_ID || 'price_default' }}
+          AI_CONFIDENCE_THRESHOLD=${{ vars.AI_CONFIDENCE_THRESHOLD || '0.85' }}
 
           # ── Sécurité ──
           JWT_SECRET=${{ secrets.JWT_SECRET }}
@@ -275,7 +299,7 @@ jobs:
           NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
 
           # ── Cloudflare Tunnel ──
-          CLOUDFLARE_TUNNEL_ID=${{ secrets.CLOUDFLARE_TUNNEL_ID }}
+          CLOUDFLARE_TUNNEL_TOKEN=${{ secrets.CLOUDFLARE_TUNNEL_TOKEN }}
 
           # ── Mikro-ORM ──
           MIKRO_ORM_MIGRATIONS_DISABLE_FOREIGN_KEYS=false
@@ -287,50 +311,47 @@ jobs:
 
           # ── Google AI ──
           GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}
-          GEMINI_MODEL_NAME=${{ vars.GEMINI_MODEL_NAME || 'gemini-2.0-flash' }}
+          GEMINI_MODEL_NAME=${{ vars.GEMINI_MODEL_NAME || 'gemini-2.5-flash' }}
 
           # ── Feature Flags ──
           BYPASS_SUBSCRIPTION_CHECK=${{ vars.BYPASS_SUBSCRIPTION_CHECK || 'false' }}
 
-          # ── ZeroClaw ──
-          SIKAFLOW_API_URL=http://backend:3000
           SIKAFLOW_API_KEY=${{ secrets.ADMIN_API_KEY }}
+          ZEROCLAW_IMAGE_TAG=${{ steps.env.outputs.TARGET_ENV == 'production' && 'latest' || 'develop' }}
           ENVFILE
 
           # Remove leading whitespace from heredoc
           sed -i 's/^          //' /tmp/sikaflow.env
           # Remove empty lines that result from unset variables
           sed -i '/=$/d' /tmp/sikaflow.env
+          # Ensure GitHub Repository Owner is strictly lowercase for Docker image tags
+          sed -i -e '/^GITHUB_REPOSITORY_OWNER=/ s/=.*/\L&/' /tmp/sikaflow.env
           echo "✅ Generated .env with $(wc -l < /tmp/sikaflow.env) lines"
 
-      - name: Upload .env to VPS
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_PORT || 22 }}
-          source: /tmp/sikaflow.env
-          target: ~/sikaflow
-          overwrite: true
+          echo "✅ .env file and cloudflare config ready"
 
-      - name: Install .env on VPS
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_PORT || 22 }}
-          script: |
-            mkdir -p ~/sikaflow
-            if [ -f ~/sikaflow/tmp/sikaflow.env ]; then
-              mv ~/sikaflow/tmp/sikaflow.env ~/sikaflow/.env
-              rm -rf ~/sikaflow/tmp
-            elif [ -f ~/sikaflow/sikaflow.env ]; then
-              mv ~/sikaflow/sikaflow.env ~/sikaflow/.env
-            fi
-            chmod 600 ~/sikaflow/.env
-            echo "🔐 .env installed ($(wc -l < ~/sikaflow/.env) lines)"
+      - name: Upload and Install .env to VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_PORT: ${{ secrets.VPS_PORT || 22 }}
+        run: |
+          # Setup SSH
+          mkdir -p ~/.ssh
+          echo "$VPS_SSH_KEY" > ~/.ssh/vps_key
+          chmod 600 ~/.ssh/vps_key
+          ssh-keyscan -p "$VPS_PORT" -H "$VPS_HOST" >> ~/.ssh/known_hosts
+
+          # Ensure target directory exists
+          ssh -i ~/.ssh/vps_key -p "$VPS_PORT" -o StrictHostKeyChecking=no "$VPS_USER@$VPS_HOST" "mkdir -p ~/sikaflow ~/sikaflow/zeroclaw"
+
+          # SCP the env file directly contextually
+          scp -i ~/.ssh/vps_key -P "$VPS_PORT" -o StrictHostKeyChecking=no /tmp/sikaflow.env "$VPS_USER@$VPS_HOST:~/sikaflow/.env"
+
+          # Secure the files permissions
+          ssh -i ~/.ssh/vps_key -p "$VPS_PORT" -o StrictHostKeyChecking=no "$VPS_USER@$VPS_HOST" "chmod 600 ~/sikaflow/.env"
+          echo "🔐 .env installed successfully"
 
       # ─────────────────────────────────────────────────────────────────────
       # Execute deploy.sh on VPS
@@ -362,6 +383,13 @@ jobs:
               echo "📦 Installing ZeroClaw config..."
               rm -rf ~/sikaflow/zeroclaw
               cp -r "$STAGE/zeroclaw" ~/sikaflow/zeroclaw
+            fi
+
+            # Install ZeroClaw Engine Source
+            if [ -d "$STAGE/zeroclaw-engine" ]; then
+              echo "🦀 Installing ZeroClaw Engine source..."
+              rm -rf ~/sikaflow/zeroclaw-engine
+              cp -r "$STAGE/zeroclaw-engine" ~/sikaflow/zeroclaw-engine
             fi
 
             # Install Cloudflare config
@@ -400,20 +428,27 @@ jobs:
             COMPOSE_FILE="${{ steps.compose.outputs.COMPOSE_FILE }}"
             cd ~/sikaflow
 
+            # Check Docker permissions
+            if ! docker info > /dev/null 2>&1; then
+                DOCKER_CMD="sudo docker"
+            else
+                DOCKER_CMD="docker"
+            fi
+
             # Check all containers are running
-            RUNNING=$(docker compose -f "$COMPOSE_FILE" ps --format '{{.Name}} {{.Status}}' | grep -v "Exit" | wc -l)
-            TOTAL=$(docker compose -f "$COMPOSE_FILE" ps --format '{{.Name}}' | wc -l)
+            RUNNING=$($DOCKER_CMD compose -f "$COMPOSE_FILE" ps --format '{{.Name}} {{.Status}}' | grep -v "Exit" | wc -l)
+            TOTAL=$($DOCKER_CMD compose -f "$COMPOSE_FILE" ps --format '{{.Name}}' | wc -l)
             echo "   Containers: $RUNNING/$TOTAL running"
 
             # Backend health
-            if docker compose -f "$COMPOSE_FILE" exec -T backend curl -sf http://localhost:3000/health > /dev/null 2>&1; then
+            if $DOCKER_CMD compose -f "$COMPOSE_FILE" exec -T backend curl -sf http://localhost:3000/health > /dev/null 2>&1; then
               echo "   ✅ Backend: healthy"
             else
               echo "   ⚠️  Backend: not responding yet"
             fi
 
             # ZeroClaw health
-            if docker compose -f "$COMPOSE_FILE" exec -T zeroclaw curl -sf http://localhost:3001/health > /dev/null 2>&1; then
+            if $DOCKER_CMD compose -f "$COMPOSE_FILE" exec -T zeroclaw curl -sf http://localhost:3001/health > /dev/null 2>&1; then
               echo "   ✅ ZeroClaw: healthy"
             else
               echo "   ⚠️  ZeroClaw: not responding yet"
@@ -421,4 +456,4 @@ jobs:
 
             echo ""
             echo "📋 Container status:"
-            docker compose -f "$COMPOSE_FILE" ps
+            $DOCKER_CMD compose -f "$COMPOSE_FILE" ps

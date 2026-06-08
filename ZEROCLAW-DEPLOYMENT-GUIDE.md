@@ -20,25 +20,23 @@ Internet
              ──SQL───→ PostgreSQL (base séparée: zeroclaw_poc/zeroclaw_prod)
 ```
 
-### Fichiers ZeroClaw (déjà dans le repo)
+### Fichiers ZeroClaw (dans le repo)
 
 ```
+zeroclaw-engine/          # 🦀 Code source complet du moteur ZeroClaw modifié (Rust)
+├── src/tools/sikaflow/   # Implémentation en Rust des 10 outils SikaFlow connectés à l'API
+│   ├── mod.rs
+│   ├── record_expense.rs
+│   └── ...
+└── Dockerfile            # Compile le code Rust et construit l'image finale
+
 zeroclaw/
 ├── system-prompt.md          # Règles agent (456 lignes)
 ├── memory-schema.md          # Schéma mémoire conversationnelle
-├── onboarding-conversation.md # Design onboarding
-└── tools/                    # 10 tools YAML (type: http_request)
-    ├── check-user-exists.tool.yaml
-    ├── create-organization.tool.yaml
-    ├── record-expense.tool.yaml
-    ├── record-income.tool.yaml
-    ├── get-balance.tool.yaml
-    ├── record-debt.tool.yaml
-    ├── get-debts.tool.yaml
-    ├── settle-debt.tool.yaml
-    ├── remind-debt.tool.yaml
-    └── update-transaction-category.tool.yaml
+└── onboarding-conversation.md # Design onboarding
 ```
+
+> **Note Architecture :** Contrairement à l'ancienne version, ZeroClaw n'utilise **plus de fichiers YAML dynamiques** pour les outils. Les 10 outils propres à SikaFlow (enregistrement de dépense, création d'organisation, etc.) sont directement implémentés en **Rust** dans le dossier `zeroclaw-engine/src/tools/sikaflow/`. La compilation s'effectue automatiquement via le `Dockerfile` personnalisé lors du déploiement. L'authentification `SIKAFLOW_API_URL` et `SIKAFLOW_API_KEY` est injectée dynamiquement par le `.env` au runtime.
 
 ---
 
@@ -53,10 +51,12 @@ Push sur main    → Build images → Deploy production (VPS)
 
 Le workflow GitHub Actions (`.github/workflows/deploy.yml`) fait tout :
 
-1. ✅ Build et push des images Docker (backend, frontend, scanner)
-2. ✅ Copie des configs sur le VPS (compose, zeroclaw, cloudflare)
-3. ✅ Exécution de `deploy.sh` (pull, compose up, cleanup)
-4. ✅ Health check (backend + ZeroClaw)
+1. ✅ Build local du binaire ZeroClaw modifé (Rust) via Docker Compose
+2. ✅ Build et push des images Docker (backend, frontend, scanner)
+3. ✅ Copie des configs et codes sources sur le VPS (composant `zeroclaw-engine` + configs)
+4. ✅ Exécution de `deploy.sh` sur le VPS (pull, docker compose up --build, cleanup)
+5. ✅ Health check (backend + ZeroClaw)
+6. ✅ Health check (backend + ZeroClaw)
 
 ### GitHub Secrets requis
 
@@ -173,13 +173,13 @@ scp cloudflare/credentials.json user@vps:~/sikaflow/cloudflare/
 
 Configurez les webhooks une seule fois :
 
-- **WhatsApp** (Meta) : `https://agent-staging.sika-flow.com/webhook/whatsapp`
+- **WhatsApp** (Meta) : `https://agent-staging.sika-flow.com/webhook`
 - **Telegram** :
 
 ```bash
 curl -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
   -H "Content-Type: application/json" \
-  -d '{"url": "https://agent-staging.sika-flow.com/webhook/telegram", "secret_token": "${TELEGRAM_WEBHOOK_SECRET}"}'
+  -d '{"url": "https://agent-staging.sika-flow.com/webhook", "secret_token": "${TELEGRAM_WEBHOOK_SECRET}"}'
 ```
 
 ---

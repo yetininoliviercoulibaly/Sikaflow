@@ -28,7 +28,7 @@ export class SettleDebtUseCase {
   async execute(command: SettleDebtCommand): Promise<SettleDebtResult> {
     const { phoneNumber, shortId, amount } = command;
 
-    const user = await this.userRepository.findByPhoneNumber(phoneNumber);
+    const user = await this.userRepository.findByIdentifier(phoneNumber);
     if (!user) {
       throw new NotFoundException(`User with phone ${phoneNumber} not found`);
     }

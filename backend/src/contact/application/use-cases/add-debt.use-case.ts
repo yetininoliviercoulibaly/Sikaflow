@@ -24,7 +24,7 @@ export class AddDebtUseCase {
   async execute(command: AddDebtCommand): Promise<Contact> {
     const { phoneNumber, amount, contactName, contactPhone, description } = command;
 
-    const user = await this.userRepository.findByPhoneNumber(phoneNumber);
+    const user = await this.userRepository.findByIdentifier(phoneNumber);
     if (!user) {
       throw new NotFoundException(`User with phone ${phoneNumber} not found`);
     }

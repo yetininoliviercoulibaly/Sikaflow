@@ -1,7 +1,7 @@
 # ZeroClaw Memory Schema — SikaFlow
 
 Ce document définit le schéma officiel des clés de mémoire conversationnelle utilisées par l'agent SikaFlow.
-ZeroClaw persiste ces données en PostgreSQL par session utilisateur (identifié par numéro de téléphone).
+ZeroClaw persiste ces données en PostgreSQL par session utilisateur (identifié par numéro de téléphone ou identifiant Telegram).
 
 ---
 
@@ -38,10 +38,12 @@ Persiste entre les sessions.
 | `session.activeOrgId` | `string` | UUID de l'organisation active | UUID v4 |
 | `session.activeOrgName` | `string` | Nom de l'organisation active | Texte libre |
 | `session.activeOrgRole` | `string` | Rôle de l'utilisateur dans l'org active | `OWNER` \| `MANAGER` \| `STAFF` |
+| `session.userPhoneNumber` | `string` | Numéro de téléphone résolu (cache pour éviter re-identification Telegram) | E.164 (ex: `+2250707070405`) |
 
 ### Cycle de vie
 
 ```
+check_user_exists(telegram_user_id) → session.userPhoneNumber résolu depuis la réponse API
 create_organization → session.activeOrgId, session.activeOrgName, session.activeOrgRole définis
 "Passe sur Festival" → session.activeOrgId mis à jour vers la nouvelle org
 ```

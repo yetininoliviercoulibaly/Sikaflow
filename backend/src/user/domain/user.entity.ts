@@ -5,6 +5,7 @@ export class User {
     public fullName: string | null,
     public lastActiveOrganizationId: string | null,
     public createdAt: Date,
-    public preferredLanguage: string = 'fr', // Default to FR
+    public preferredLanguage: string = 'fr',
+    public telegramUserId: string | null = null,
   ) {}
 }

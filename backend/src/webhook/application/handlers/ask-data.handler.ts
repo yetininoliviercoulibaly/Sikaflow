@@ -30,7 +30,7 @@ export class AskDataHandler implements IActionHandler {
           }
 
           // Resolve User and Role
-          const user = await this.userRepository.findByPhoneNumber(senderPhoneNumber);
+          const user = await this.userRepository.findByIdentifier(senderPhoneNumber);
           if (!user) {
               await messagingService.sendMessage(senderPhoneNumber, "Utilisateur non trouvé.");
               return;

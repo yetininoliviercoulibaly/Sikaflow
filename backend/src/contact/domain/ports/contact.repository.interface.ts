@@ -17,9 +17,9 @@ export interface IContactRepository {
   findByShortId(ownerId: string, shortId: string): Promise<Contact | null>;
 
   /**
-   * Find contact by phone for a specific owner
+   * Find contact by phone for a specific owner (optionally scoped to an organization)
    */
-  findByPhone(ownerId: string, phone: string): Promise<Contact | null>;
+  findByPhone(ownerId: string, phone: string, organizationId?: string): Promise<Contact | null>;
 
   /**
    * Find all contacts for an owner with optional organization filter
@@ -34,9 +34,9 @@ export interface IContactRepository {
   ): Promise<Contact[]>;
 
   /**
-   * Search contacts by name (fuzzy search)
+   * Search contacts by name (fuzzy search), optionally scoped to an organization
    */
-  searchByName(ownerId: string, query: string, limit?: number): Promise<Contact[]>;
+  searchByName(ownerId: string, query: string, limit?: number, organizationId?: string): Promise<Contact[]>;
 
   /**
    * Find contacts with pending debts (totalOwed > 0)

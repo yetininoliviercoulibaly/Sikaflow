@@ -26,6 +26,10 @@ Write-Host "`n1️⃣  [Mot de passe requis] Copie des fichiers..." -ForegroundC
 scp deploy.sh $ComposeFile "${UserHost}:~/"
 scp -r zeroclaw "${UserHost}:~/zeroclaw-upload"
 
+Write-Host "   Nettoyage d'artefacts Cargo avant upload..." -ForegroundColor DarkGray
+Remove-Item -Path "zeroclaw-engine/target" -Recurse -Force -ErrorAction Ignore
+scp -r zeroclaw-engine "${UserHost}:~/zeroclaw-engine-upload"
+
 # Cloudflare config (environment-specific)
 Write-Host "   Copie config Cloudflare ($TargetEnv)..." -ForegroundColor DarkGray
 scp "cloudflare/config.${TargetEnv}.yml" "${UserHost}:~/cloudflare-config.yml"
@@ -36,7 +40,7 @@ if ($LASTEXITCODE -ne 0) { Write-Error "Echec copie SCP."; exit 1 }
 Write-Host "`n2️⃣  [Mot de passe requis] Lancement..." -ForegroundColor Cyan
 
 # Astuce: On chaine tout avec '&&' sur une seule ligne PowerShell pour eviter les problemes CRLF
-ssh $UserHost "mkdir -p ~/sikaflow && mv ~/$ComposeFile ~/sikaflow/ && tr -d '\r' < ~/deploy.sh > ~/sikaflow/deploy.sh && rm ~/deploy.sh && chmod +x ~/sikaflow/deploy.sh && ~/sikaflow/deploy.sh $TargetEnv"
+ssh $UserHost "mkdir -p ~/sikaflow && rm -rf ~/sikaflow/zeroclaw && mv ~/zeroclaw-upload ~/sikaflow/zeroclaw && rm -rf ~/sikaflow/zeroclaw-engine && mv ~/zeroclaw-engine-upload ~/sikaflow/zeroclaw-engine && mv ~/$ComposeFile ~/sikaflow/ && tr -d '\r' < ~/deploy.sh > ~/sikaflow/deploy.sh && rm ~/deploy.sh && chmod +x ~/sikaflow/deploy.sh && ~/sikaflow/deploy.sh $TargetEnv"
 
 if ($LASTEXITCODE -ne 0) { 
     Write-Error "Echec du deploiement distant."

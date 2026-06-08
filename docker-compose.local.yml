@@ -55,7 +55,7 @@ services:
       WHATSAPP_ACCESS_TOKEN: fake
       WHATSAPP_VERIFY_TOKEN: fake
       GOOGLE_API_KEY: ${GOOGLE_API_KEY:-fake}
-      GEMINI_MODEL_NAME: gemini-1.5-flash
+      GEMINI_MODEL_NAME: gemini-2.5-flash
       TELEGRAM_BOT_TOKEN: fake
       BYPASS_SUBSCRIPTION_CHECK: "true"
     ports:
