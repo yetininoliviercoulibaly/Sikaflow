@@ -115,11 +115,13 @@ WAVE_API_KEY=wave_xxxxxxxxxx
 openssl rand -base64 32
 ```
 
-Exemple de résultat :
+La commande affiche une chaîne base64 aléatoire à coller comme valeur :
 
 ```bash
-JWT_SECRET=X9f2kL8mN4pQ6rS1tU3vW5xY7zA9bC0dE1fG2hI4jK6
+JWT_SECRET=<collez-ici-la-sortie-de-openssl-rand-base64-32>
 ```
+
+> ⚠️ Ne réutilisez jamais un exemple trouvé dans la doc : générez toujours votre propre clé.
 
 ⚠️ **Important :** Utilisez une clé **différente** pour staging et production !
 
@@ -178,7 +180,7 @@ Une fois toutes les valeurs configurées, votre fichier `.env` sur le VPS devrai
 
 ```bash
 GITHUB_REPOSITORY_OWNER=john-doe
-DB_PASSWORD=X9f2kL8mN4pQ6rS...
+DB_PASSWORD=<votre-mot-de-passe-genere>
 WHATSAPP_PHONE_NUMBER_ID=123456789012345
 STRIPE_SECRET_KEY=sk_test_51ABCxxx...
 # etc.
